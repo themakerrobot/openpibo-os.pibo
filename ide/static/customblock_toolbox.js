@@ -2272,6 +2272,20 @@ let toolbox = (lang) => {
           },  
           {
             "kind": "block",
+            "type": "vision_object_load_ext",
+            "inputs":{
+              "filename":{
+                "shadow": {
+                  "type": "text",
+                  "fields": {
+                    "TEXT": "yolo11s"
+                  }
+                }
+              },
+            }
+          },
+          {
+            "kind": "block",
             "type": "vision_object",
             "inputs":{
               "img":{
