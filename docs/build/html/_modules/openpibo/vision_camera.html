@@ -13,7 +13,7 @@
 
   
     <link rel="shortcut icon" href="../../_static/icon.png"/>
-    <link rel="canonical" href="https://themakerrobot.github.io/openpibo-python/_modules/openpibo/vision_camera.html" />
+    <link rel="canonical" href="https://themakerrobot.github.io/openpibo-os.pibo/_modules/openpibo/vision_camera.html" />
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
       <script src="../../_static/documentation_options.js?v=2c284236"></script>
@@ -66,6 +66,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../libraries/oled.html">oled</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../libraries/speech.html">speech</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../libraries/vision_camera.html">vision_camera</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../libraries/vision_face.html">vision_face</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../libraries/vision_detect.html">vision_detect</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../libraries/vision_classify.html">vision_classify</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../libraries/utils.html">utils</a></li>
@@ -207,7 +208,7 @@
 <span class="sd">    :returns: ``numpy.ndarray`` 타입 이미지 객체</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">return</span> <span class="n">cv2</span><span class="o">.</span><span class="n">resize</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cap</span><span class="o">.</span><span class="n">capture_array</span><span class="p">(),</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">height</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">width</span><span class="p">))</span></div>
+    <span class="k">return</span> <span class="n">cv2</span><span class="o">.</span><span class="n">resize</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cap</span><span class="o">.</span><span class="n">capture_array</span><span class="p">(),</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">width</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">height</span><span class="p">))</span></div>
 
     <span class="c1"># return cv2.rotate(cv2.resize(self.cap.capture_array(), (self.height, self.width)),cv2.ROTATE_90_COUNTERCLOCKWISE)</span>
     <span class="c1"># return cv2.rotate(self.cap.capture_array(),cv2.ROTATE_90_COUNTERCLOCKWISE)</span>

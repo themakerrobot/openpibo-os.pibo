@@ -12,12 +12,14 @@ import wifi
 import network_disp
 import uart_ctrl
 import argparse
+from mcu_control import DeviceControl
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-  global winfo, ole, aud
+  global winfo, ole, aud, device_control
   ole = Oled()
   aud = Audio()
+  device_control = DeviceControl()
   winfo = ['','','','','','']
   uart_ctrl.start()
   boot()
@@ -27,9 +29,19 @@ app = FastAPI(lifespan=lifespan)
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 apmode = True
 
-#@app.get("/device/{pkt}")
-#async def device_command(pkt: str):
-#  return JSONResponse(content=f"not support", status_code=500)
+@app.get("/device/{pkt}")
+async def device_command(pkt: str):
+  try:
+    if pkt == "#15:!":
+      return JSONResponse(content=device_control.system_data.get('battery', ''), status_code=200)
+    elif pkt == "#40:!":
+      return JSONResponse(content=device_control.system_data.get('system', ''), status_code=200)
+    else:
+      response = device_control.send_raw(pkt)
+      return JSONResponse(content=response, status_code=200)
+  except Exception as ex:
+    return JSONResponse(content=f"Error: {str(ex)}", status_code=500)
+
 
 @app.get('/usedata')
 async def f():

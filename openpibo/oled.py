@@ -20,7 +20,7 @@ import cv2, os
 import numpy as np
 import openpibo_models
 
-class Oled:
+class Oled_old:
   """
 Functions:
 :meth:`~openpibo.oled.Oled.show`
@@ -217,18 +217,18 @@ Functions:
     self.draw_data(img)
     self.show()
 
-class OledbyST7735:
+class Oled:
   """
 Functions:
-:meth:`~openpibo.oled.OledbyST7735.show`
-:meth:`~openpibo.oled.OledbyST7735.clear`
-:meth:`~openpibo.oled.OledbyST7735.set_font`
-:meth:`~openpibo.oled.OledbyST7735.draw_text`
-:meth:`~openpibo.oled.OledbyST7735.draw_image`
-:meth:`~openpibo.oled.OledbyST7735.draw_data`
-:meth:`~openpibo.oled.OledbyST7735.draw_rectangle`
-:meth:`~openpibo.oled.OledbyST7735.draw_ellipse`
-:meth:`~openpibo.oled.OledbyST7735.draw_line`
+:meth:`~openpibo.oled.Oledc.show`
+:meth:`~openpibo.oled.Oledc.clear`
+:meth:`~openpibo.oled.Oledc.set_font`
+:meth:`~openpibo.oled.Oledc.draw_text`
+:meth:`~openpibo.oled.Oledc.draw_image`
+:meth:`~openpibo.oled.Oledc.draw_data`
+:meth:`~openpibo.oled.Oledc.draw_rectangle`
+:meth:`~openpibo.oled.Oledc.draw_ellipse`
+:meth:`~openpibo.oled.Oledc.draw_line`
 
   파이보의 OLED를 통해 다양한 그림을 표현합니다.
 

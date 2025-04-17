@@ -99,7 +99,7 @@ Functions:
     :returns: ``numpy.ndarray`` 타입 이미지 객체
     """
 
-    return cv2.resize(self.cap.capture_array(), (self.height, self.width))
+    return cv2.resize(self.cap.capture_array(), (self.width, self.height))
     # return cv2.rotate(cv2.resize(self.cap.capture_array(), (self.height, self.width)),cv2.ROTATE_90_COUNTERCLOCKWISE)
     # return cv2.rotate(self.cap.capture_array(),cv2.ROTATE_90_COUNTERCLOCKWISE)
     #return self.cap.capture_array()
