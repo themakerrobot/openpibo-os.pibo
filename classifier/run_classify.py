@@ -57,7 +57,7 @@ camera_lock = threading.Lock()
 # 카메라 이미지를 Base64로 변환
 # ---------------------------------
 def to_base64(im):
-    im = cv2.imencode('.jpg', cv2.resize(im, (240,320)))[1].tobytes()
+    im = cv2.imencode('.jpg', cv2.resize(im, (320,240)))[1].tobytes()
     return base64.b64encode(im).decode('utf-8')
 
 # ---------------------------------
