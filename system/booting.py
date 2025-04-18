@@ -161,7 +161,6 @@ def boot():
     if (tmp[6] != '' and tmp[6][0:3] != '169') or (tmp[7] != '' and tmp[7][0:3] != '169'):
       os.system("/home/pi/openpibo-os/system/hotspot.sh stop")
       break
-    ole.draw_image("/home/pi/openpibo-os/system/pibo.jpg")
     ole.draw_text((5,5), "˚".join(["" for _ in range(i+1)]))
     ole.show()
     time.sleep(3)

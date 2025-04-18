@@ -265,7 +265,7 @@ Functions:
     dc_pin = digitalio.DigitalInOut(board.D23)    # any pin!
 
     spi = busio.SPI(11,10,9)
-    self.oled = st7735.ST7735S(spi, rotation=270, width=self.height, height=self.width, cs=cs_pin, bl=cs_pin, dc=dc_pin, rst=rst_pin, x_offset=1, y_offset=2)
+    self.oled = st7735.ST7735S(spi, baudrate=36000000, rotation=270, width=self.height, height=self.width, cs=cs_pin, bl=cs_pin, dc=dc_pin, rst=rst_pin, x_offset=1, y_offset=2)
     self.font = ImageFont.truetype(self.font_path, self.font_size)
     self.image = Image.new("RGB", (self.width, self.height), (0,0,0))
     self.oled.fill(0)
