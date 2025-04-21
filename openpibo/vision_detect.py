@@ -153,7 +153,7 @@ Functions:
     #self.dictionary = cv2.aruco.Dictionary_get(cv2.aruco.DICT_4X4_50)
     self.dictionary = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_50)
     self.parameters = cv2.aruco.DetectorParameters()
-    self.tracker = dlib.correlation_tracker()
+    self.tracker = None
     self.hand_gesture_recognizer =  None
 
   def load_hand_gesture_model(self, modelpath='/home/pi/.model/hand/gesture_recognizer.task'):
@@ -419,18 +419,19 @@ Functions:
     if not type(img) is np.ndarray:
       raise Exception('"img" must be image data from opencv')
 
+    self.tracker = dlib.correlation_tracker()
     x1,y1,x2,y2 = p
     self.tracker.start_track(cv2.cvtColor(img, cv2.COLOR_BGR2RGB), dlib.rectangle(x1,y1,x2,y2))
 
   def track_object(self, img):
     """
-    이미지 안의 사물 트래커를 설정합니다.
+    이미지 안의 사물 트래커를 갱신합니다.
 
     example::
 
       img = camera.read()
-      tracker = detect.object_tracker_init(img, (10,10,100,100))
-      tracker, position = detect.track_object(tracker, img)
+      detect.object_tracker_init(img, (10,10,100,100))
+      position = detect.track_object(img)
 
     :param numpy.ndarray img: 이미지 객체
 
@@ -447,7 +448,27 @@ Functions:
     y1 = int(box.top())
     x2 = int(box.right())
     y2 = int(box.bottom())
-    return x1, y1, x2, y2
+
+    height, width = img.shape[:2]
+    x1 = max(0, int(x1))
+    y1 = max(0, int(y1))
+    x2 = min(width - 1, int(x2))
+    y2 = min(height - 1, int(y2))
+    return (x1, y1, x2, y2)
+
+  def track_object_vis(self, img, item):
+    """
+    마커 결과를 표시합니다.
+
+    :param numpy.ndarray img: 이미지 객체
+    :param array items: 마커 결과
+    """
+
+    if not type(img) is np.ndarray:
+      raise Exception('"img" must be image data from opencv')
+
+    x1,y1,x2,y2 = item
+    cv2.rectangle(img, (x1,y1), (x2,y2), (255,50,255), 2)
 
   def detect_marker(self, img, marker_length=2):
     """
@@ -501,7 +522,7 @@ Functions:
     마커 결과를 표시합니다.
 
     :param numpy.ndarray img: 이미지 객체
-    :param array items: 마커 결과과
+    :param array items: 마커 결과
     """
 
     if not type(img) is np.ndarray:

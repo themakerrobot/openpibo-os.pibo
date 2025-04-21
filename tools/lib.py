@@ -40,7 +40,7 @@ class Pibo:
     self.dev = Device()
     self.onoff = False
     self.mymodel_path = "/home/pi/mymodel"
-    self.tracker, self.trackX, self.trackY = None, 0, 0
+    self.trackX, self.trackY = 0, 0
     self.imgX, self.imgY = 0,0
     self.marker_length = 2
     self.aud = Audio()
@@ -194,20 +194,17 @@ class Pibo:
 
   def object_tracker_init(self, d):
     im = self.frame.copy()
-    if self.tracker is not None:
-      del self.tracker
+    if self.det.tracker is not None:
+      del self.det.tracker
 
-    self.tracker = self.det.object_tracker_init(im, (d['x1'], d['y1'], d['x2'], d['y2']))
-  
+    self.det.object_tracker_init(im, (d['x1'], d['y1'], d['x2'], d['y2']))
+ 
   def track_object(self):
     im = self.frame.copy()
     colors = (100,0,200)
-
-    if self.tracker is not None:
-      res = self.det.track_object(self.tracker, im)
-      self.tracker = res['tracker']
-      x1,y1,x2,y2 = res['position']
-      self.cam.rectangle(im, (x1,y1), (x2,y2),colors,3)
+    if self.det.tracker is not None:
+      x1,y1,x2,y2 = self.det.track_object(im)
+      self.cam.rectangle(im, (x1,y1), (x2,y2), colors,3)
     return im, ""
 
   def detect_marker(self):
