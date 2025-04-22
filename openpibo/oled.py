@@ -16,11 +16,11 @@ import adafruit_rgb_display.ili9341 as ili9341
 import adafruit_rgb_display.st7735 as st7735
 
 from PIL import Image, ImageDraw, ImageFont, ImageOps
-import cv2, os
+import os
 import numpy as np
 import openpibo_models
 
-class Oled_old:
+class Oled:
   """
 Functions:
 :meth:`~openpibo.oled.Oled.show`
@@ -217,7 +217,7 @@ Functions:
     self.draw_data(img)
     self.show()
 
-class Oled:
+class Oled7735:
   """
 Functions:
 :meth:`~openpibo.oled.Oledc.show`
@@ -606,7 +606,8 @@ Functions:
     if type(img) is not np.ndarray:
       raise Exception('"img" must be image data from opencv.')
 
-    self.image = Image.fromarray(cv2.cvtColor(img, cv2.COLOR_BGR2RGB)).resize((self.width, self.height))
+    #self.image = Image.fromarray(cv2.cvtColor(img, cv2.COLOR_BGR2RGB)).resize((self.width, self.height))
+    self.image = Image.fromarray(img[:, :, ::-1]).resize((self.width, self.height))
 
   def draw_rectangle(self, points, fill=None):
     """
