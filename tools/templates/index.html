@@ -23,15 +23,15 @@
       <div style="float:left">
         <h2>
           <i class="fa-solid fa-microchip">Tools <span id="state"></span></i>&nbsp;
-          <i class="fa-solid fa-left-right" style="opacity:30%"></i>&nbsp;
+          <!-- <i class="fa-solid fa-left-right" style="opacity:30%"></i>&nbsp;
           <a id="ide_bt">
              <i class="fa-solid fa-code" style="opacity:30%">IDE</i>
-          </a>
+          </a> -->
         </h2>
       </div>
       <div style="float:right">
         <h2 style="display: flex; align-items: center; justify-content: center;">
-          <a id="classifier_bt">
+          <!-- <a id="classifier_bt">
             <i class="fa-solid fa-images"></i>
           </a>&nbsp;&nbsp;
           <a id="top_poweroff_bt">
@@ -39,7 +39,8 @@
           </a>&nbsp;&nbsp;
           <a id="top_restart_bt">
             <i class="fa-solid fa-arrow-rotate-right"></i>
-          </a>&nbsp;&nbsp;
+          </a>&nbsp;&nbsp; -->
+          &nbsp;&nbsp;<a id="fullscreen_bt"><span id='fullscreen_txt'></span></a>&nbsp;&nbsp;
           <select id="language">
             <option value="ko">한국어</option>
             <option value="en">English</option>
@@ -65,15 +66,15 @@
               <div class="toggle-switch"></div>
             </label>
           </li>
-          <li><button name="home"></li>
-          <li><button name="device"></li>
+          <!-- <li><button name="home"></li>
+          <li><button name="device"></li> -->
           <li><button name="motion"></li>
           <li><button name="vision"></li>
           <li><button name="speech"></li>
-          <li><button name="simulator"></li>
+          <!-- <li><button name="simulator"></li> -->
         </ul>
       </nav>
-      <div class="wifi-popup" id="wifiPopup" style="display:none">
+      <!-- <div class="wifi-popup" id="wifiPopup" style="display:none">
         <div class="wifi-popup-content">
           <h3>
             <div style="float:left"><i class="fa-solid fa-circle-exclamation"></i>&nbsp;<span data-key="internet_settings"></span></div>
@@ -140,11 +141,11 @@
           <h3>&nbsp;</h3>
           <div style="height:210px;overflow-y:scroll" id="usedata_json"></div>
         </div>
-      </div>
+      </div> -->
 
       <div class="content">
         <div class="wrapper">
-          <h4 id="content_header">HOME</h4>
+          <!-- <h4 id="content_header">HOME</h4>
           <article id="article_home">
             <section>
               <ul style="list-style-type:none">
@@ -545,7 +546,7 @@
                 </div>
               </div>
             </section>
-          </article>
+          </article> -->
           <article id="article_motion" class="margin">
             <section class="pibo-section">
               <div>
@@ -997,8 +998,8 @@
                 <input type="radio" name="s_voice_en" value="off" />Off
               </div>
               <div class="speech-input-group">
-                <span class="label" data-key="file"></span>:
-                <i class="fa-solid fa-dollar-sign"></i>~/myaudio/tts.mp3
+                <span class="label" data-key="volume"></span>:
+                <input type="number" id="volume" min="0" max="100" value="80" pattern="\d*" /><i class="fa-solid fa-percent"></i>
               </div>
               <div class="speech-input-group">
                 <span class="label" data-key="voice_type"></span>:
@@ -1052,6 +1053,27 @@
                 <span class="label" data-key="result"></span>:
                 <input type="text" id="s_translate_result_val" disabled/>
               </div>
+
+
+              <div>
+                <h3 class="mark" data-key="record"></h3>
+              </div>
+              <div class="speech-input-group">
+                <input type="number" name="mic_time_val" id="mic_time_val" value="5" min="1" max="30" pattern="\d*" />
+                <span class="label" data-key="second"></span>
+                <button id="mic_bt">
+                  <i class="fa-solid fa-microphone"></i>
+                  <span data-key="record"></span>
+                </button>
+                <button id="mic_replay_bt">
+                  <i class="fa-solid fa-repeat"></i>
+                  <span data-key="replay"></span>
+                </button>
+                <i class="fa-solid fa-ellipsis"></i>
+                <span class="label" id="mic_status"></span>
+              </div>
+
+
             </section>
             <section>
               <div>
@@ -1110,7 +1132,7 @@
               </div>
             </section>
           </article>
-          <article id="article_simulator">
+          <!-- <article id="article_simulator">
             <div class="vertical">
               <section class="new-and-list">
                 <h5 id="sequence_warn" class="warning no-sequence" >
@@ -1423,7 +1445,7 @@
                             required
                           ></select>
                         </div>
-                        <!-- <div class="horizontal vertical-align">
+                        <div class="horizontal vertical-align">
                           <span class="label small">소리</span>
                           <input
                             type="number"
@@ -1431,7 +1453,7 @@
                             id="audio_volume_input"
                             class="number"
                           />
-                        </div> -->
+                        </div>
                       </div>
                     </div>
                     <div id="tts_card" class="config card outline">
@@ -1467,7 +1489,7 @@
                             maxlength="48"
                           ></textarea>
                         </div>
-                        <!-- <div class="horizontal vertical-align">
+                        <div class="horizontal vertical-align">
                           <span class="label small">소리</span>
                           <input
                             type="number"
@@ -1475,7 +1497,7 @@
                             id="tts_volume_input"
                             name="tts_volume_input"
                           />
-                        </div> -->
+                        </div>
                       </div>
                     </div>
                     <div class="config card outline" style="opacity: 0"></div>
@@ -1520,17 +1542,17 @@
                   <i class="fa-solid fa-trash-can"></i>
                   <span data-key="remove"></span>
                 </button>
-                <!-- <button class="btn-teal" id="timeline_sel_play_bt">
+                <button class="btn-teal" id="timeline_sel_play_bt">
                   <i class="fa-solid fa-play"></i> 선택 실행
-                </button> -->
+                </button>
               </div>
             </section>
-          </article>
+          </article> -->
         </div>
       </div>
     </main>
   </body>
-  <footer>
+  <!-- <footer>
     <div style="float: left; padding: 0.7rem 0 0.7rem 0">
       <i class="fa-solid fa-robot fa-flip"></i>
       <span id="s_os_version"></span>,
@@ -1549,7 +1571,7 @@
       <span id="s_runtime"></span>, <span id="d_battery_val"></span>
       <span id="d_dc_val"></span>
     </div>
-  </footer>
+  </footer> -->
   <script src="../static/ko2en.js?ver=240325v2"></script>
   <script src="../static/index.js?ver=240325v9"></script>
 </html>

@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>openpibo.vision_face &mdash; OPENPIBO 0.9.2.76 문서</title>
+  <title>openpibo.vision_face &mdash; OPENPIBO 0.9.3.1 문서</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=80d5e7a1" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
       <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -13,10 +13,10 @@
 
   
     <link rel="shortcut icon" href="../../_static/icon.png"/>
-    <link rel="canonical" href="https://themakerrobot.github.io/openpibo-python/_modules/openpibo/vision_face.html" />
+    <link rel="canonical" href="https://themakerrobot.github.io/openpibo-os.pibo/_modules/openpibo/vision_face.html" />
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=2c284236"></script>
+      <script src="../../_static/documentation_options.js?v=a094e606"></script>
       <script src="../../_static/doctools.js?v=9bcbadda"></script>
       <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
       <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -67,6 +67,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../libraries/speech.html">speech</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../libraries/vision_camera.html">vision_camera</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../libraries/vision_detect.html">vision_detect</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../libraries/vision_face.html">vision_face</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../libraries/vision_classify.html">vision_classify</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../libraries/utils.html">utils</a></li>
 </ul>
@@ -100,7 +101,8 @@
 <span class="sd">영상처리, 인공지능 비전 기술을 사용합니다.</span>
 
 <span class="sd">Class:</span>
-<span class="sd">:obj:`~openpibo.vision_face.Face`</span>
+<span class="sd">:meth:`~openpibo.vision_detect.putTextPIL`</span>
+<span class="sd">:obj:`~openpibo.vision_detect.Face`</span>
 <span class="sd">&quot;&quot;&quot;</span>
 <span class="kn">import</span> <span class="nn">cv2</span><span class="o">,</span><span class="nn">dlib</span>
 <span class="kn">import</span> <span class="nn">os</span><span class="o">,</span><span class="nn">pickle</span><span class="o">,</span><span class="nn">math</span>
@@ -108,10 +110,10 @@
 <span class="kn">import</span> <span class="nn">mediapipe</span> <span class="k">as</span> <span class="nn">mp</span>
 <span class="kn">from</span> <span class="nn">mediapipe.tasks</span> <span class="kn">import</span> <span class="n">python</span> <span class="k">as</span> <span class="n">mp_python</span>
 <span class="kn">from</span> <span class="nn">mediapipe.tasks.python</span> <span class="kn">import</span> <span class="n">vision</span> <span class="k">as</span> <span class="n">mp_vision</span>
+<span class="kn">from</span> <span class="nn">openvino.runtime</span> <span class="kn">import</span> <span class="n">Core</span>
 <span class="kn">from</span> <span class="nn">PIL</span> <span class="kn">import</span> <span class="n">Image</span><span class="p">,</span><span class="n">ImageDraw</span><span class="p">,</span><span class="n">ImageFont</span>
 <span class="kn">import</span> <span class="nn">openpibo_dlib_models</span>
 <span class="kn">import</span> <span class="nn">openpibo_models</span>
-<span class="kn">from</span> <span class="nn">openvino.runtime</span> <span class="kn">import</span> <span class="n">Core</span>
 <span class="kn">import</span> <span class="nn">logging</span>
 
 <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;TF_CPP_MIN_LOG_LEVEL&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;3&#39;</span>  <span class="c1"># TensorFlow C++ 로그 제거</span>
@@ -121,10 +123,8 @@
 <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;tensorflow&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">ERROR</span><span class="p">)</span>
 <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;ultralytics&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">ERROR</span><span class="p">)</span>
 
-
-
 <div class="viewcode-block" id="putTextPIL">
-<a class="viewcode-back" href="../../libraries/vision_face..html#openpibo.vision_face.putTextPIL">[문서]</a>
+<a class="viewcode-back" href="../../libraries/vision_face.html#openpibo.vision_face.putTextPIL">[문서]</a>
 <span class="k">def</span> <span class="nf">putTextPIL</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">points</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span> <span class="n">colors</span><span class="o">=</span><span class="p">(</span><span class="mi">255</span><span class="p">,</span><span class="mi">255</span><span class="p">,</span><span class="mi">255</span><span class="p">)):</span>
 <span class="w">  </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">  이미지에 문자를 입력합니다. (한/영 가능 - pillow 이용)- COPY</span>
@@ -160,22 +160,54 @@
   <span class="k">return</span> <span class="n">img</span></div>
 
 
+<div class="viewcode-block" id="vision_api">
+<a class="viewcode-back" href="../../libraries/vision_face.html#openpibo.vision_face.vision_api">[문서]</a>
+<span class="k">def</span> <span class="nf">vision_api</span><span class="p">(</span><span class="n">mode</span><span class="p">,</span> <span class="n">image</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="p">{}):</span>
+<span class="w">  </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">  인공지능 비전 API를 호출합니다.</span>
+
+<span class="sd">  :param str mode: 호출할 비전 API (https://o-vapi.circul.us/guide)</span>
+<span class="sd">  :param str/numpy.ndarray image: 표시할 이미지 (파일 경로 or cv 이미지)</span>
+<span class="sd">  :returns: ``Json`` 타입 결과의 데이터</span>
+
+<span class="sd">  example::</span>
+
+<span class="sd">    { &#39;type&#39;: &#39;caption&#39;, &#39;result&#39;: &#39;ok&#39;, </span>
+<span class="sd">      &#39;data&#39;: {</span>
+<span class="sd">        caption:  &quot;사람에게 로봇을 과시하는 사람&quot;, </span>
+<span class="sd">        caption_en:  &quot;a person showing off a robot to a person&quot;,</span>
+<span class="sd">        raw:  [</span>
+<span class="sd">          &quot;a person showing off a robot to a person&quot;,</span>
+<span class="sd">          &quot;a robot that is sitting on top of a table&quot;,</span>
+<span class="sd">          &quot;a very cute white robot that is sitting in front of a table&quot;</span>
+<span class="sd">        ]</span>
+<span class="sd">      }</span>
+<span class="sd">    }</span>
+
+<span class="sd">  &quot;&quot;&quot;</span>
+
+  <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">image</span><span class="p">)</span> <span class="ow">is</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">requests</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;https://o-vapi.circul.us/</span><span class="si">{</span><span class="n">mode</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">files</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;uploadFile&#39;</span><span class="p">:</span><span class="n">cv2</span><span class="o">.</span><span class="n">imencode</span><span class="p">(</span><span class="s1">&#39;.jpg&#39;</span><span class="p">,</span> <span class="n">image</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">tobytes</span><span class="p">()},</span> <span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">)</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+  <span class="k">else</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">requests</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;https://o-vapi.circul.us/</span><span class="si">{</span><span class="n">mode</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">files</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;uploadFile&#39;</span><span class="p">:</span><span class="nb">open</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="s1">&#39;rb&#39;</span><span class="p">)},</span> <span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">)</span><span class="o">.</span><span class="n">json</span><span class="p">()</span></div>
+
+
 <div class="viewcode-block" id="Face">
-<a class="viewcode-back" href="../../libraries/vision_face..html#openpibo.vision_face.Face">[문서]</a>
+<a class="viewcode-back" href="../../libraries/vision_face.html#openpibo.vision_face.Face">[문서]</a>
 <span class="k">class</span> <span class="nc">Face</span><span class="p">:</span>
 <span class="w">  </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">Functions:</span>
-<span class="sd">:meth:`~openpibo.vision_face.Face.detect`</span>
-<span class="sd">:meth:`~openpibo.vision_face.Face.get_ageGender`</span>
-<span class="sd">:meth:`~openpibo.vision_face.Face.get_age`</span>
-<span class="sd">:meth:`~openpibo.vision_face.Face.get_gender`</span>
-<span class="sd">:meth:`~openpibo.vision_face.Face.init_db`</span>
-<span class="sd">:meth:`~openpibo.vision_face.Face.train_face`</span>
-<span class="sd">:meth:`~openpibo.vision_face.Face.delete_face`</span>
-<span class="sd">:meth:`~openpibo.vision_face.Face.recognize`</span>
-<span class="sd">:meth:`~openpibo.vision_face.Face.get_db`</span>
-<span class="sd">:meth:`~openpibo.vision_face.Face.save_db`</span>
-<span class="sd">:meth:`~openpibo.vision_face.Face.load_db`</span>
+<span class="sd">:meth:`~openpibo.vision_detect.Face.detect`</span>
+<span class="sd">:meth:`~openpibo.vision_detect.Face.get_ageGender`</span>
+<span class="sd">:meth:`~openpibo.vision_detect.Face.get_age`</span>
+<span class="sd">:meth:`~openpibo.vision_detect.Face.get_gender`</span>
+<span class="sd">:meth:`~openpibo.vision_detect.Face.init_db`</span>
+<span class="sd">:meth:`~openpibo.vision_detect.Face.train_face`</span>
+<span class="sd">:meth:`~openpibo.vision_detect.Face.delete_face`</span>
+<span class="sd">:meth:`~openpibo.vision_detect.Face.recognize`</span>
+<span class="sd">:meth:`~openpibo.vision_detect.Face.get_db`</span>
+<span class="sd">:meth:`~openpibo.vision_detect.Face.save_db`</span>
+<span class="sd">:meth:`~openpibo.vision_detect.Face.load_db`</span>
 
 <span class="sd">  얼굴과 관련된 다양한 기능을 수행하는 클래스입니다. 다음 기능을 수행할 수 있습니다.</span>
 
@@ -192,7 +224,7 @@
 
 <span class="sd">  example::</span>
 
-<span class="sd">    from openpibo.vision_face import Face</span>
+<span class="sd">    from openpibo.vision_detect import Face</span>
 
 <span class="sd">    face = Face()</span>
 <span class="sd">    # 아래의 모든 예제 이전에 위 코드를 먼저 사용합니다.</span>
@@ -236,7 +268,7 @@
 
 
 <div class="viewcode-block" id="Face.detect_face">
-<a class="viewcode-back" href="../../libraries/vision_face..html#openpibo.vision_face.Face.detect_face">[문서]</a>
+<a class="viewcode-back" href="../../libraries/vision_face.html#openpibo.vision_face.Face.detect_face">[문서]</a>
   <span class="k">def</span> <span class="nf">detect_face</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">img</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    얼굴을 탐색합니다.</span>
@@ -285,7 +317,7 @@
     <span class="c1">#return self.face_detector.detectMultiScale(cv2.cvtColor(img, cv2.COLOR_BGR2GRAY), 1.1, 5) # [(x,y,w,h), ...]</span>
 
 <div class="viewcode-block" id="Face.detect_face_vis">
-<a class="viewcode-back" href="../../libraries/vision_face..html#openpibo.vision_face.Face.detect_face_vis">[문서]</a>
+<a class="viewcode-back" href="../../libraries/vision_face.html#openpibo.vision_face.Face.detect_face_vis">[문서]</a>
   <span class="k">def</span> <span class="nf">detect_face_vis</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">img</span><span class="p">,</span> <span class="n">items</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    얼굴 box 표시합니다.</span>
@@ -303,7 +335,7 @@
 
 
 <div class="viewcode-block" id="Face.landmark_face">
-<a class="viewcode-back" href="../../libraries/vision_face..html#openpibo.vision_face.Face.landmark_face">[문서]</a>
+<a class="viewcode-back" href="../../libraries/vision_face.html#openpibo.vision_face.Face.landmark_face">[문서]</a>
   <span class="k">def</span> <span class="nf">landmark_face</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">img</span><span class="p">,</span> <span class="n">item</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    얼굴의 랜드마크를 탐색합니다.</span>
@@ -336,7 +368,7 @@
 
 
 <div class="viewcode-block" id="Face.landmark_face_vis">
-<a class="viewcode-back" href="../../libraries/vision_face..html#openpibo.vision_face.Face.landmark_face_vis">[문서]</a>
+<a class="viewcode-back" href="../../libraries/vision_face.html#openpibo.vision_face.Face.landmark_face_vis">[문서]</a>
   <span class="k">def</span> <span class="nf">landmark_face_vis</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">img</span><span class="p">,</span> <span class="n">coords</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    얼굴의 랜드마크를 탐색합니다.</span>
@@ -361,7 +393,7 @@
 
 
 <div class="viewcode-block" id="Face.analyze_face">
-<a class="viewcode-back" href="../../libraries/vision_face..html#openpibo.vision_face.Face.analyze_face">[문서]</a>
+<a class="viewcode-back" href="../../libraries/vision_face.html#openpibo.vision_face.Face.analyze_face">[문서]</a>
   <span class="k">def</span> <span class="nf">analyze_face</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">img</span><span class="p">,</span> <span class="n">item</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    얼굴의 나이, 성별, 감정을 추정합니다.</span>
@@ -410,7 +442,7 @@
 
 
 <div class="viewcode-block" id="Face.analyze_face_vis">
-<a class="viewcode-back" href="../../libraries/vision_face..html#openpibo.vision_face.Face.analyze_face_vis">[문서]</a>
+<a class="viewcode-back" href="../../libraries/vision_face.html#openpibo.vision_face.Face.analyze_face_vis">[문서]</a>
   <span class="k">def</span> <span class="nf">analyze_face_vis</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">img</span><span class="p">,</span> <span class="n">item</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    얼굴의 나이, 성별, 감정을 추정합니다.</span>
@@ -429,7 +461,7 @@
 
 
 <div class="viewcode-block" id="Face.init_db">
-<a class="viewcode-back" href="../../libraries/vision_face..html#openpibo.vision_face.Face.init_db">[문서]</a>
+<a class="viewcode-back" href="../../libraries/vision_face.html#openpibo.vision_face.Face.init_db">[문서]</a>
   <span class="k">def</span> <span class="nf">init_db</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    얼굴 데이터베이스를 초기화합니다.</span>
@@ -445,7 +477,7 @@
 
 
 <div class="viewcode-block" id="Face.train_face">
-<a class="viewcode-back" href="../../libraries/vision_face..html#openpibo.vision_face.Face.train_face">[문서]</a>
+<a class="viewcode-back" href="../../libraries/vision_face.html#openpibo.vision_face.Face.train_face">[문서]</a>
   <span class="k">def</span> <span class="nf">train_face</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">img</span><span class="p">,</span> <span class="n">item</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    얼굴을 학습하여 얼굴 데이터베이스에 저장합니다.</span>
@@ -483,7 +515,7 @@
     <span class="c1">#cv2.imwrite(self.data_path+&quot;/{}.jpg&quot;.format(name), img[y+3:y+h-3, x+3:x+w-3]);</span>
 
 <div class="viewcode-block" id="Face.delete_face">
-<a class="viewcode-back" href="../../libraries/vision_face..html#openpibo.vision_face.Face.delete_face">[문서]</a>
+<a class="viewcode-back" href="../../libraries/vision_face.html#openpibo.vision_face.Face.delete_face">[문서]</a>
   <span class="k">def</span> <span class="nf">delete_face</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    등록된 얼굴을 삭제합니다.</span>
@@ -508,7 +540,7 @@
 
 
 <div class="viewcode-block" id="Face.recognize">
-<a class="viewcode-back" href="../../libraries/vision_face..html#openpibo.vision_face.Face.recognize">[문서]</a>
+<a class="viewcode-back" href="../../libraries/vision_face.html#openpibo.vision_face.Face.recognize">[문서]</a>
   <span class="k">def</span> <span class="nf">recognize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">img</span><span class="p">,</span> <span class="n">item</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    등록된 얼굴을 인식합니다.</span>
@@ -557,7 +589,7 @@
 
 
 <div class="viewcode-block" id="Face.get_db">
-<a class="viewcode-back" href="../../libraries/vision_face..html#openpibo.vision_face.Face.get_db">[문서]</a>
+<a class="viewcode-back" href="../../libraries/vision_face.html#openpibo.vision_face.Face.get_db">[문서]</a>
   <span class="k">def</span> <span class="nf">get_db</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    사용 중인 얼굴 데이터베이스를 확인합니다.</span>
@@ -586,7 +618,7 @@
 
 
 <div class="viewcode-block" id="Face.save_db">
-<a class="viewcode-back" href="../../libraries/vision_face..html#openpibo.vision_face.Face.save_db">[문서]</a>
+<a class="viewcode-back" href="../../libraries/vision_face.html#openpibo.vision_face.Face.save_db">[문서]</a>
   <span class="k">def</span> <span class="nf">save_db</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    얼굴 데이터베이스를 파일로 저장합니다.</span>
@@ -603,7 +635,7 @@
 
 
 <div class="viewcode-block" id="Face.load_db">
-<a class="viewcode-back" href="../../libraries/vision_face..html#openpibo.vision_face.Face.load_db">[문서]</a>
+<a class="viewcode-back" href="../../libraries/vision_face.html#openpibo.vision_face.Face.load_db">[문서]</a>
   <span class="k">def</span> <span class="nf">load_db</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    얼굴 데이터베이스 파일을 불러옵니다.</span>
@@ -624,7 +656,7 @@
 
   <span class="c1"># face mesh</span>
 <div class="viewcode-block" id="Face.calculate_head_orientation">
-<a class="viewcode-back" href="../../libraries/vision_face..html#openpibo.vision_face.Face.calculate_head_orientation">[문서]</a>
+<a class="viewcode-back" href="../../libraries/vision_face.html#openpibo.vision_face.Face.calculate_head_orientation">[문서]</a>
   <span class="k">def</span> <span class="nf">calculate_head_orientation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">keypoints</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    (내부 함수) 얼굴 랜드마크 데이터를 통해 얼굴 방향 계산</span>
@@ -676,7 +708,7 @@
 
 
 <div class="viewcode-block" id="Face.get_angle_between_lines">
-<a class="viewcode-back" href="../../libraries/vision_face..html#openpibo.vision_face.Face.get_angle_between_lines">[문서]</a>
+<a class="viewcode-back" href="../../libraries/vision_face.html#openpibo.vision_face.Face.get_angle_between_lines">[문서]</a>
   <span class="k">def</span> <span class="nf">get_angle_between_lines</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">point1</span><span class="p">,</span> <span class="n">point2</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Calculate angle between two lines defined by three points.&quot;&quot;&quot;</span>
     <span class="c1"># Vector 1: start -&gt; point1</span>
@@ -695,7 +727,7 @@
 
 
 <div class="viewcode-block" id="Face.detect_mesh_vis">
-<a class="viewcode-back" href="../../libraries/vision_face..html#openpibo.vision_face.Face.detect_mesh_vis">[문서]</a>
+<a class="viewcode-back" href="../../libraries/vision_face.html#openpibo.vision_face.Face.detect_mesh_vis">[문서]</a>
   <span class="k">def</span> <span class="nf">detect_mesh_vis</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">image</span><span class="p">,</span> <span class="n">items</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Draw connections between landmarks based on Mediapipe&#39;s face mesh.&quot;&quot;&quot;</span>
     <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">items</span><span class="p">:</span>
@@ -716,7 +748,7 @@
 
 
 <div class="viewcode-block" id="Face.detect_mesh">
-<a class="viewcode-back" href="../../libraries/vision_face..html#openpibo.vision_face.Face.detect_mesh">[문서]</a>
+<a class="viewcode-back" href="../../libraries/vision_face.html#openpibo.vision_face.Face.detect_mesh">[문서]</a>
   <span class="k">def</span> <span class="nf">detect_mesh</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">image</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Detect mesh and return distance, direction, and image with landmarks.&quot;&quot;&quot;</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
@@ -768,7 +800,7 @@
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2025 THEMAKER. All rights reserved. openpibo-python-0.9.2.76.</p>
+    <p>&#169; Copyright 2025 THEMAKER. All rights reserved. openpibo-python-0.9.3.1.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

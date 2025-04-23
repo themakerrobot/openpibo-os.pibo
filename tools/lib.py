@@ -2,7 +2,7 @@ import openpibo
 import openpibo_models
 from openpibo.vision_camera import Camera
 from openpibo.vision_detect import Face
-from openpibo.vision_detect import Detect
+from openpibo.vision_face import Detect
 from openpibo.vision_classify import CustomClassifier
 from openpibo.audio import Audio
 from openpibo.oled import Oled
@@ -211,7 +211,7 @@ class Pibo:
     im = self.frame.copy()
     res = self.det.detect_marker(im, self.marker_length)
     self.det.detect_marker_vis(im, res)
-    return im, " ".join([ f'({d["id"]})-{d["distance"]}cm' for d in res['data']])
+    return im, " ".join([ f'({d["id"]})-{d["distance"]}cm' for d in res])
 
   def imwrite(self, name):
     self.cam.imwrite(name, self.res_img.copy())
@@ -304,7 +304,7 @@ class Pibo:
   def mic(self, d):
     record_time = d['time']
     filename = "/home/pi/myaudio/mic.wav"
-    os.system(f'arecord -D dmic_sv -c2 -r 16000 -f S32_LE -d {record_time} -t wav -q -vv -V streo stream.raw;sox stream.raw -c 1 -b 16 {filename};rm stream.raw')
+    os.system(f'arecord -D plug:dmic_sv -c2 -r 16000 -f S32_LE -d {record_time} -t wav -q -vv -V streo stream.raw;sox stream.raw -c 1 -b 16 {filename};rm stream.raw')
 
   def play_audio(self, filename, volume, background):
     self.aud.play(filename=filename, volume=volume, background=background)

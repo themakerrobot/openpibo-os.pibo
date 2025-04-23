@@ -670,6 +670,36 @@ const getSpeech = (socket) => {
     $("#s_translate_result_val").val(data);
   });
 
+
+  socket.on("mic", function (d) {
+    console.log('mic', d)
+    $("#mic_status").text(d);
+  });
+
+  $("#mic_bt").on("click", function () {
+    let tmictime = "#mic_time_val";
+    let val = Number($(tmictime).val());
+    let min = Number($(tmictime).attr("min"));
+    let max = Number($(tmictime).attr("max"));
+
+    if (isNaN(val) || val < min || val > max) {
+      alert(translations["audio_input_error"][lang]);
+      return;
+    }
+
+    $("#mic_status").html("<i class='fa-solid fa-fade'>녹음 중</i>");
+    socket.emit("mic", {
+      time: val,
+      volume: Number($("#volume").val()),
+    });
+  });
+
+  $("#mic_replay_bt").on("click", function () {
+    socket.emit("mic_replay", { volume: Number($("#volume").val()) });
+  });
+
+
+
   socket.on("disp_speech", function (data) {
     if ("answer" in data) {
       $("#s_answer_val").val(data["answer"]);
@@ -921,31 +951,31 @@ const getDevices = (socket) => {
     }
   });
 
-  socket.on("mic", function (d) {
-    $("#mic_status").text(d);
-  });
+  // socket.on("mic", function (d) {
+  //   $("#mic_status").text(d);
+  // });
 
-  $("#mic_bt").on("click", function () {
-    let tmictime = "#mic_time_val";
-    let val = Number($(tmictime).val());
-    let min = Number($(tmictime).attr("min"));
-    let max = Number($(tmictime).attr("max"));
+  // $("#mic_bt").on("click", function () {
+  //   let tmictime = "#mic_time_val";
+  //   let val = Number($(tmictime).val());
+  //   let min = Number($(tmictime).attr("min"));
+  //   let max = Number($(tmictime).attr("max"));
 
-    if (isNaN(val) || val < min || val > max) {
-      alert(translations["audio_input_error"][lang]);
-      return;
-    }
+  //   if (isNaN(val) || val < min || val > max) {
+  //     alert(translations["audio_input_error"][lang]);
+  //     return;
+  //   }
 
-    $("#mic_status").html("<i class='fa-solid fa-fade'>녹음 중</i>");
-    socket.emit("mic", {
-      time: val,
-      volume: Number($("#volume").val()),
-    });
-  });
+  //   $("#mic_status").html("<i class='fa-solid fa-fade'>녹음 중</i>");
+  //   socket.emit("mic", {
+  //     time: val,
+  //     volume: Number($("#volume").val()),
+  //   });
+  // });
 
-  $("#mic_replay_bt").on("click", function () {
-    socket.emit("mic_replay", { volume: Number($("#volume").val()) });
-  });
+  // $("#mic_replay_bt").on("click", function () {
+  //   socket.emit("mic_replay", { volume: Number($("#volume").val()) });
+  // });
 
   socket.on("audio_path", (data) => {
     $("#audiofiles").empty();
@@ -2421,7 +2451,7 @@ const getSimulations = (socket) => {
 };
 
 $(function () {
-  const socket = io(`http://${location.hostname}`, {
+  const socket = io(`http://${location.hostname}:50000`, {
     path: "/ws/socket.io",
   });
 
@@ -2492,7 +2522,7 @@ $(function () {
     $("#ide_bt").on("click", function () {
       if (confirm(translations["move_to_ide"][lang])) {
         socket.emit("onoff", "off");
-        location.href = `http://${location.hostname}:50000`;
+        location.href = `http://${location.hostname}`;
       }
     });
     $("#ide_bt").hover(
@@ -2723,10 +2753,10 @@ $(function () {
   getVisions(socket);
   getMotions(socket);
   getSpeech(socket);
-  getDevices(socket);
-  getSimulations(socket);
+  // getDevices(socket);
+  // getSimulations(socket);
 
-  handleMenu("home");
+  handleMenu("motion");
   const menus = $("nav").find("button");
   menus.each((idx) => {
     const element = menus.get(idx);

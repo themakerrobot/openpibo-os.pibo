@@ -70,9 +70,9 @@ const translations = {
     ko: "시스템 설정",
     en: "System settings"
   },
-  volume_setting: {
-    ko: "소리크기 설정하기",
-    en: "Set volume"
+  volume: {
+    ko: "음량",
+    en: "Volume"
   },
   eyecolor_checking : {
     ko: "눈 색상 확인하기",
@@ -459,6 +459,10 @@ const translations = {
     ko: "말하기",
     en: "Speak"
   },
+  translate: {
+    ko: "번역하기",
+    en: "translate"
+  },
   voice_type: {
     ko: "음성종류",
     en: "Voice type"
@@ -840,7 +844,7 @@ const translations = {
   export: {
     ko: "내보내기",
     en: "Export"
-  }
+  },
 };
 
 const setLanguage = (lang) => {
