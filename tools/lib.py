@@ -1,8 +1,8 @@
 import openpibo
 import openpibo_models
 from openpibo.vision_camera import Camera
-from openpibo.vision_detect import Face
-from openpibo.vision_face import Detect
+from openpibo.vision_face import Face
+from openpibo.vision_detect import Detect
 from openpibo.vision_classify import CustomClassifier
 from openpibo.audio import Audio
 from openpibo.oled import Oled

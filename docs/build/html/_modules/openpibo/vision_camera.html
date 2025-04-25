@@ -64,6 +64,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../libraries/usb_uart.html">usb_uart</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../libraries/motion.html">motion</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../libraries/oled.html">oled</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../libraries/pibo_graphics.html">pibo_graphics</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../libraries/speech.html">speech</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../libraries/vision_camera.html">vision_camera</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../libraries/vision_detect.html">vision_detect</a></li>
@@ -227,6 +228,19 @@
       <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;len(</span><span class="si">{</span><span class="n">colors</span><span class="si">}</span><span class="s1">) must be 3&#39;</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">((</span><span class="n">h</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="n">colors</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Camera.imshow">
+<a class="viewcode-back" href="../../libraries/vision_camera.html#openpibo.vision_camera.Camera.imshow">[문서]</a>
+  <span class="k">def</span> <span class="nf">imshow</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">img</span><span class="p">,</span> <span class="n">ratio</span><span class="o">=</span><span class="mf">1.0</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    이미지 파일을 Web IDE에 출력합니다.</span>
+
+<span class="sd">    :param numpy.ndarray img: 이미지 객체</span>
+<span class="sd">    :param float ratio: 이미지 사이즈 변환 비율 (다수 동시 사용시, 네트워크 부하)    </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">imshow_to_ide</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="n">ratio</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="Camera.imshow_to_ide">
