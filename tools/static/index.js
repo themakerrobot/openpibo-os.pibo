@@ -1,30 +1,209 @@
 let fullscreen = false;
-$('#fullscreen_txt').html(
-  fullscreen?
-  '<i class="fa-solid fa-minimize fa-xl"></i>':
-  '<i class="fa-solid fa-maximize fa-xl"></i>'
-);
 
-$('#fullscreen_bt').on('click', ()=>{
+const fullscreenTxt = document.getElementById('fullscreen_txt');
+const fullscreenBt = document.getElementById('fullscreen_bt');
+
+const updateIcon = function () {
+  fullscreenTxt.innerHTML = fullscreen
+    ? '<i class="fa-solid fa-minimize"></i>'
+    : '<i class="fa-solid fa-maximize"></i>';
+};
+
+updateIcon(); // 초기 아이콘 설정
+
+fullscreenBt.addEventListener('click', (e) => {
+  e.preventDefault(); // <a> 태그 기본 동작 방지
+
   if (!fullscreen && document.documentElement.requestFullscreen) {
     document.documentElement.requestFullscreen();
-    fullscreen=true;
-    $('#fullscreen_txt').html('<i class="fa-solid fa-minimize fa-xl"></i>');
-  }
-  else if (fullscreen && document.exitFullscreen) {
+    fullscreen = true;
+  } else if (fullscreen && document.exitFullscreen) {
     document.exitFullscreen();
-    fullscreen=false;
-    $('#fullscreen_txt').html('<i class="fa-solid fa-maximize fa-xl"></i>');
+    fullscreen = false;
   }
-  else {}
+
+  updateIcon();
 });
 
-$('#guide_bt').on('click', () => {
-  window.open('https://themakerrobot.github.io/openpibo-os.pibrain/build/html/index.html');
+// 사용자가 ESC 등으로 fullscreen 종료했을 때 아이콘 동기화
+document.addEventListener('fullscreenchange', function () {
+  fullscreen = !!document.fullscreenElement;
+  updateIcon();
 });
 
-$('#classifier_bt').on('click', () => {
-  window.open(`http://${location.hostname}:50010`);
+// --- Get references to popup elements (using provided IDs) ---
+const alertPopup = document.getElementById('alertPopup');
+const confirmPopup = document.getElementById('confirmPopup');
+const promptPopup = document.getElementById('promptPopup');
+
+// --- Get references to internal elements (using NEW specific IDs) ---
+// Alert elements
+const alertMessageElement = document.getElementById('alertMessageElement');
+const alertOkBtn = document.getElementById('alertOkBtn');
+
+// Confirm elements
+const confirmMessageElement = document.getElementById('confirmMessageElement');
+const confirmOkBtn = document.getElementById('confirmOkBtn');
+const confirmCancelBtn = document.getElementById('confirmCancelBtn');
+
+// Prompt elements
+const promptMessageElement = document.getElementById('promptMessageElement');
+const promptInputElement = document.getElementById('promptInputElement');
+const promptOkBtn = document.getElementById('promptOkBtn');
+const promptCancelBtn = document.getElementById('promptCancelBtn');
+
+// --- Helper to hide all popups ---
+function hidePopups() {
+  if (alertPopup) alertPopup.style.display = 'none';
+  if (confirmPopup) confirmPopup.style.display = 'none';
+  if (promptPopup) promptPopup.style.display = 'none';
+}
+
+// --- alert_popup Function (변경 없음) ---
+async function alert_popup(message) {
+  hidePopups();
+  if (!alertPopup || !alertMessageElement || !alertOkBtn) {
+    console.error("Alert popup elements not found!");
+    return;
+  }
+  alertMessageElement.textContent = message;
+  alertPopup.style.display = 'flex';
+
+  // --- Use addEventListener with { once: true } for robust cleanup ---
+  const handler = function () {
+    hidePopups();
+  };
+  // Remove previous listener just in case, before adding a new one
+  alertOkBtn.removeEventListener('click', handler);
+  alertOkBtn.addEventListener('click', handler, { once: true }); // Automatically removes after firing
+}
+
+// --- confirm_popup Function (수정됨) ---
+async function confirm_popup(message) {
+  console.log("await confirm_popup: 함수 시작, 메시지:", message); // 디버깅 로그
+  return new Promise((resolve) => {
+    hidePopups(); // 다른 팝업 숨기기
+
+    // 요소 확인 (중요!)
+    const popupElement = document.getElementById('confirmPopup');
+    const msgElement = document.getElementById('confirmMessageElement');
+    const okButton = document.getElementById('confirmOkBtn');
+    const cancelButton = document.getElementById('confirmCancelBtn');
+
+    if (!popupElement || !msgElement || !okButton || !cancelButton) {
+      console.error("await confirm_popup: 필수 요소를 찾을 수 없습니다!", { popupElement, msgElement, okButton, cancelButton });
+      resolve(false); // 요소를 찾을 수 없으면 즉시 false 반환 (오류 상황)
+      return;
+    }
+    console.log("await confirm_popup: 요소 찾음:", { popupElement, msgElement, okButton, cancelButton }); // 디버깅 로그
+
+    msgElement.textContent = message;
+    popupElement.style.display = 'flex'; // 팝업 표시
+    console.log("await confirm_popup: 팝업 표시됨. 사용자 입력 대기 중..."); // 디버깅 로그
+
+    // --- 이벤트 핸들러 정의 ---
+    const okHandler = function () {
+      console.log("await confirm_popup: 확인 버튼 클릭됨"); // 디버깅 로그
+      cleanup();
+      resolve(true); // Promise를 true로 완료
+    };
+
+    const cancelHandler = function () {
+      console.log("await confirm_popup: 취소 버튼 클릭됨"); // 디버깅 로그
+      cleanup();
+      resolve(false); // Promise를 false로 완료
+    };
+
+    // --- 리스너 정리 함수 ---
+    // 이 함수는 버튼이 클릭될 때 호출되어 리스너를 제거하고 팝업을 숨김
+    const cleanup = function () {
+      console.log("await confirm_popup: 리스너 정리 및 팝업 숨김"); // 디버깅 로그
+      okButton.removeEventListener('click', okHandler);
+      cancelButton.removeEventListener('click', cancelHandler);
+      hidePopups();
+    };
+
+    // --- 중요: 기존 리스너 제거 후 새 리스너 추가 ---
+    // 이전에 추가된 리스너가 남아있을 수 있으므로, 항상 새로 추가하기 전에 제거
+    okButton.removeEventListener('click', okHandler);
+    cancelButton.removeEventListener('click', cancelHandler);
+
+    // 새 리스너 추가
+    okButton.addEventListener('click', okHandler);
+    cancelButton.addEventListener('click', cancelHandler);
+    console.log("await confirm_popup: 이벤트 리스너 추가됨"); // 디버깅 로그
+
+    // 이 시점에서는 resolve()가 호출되지 않음! 핸들러 내부에서만 호출됨.
+  });
+}
+
+// --- prompt_popup Function (리스너 관리 강화) ---
+async function prompt_popup(message, defaultValue = '') {
+  console.log("await prompt_popup: 함수 시작, 메시지:", message); // 디버깅 로그
+  return new Promise((resolve) => {
+    hidePopups();
+
+    const popupElement = document.getElementById('promptPopup');
+    const msgElement = document.getElementById('promptMessageElement');
+    const inputElement = document.getElementById('promptInputElement');
+    const okButton = document.getElementById('promptOkBtn');
+    const cancelButton = document.getElementById('promptCancelBtn');
+
+    if (!popupElement || !msgElement || !inputElement || !okButton || !cancelButton) {
+      console.error("await prompt_popup: 필수 요소를 찾을 수 없습니다!", { popupElement, msgElement, inputElement, okButton, cancelButton });
+      resolve(null); // 오류 시 null 반환
+      return;
+    }
+    console.log("await prompt_popup: 요소 찾음:", { popupElement, msgElement, inputElement, okButton, cancelButton }); // 디버깅 로그
+
+    msgElement.textContent = message;
+    inputElement.value = defaultValue;
+    popupElement.style.display = 'flex';
+    inputElement.focus(); // 입력 필드에 포커스
+    console.log("await prompt_popup: 팝업 표시됨. 사용자 입력 대기 중..."); // 디버깅 로그
+
+    const okHandler = function () {
+      console.log("await prompt_popup: 확인 버튼 클릭됨"); // 디버깅 로그
+      cleanup();
+      resolve(inputElement.value); // 입력된 값으로 완료
+    };
+
+    const cancelHandler = function () {
+      console.log("await prompt_popup: 취소 버튼 클릭됨"); // 디버깅 로그
+      cleanup();
+      resolve(null); // 취소 시 null로 완료
+    };
+
+    const enterKeyHandler = (event) => {
+      if (event.key === 'Enter') {
+        console.log("await prompt_popup: Enter 키 입력됨"); // 디버깅 로그
+        okHandler(); // 확인 버튼 클릭과 동일하게 처리
+      }
+    };
+
+    const cleanup = function () {
+      console.log("await prompt_popup: 리스너 정리 및 팝업 숨김"); // 디버깅 로그
+      okButton.removeEventListener('click', okHandler);
+      cancelButton.removeEventListener('click', cancelHandler);
+      inputElement.removeEventListener('keydown', enterKeyHandler);
+      hidePopups();
+    };
+
+    // 기존 리스너 제거
+    okButton.removeEventListener('click', okHandler);
+    cancelButton.removeEventListener('click', cancelHandler);
+    inputElement.removeEventListener('keydown', enterKeyHandler);
+
+    // 새 리스너 추가
+    okButton.addEventListener('click', okHandler);
+    cancelButton.addEventListener('click', cancelHandler);
+    inputElement.addEventListener('keydown', enterKeyHandler);
+    console.log("await prompt_popup: 이벤트 리스너 추가됨"); // 디버깅 로그
+  });
+}
+
+document.getElementById("logo_bt").addEventListener("click", function () {
+  location.href = `http://${location.hostname}`;
 });
 
 const init_usedata = {
@@ -131,11 +310,11 @@ const getVisions = (socket) => {
       data: formData,
       contentType: false,
       processData: false,
-    }).always((xhr, status) => {
+    }).always(async (xhr, status) => {
       if (status == "success") {
-        alert(translations["file_ok"][lang]);
+        await alert_popup(translations["file_ok"][lang]);
       } else {
-        alert(`${translations["file_error"][lang]}\n >> ${xhr.responseJSON["result"]}`);
+        await alert_popup(`${translations["file_error"][lang]}\n >> ${xhr.responseJSON["result"]}`);
         $("#v_upload_tm").val("");
       }
     });
@@ -185,7 +364,7 @@ const getMotions = (socket) => {
       socket.emit("set_motor", { idx: i, pos: Number($(trange).val()) });
     });
 
-    $(tval).on("focusout keydown", function (evt) {
+    $(tval).on("focusout keydown", async function (evt) {
       if (
         evt.type == "focusout" ||
         (evt.type == "keydown" && evt.keyCode == 13)
@@ -196,7 +375,7 @@ const getMotions = (socket) => {
 
         if (isNaN(pos) || pos < min || pos > max) {
           $(this).val($(trange).val());
-          alert(translations["range_warn"][lang](min, max));
+          await alert_popup(translations["range_warn"][lang](min, max));
         } else {
 	        $(trange).val(pos);
           socket.emit("set_motor", { idx: i, pos: pos });
@@ -211,7 +390,7 @@ const getMotions = (socket) => {
     });
   }
 
-  $("#m_time_val").on("focusout keydown", function (evt) {
+  $("#m_time_val").on("focusout keydown", async function (evt) {
     if (
       evt.type == "focusout" ||
       (evt.type == "keydown" && evt.keyCode == 13)
@@ -222,7 +401,7 @@ const getMotions = (socket) => {
 
       if (isNaN(pos) || pos < min || pos > max) {
         $(this).val(0);
-        alert(translations["range_warn"][lang](min, max));
+        await alert_popup(translations["range_warn"][lang](min, max));
       }
     }
   });
@@ -317,9 +496,9 @@ const getMotions = (socket) => {
 
               socket.emit("set_motors", { pos_lst: pos_lst });
             })
-            .dblclick(function () {
+            .dblclick(async function () {
               let t = $(this).text().split(" 초")[0];
-              if (confirm(translations["confirm_motion_delete"][lang](t))) {
+              if (await confirm_popup(translations["confirm_motion_delete"][lang](t))) {
                 socket.emit("delete_frame", Number(t) * 1000);
                 $(this).remove();
               }
@@ -346,35 +525,35 @@ const getMotions = (socket) => {
       data: formData,
       contentType: false,
       processData: false,
-    }).always((xhr, status) => {
+    }).always( async (xhr, status) => {
       if (status == "success") {
-        alert(translations["file_ok"][lang]);
+        await alert_popup(translations["file_ok"][lang]);
       } else {
-        alert(`${translations["file_error"][lang]}\n >> ${xhr.responseJSON["result"]}`);
+        await alert_popup(`${translations["file_error"][lang]}\n >> ${xhr.responseJSON["result"]}`);
         $("#v_import_motion").val("");
       }
     });
   });
 
   // 테이블 초기화
-  $("#init_frame_bt").on("click", function () {
-    if (confirm(translations["confirm_motion_delete_all"][lang])) {
+  $("#init_frame_bt").on("click", async function () {
+    if (await confirm_popup(translations["confirm_motion_delete_all"][lang])) {
       socket.emit("init_frame");
       $("#motor_table > tbody").empty();
     }
   });
 
   // 동작 재생
-  $("#play_frame_bt").on("click", function () {
+  $("#play_frame_bt").on("click", async function () {
     if ($("#motor_table > tbody").text()) {
       let cycle = $("#play_cycle_val").val();
       socket.emit("play_frame", cycle);
     } else {
-      alert(translations["motion_empty"][lang]);
+      await alert_popup(translations["motion_empty"][lang]);
     }
   });
 
-  $("#play_cycle_val").on("focusout keydown", function (evt) {
+  $("#play_cycle_val").on("focusout keydown", async function (evt) {
     if (
       evt.type == "focusout" ||
       (evt.type == "keydown" && evt.keyCode == 13)
@@ -384,7 +563,7 @@ const getMotions = (socket) => {
       let max = Number($(this).attr("max"));
 
       if (!Number.isInteger(val) || val < min || val > max) {
-        alert(translations["range_warn"][lang](min, max));
+        await alert_popup(translations["range_warn"][lang](min, max));
         $(this).val(1);
       }
     }
@@ -396,29 +575,29 @@ const getMotions = (socket) => {
   });
 
   // 모션 추가
-  $("#add_motion_bt").on("click", function () {
+  $("#add_motion_bt").on("click", async function () {
     let motionName = $("#motion_name_val").val().trim();
 
     if (motionName == "") {
-      alert(translations["motion_name_empty"][lang]);
+      await alert_popup(translations["motion_name_empty"][lang]);
       return;
     }
-    if (confirm(translations["confirm_motion_register"][lang](motionName))) {
+    if (await confirm_popup(translations["confirm_motion_register"][lang](motionName))) {
       socket.emit("add_motion", motionName);
       $("#motion_name_val").val("");
     }
   });
 
   // 모션 불러오기
-  $("#load_motion_bt").on("click", function () {
+  $("#load_motion_bt").on("click", async function () {
     let motionName = $("#motion_name_val").val().trim();
 
     if (motionName == "") {
-      alert(translations["motion_name_empty"][lang]);
+      await alert_popup(translations["motion_name_empty"][lang]);
       return;
     }
 
-    if (confirm(translations["confirm_motion_load"][lang](motionName))) {
+    if (await confirm_popup(translations["confirm_motion_load"][lang](motionName))) {
       socket.emit("load_motion", motionName);
       $("#motion_name_val").val("");
     }
@@ -467,40 +646,40 @@ const getMotions = (socket) => {
   }
 
   // 모션 삭제
-  $("#delete_motion_bt").on("click", function () {
+  $("#delete_motion_bt").on("click", async function () {
     let motionName = $("#motion_name_val").val().trim();
 
     if (motionName == "") {
-      alert(translations["motion_name_empty"][lang]);
+      await alert_popup(translations["motion_name_empty"][lang]);
       return;
     }
-    if (confirm(translations["confirm_motion_delete"][lang](motionName))) {
+    if (await confirm_popup(translations["confirm_motion_delete"][lang](motionName))) {
       socket.emit("delete_motion", motionName);
       $("#motion_name_val").val("");
     }
   });
 
   // 모션 삭제
-  $("#reset_motion_bt").on("click", function () {
-    if (confirm(translations["confirm_motion_delete_all"][lang])) socket.emit("reset_motion");
+  $("#reset_motion_bt").on("click", async function () {
+    if (await confirm_popup(translations["confirm_motion_delete_all"][lang])) socket.emit("reset_motion");
   });
 };
 
 const getSpeech = (socket) => {
   const max_tts_length = 30;
-  $("#s_tts_bt").on("click", function () {
+  $("#s_tts_bt").on("click", async function () {
     if ($("input[name=s_voice_en]:checked").val() == "off") {
-      alert(translations["voice_enable"][lang]);
+      await alert_popup(translations["voice_enable"][lang]);
       return;
     }
 
     let string = $("#s_tts_val").val().trim();
     if (string == "") {
-      alert(translations["text_empty"][lang]);
+      await alert_popup(translations["text_empty"][lang]);
       return;
     }
     if (string.length > max_tts_length) {
-      alert(translations["text_size_limit"][lang](max_tts_length));
+      await alert_popup(translations["text_size_limit"][lang](max_tts_length));
       return;
     }
     socket.emit("tts", {
@@ -510,19 +689,19 @@ const getSpeech = (socket) => {
     });
   });
 
-  $("#s_tts_val").on("keypress", function (evt) {
+  $("#s_tts_val").on("keypress", async function (evt) {
     if (evt.keyCode == 13) {
       if ($("input[name=s_voice_en]:checked").val() == "off") {
-        alert(translations["voice_enable"][lang]);
+        await alert_popup(translations["voice_enable"][lang]);
         return;
       }
       let string = $("#s_tts_val").val().trim();
       if (string == "") {
-        alert(translations["text_empty"][lang]);
+        await alert_popup(translations["text_empty"][lang]);
         return;
       }
       if (string.length > max_tts_length) {
-        alert(translations["text_size_limit"][lang](max_tts_length));
+        await alert_popup(translations["text_size_limit"][lang](max_tts_length));
         return;
       }
       socket.emit("tts", {
@@ -543,20 +722,20 @@ const getSpeech = (socket) => {
       data: formData,
       contentType: false,
       processData: false,
-    }).always((xhr, status) => {
+    }).always(async (xhr, status) => {
       if (status == "success") {
-        alert(translations["file_ok"][lang]);
+        await alert_popup(translations["file_ok"][lang]);
       } else {
-        alert(`${translations["file_error"][lang]}\n >> ${xhr.responseJSON["result"]}`);
+        await alert_popup(`${translations["file_error"][lang]}\n >> ${xhr.responseJSON["result"]}`);
         $("#s_upload_csv").val("");
       }
     });
   });
 
-  $("#s_reset_csv_bt").on("click", function () {
+  $("#s_reset_csv_bt").on("click", async function () {
     socket.emit("reset_csv", {lang: lang});
     $("#s_upload_csv").val("");
-    alert(translations["reset_ok"][lang]);
+    await alert_popup(translations["reset_ok"][lang]);
   });
 
   $("#s_question_val").on("keyup", function () {
@@ -567,12 +746,12 @@ const getSpeech = (socket) => {
     );
   });
 
-  $("#s_question_val").on("keypress", function (evt) {
+  $("#s_question_val").on("keypress", async function (evt) {
     if (evt.keyCode == 13) {
       // enter
       q = $("#s_question_val").val().trim();
       if (q == "") {
-        alert(translations["text_empty"][lang]);
+        await alert_popup(translations["text_empty"][lang]);
         return;
       }
 
@@ -602,11 +781,11 @@ const getSpeech = (socket) => {
     }
   });
 
-  $("#s_chat_bt").on("click", function () {
+  $("#s_chat_bt").on("click", async function () {
     q = $("#s_question_val").val().trim();
 
     if (q == "") {
-      alert(translations["text_empty"][lang]);
+      await alert_popup(translations["text_empty"][lang]);
       return;
     }
 
@@ -634,10 +813,10 @@ const getSpeech = (socket) => {
     }, 800);
   });
 
-  $("#s_translate_bt").on("click", () => {
+  $("#s_translate_bt").on("click", async () => {
     txt = $("#s_translate_val").val().trim();
     if (txt == "") {
-      alert(translations["text_empty"][lang]);
+      await alert_popup(translations["text_empty"][lang]);
       return;
     }
 
@@ -649,11 +828,11 @@ const getSpeech = (socket) => {
     });
   });
 
-  $("#s_translate_val").on("keypress", function (evt) {
+  $("#s_translate_val").on("keypress", async function (evt) {
     if (evt.keyCode == 13) {
       txt = $("#s_translate_val").val().trim();
       if (txt == "") {
-        alert(translations["text_empty"][lang]);
+        await alert_popup(translations["text_empty"][lang]);
         return;
       }
   
@@ -676,14 +855,14 @@ const getSpeech = (socket) => {
     $("#mic_status").text(d);
   });
 
-  $("#mic_bt").on("click", function () {
+  $("#mic_bt").on("click", async function () {
     let tmictime = "#mic_time_val";
     let val = Number($(tmictime).val());
     let min = Number($(tmictime).attr("min"));
     let max = Number($(tmictime).attr("max"));
 
     if (isNaN(val) || val < min || val > max) {
-      alert(translations["audio_input_error"][lang]);
+      await alert_popup(translations["audio_input_error"][lang]);
       return;
     }
 
@@ -777,7 +956,7 @@ const getDevices = (socket) => {
   for (let i = 0; i < 6; i++) {
     let tneopixel = "#d_n" + i + "_val";
 
-    $(tneopixel).on("focusout keydown", function (evt) {
+    $(tneopixel).on("focusout keydown", async function (evt) {
       if (
         evt.type == "focusout" ||
         (evt.type == "keydown" && evt.keyCode == 13)
@@ -787,7 +966,7 @@ const getDevices = (socket) => {
         let max = Number($(this).attr("max"));
 
         if (isNaN(val) || val < min || val > max) {
-          alert(translations["range_warn"][lang](min, max));
+          await alert_popup(translations["range_warn"][lang](min, max));
 	        $(this).val(0);
         } else {
           socket.emit("set_neopixel", { idx: i, value: val });
@@ -800,7 +979,7 @@ const getDevices = (socket) => {
     });
   }
 
-  $("#eye_save_bt").on("click", function (evt) {
+  $("#eye_save_bt").on("click", async function (evt) {
     let eyeval = "";
 
     for (let i = 0; i < 6; i++) {
@@ -810,18 +989,18 @@ const getDevices = (socket) => {
       let max = Number($(tneopixel).attr("max"));
 
       if (isNaN(val) || val < min || val > max) {
-        alert(translations["range_warn"][lang](min, max));
+        await alert_popup(translations["range_warn"][lang](min, max));
         return;
       }
       eyeval = i == 5 ? eyeval + val : eyeval + val + ",";
     }
 
-    if (confirm(translations["confirm_eyecolor_save"][lang])) {
+    if (await confirm_popup(translations["confirm_eyecolor_save"][lang])) {
       socket.emit("eye_update", eyeval);
     }
   });
 
-  $("#d_otext_val").on("keydown", function (evt) {
+  $("#d_otext_val").on("keydown", async function (evt) {
     if (evt.type == "keydown" && evt.keyCode == 13) {
       // enter
       let text = $("#d_otext_val").val().trim();
@@ -832,11 +1011,11 @@ const getDevices = (socket) => {
       if (checkOled(x, y, size))
         socket.emit("set_oled", { x: x, y: y, size: size, text: text });
       else
-      alert(translations["oled_input_error"][lang]);
+      await alert_popup(translations["oled_input_error"][lang]);
     }
   });
 
-  $("#d_ox_val").on("click keydown", function (evt) {
+  $("#d_ox_val").on("click keydown", async function (evt) {
     if (evt.type == "click" || (evt.type == "keydown" && evt.keyCode == 13)) {
       let text = $("#d_otext_val").val().trim();
       let x = Number($("#d_ox_val").val());
@@ -848,11 +1027,11 @@ const getDevices = (socket) => {
       if (checkOled(x, y, size))
         socket.emit("set_oled", { x: x, y: y, size: size, text: text });
       else
-      alert(translations["oled_input_error"][lang]);
+      await alert_popup(translations["oled_input_error"][lang]);
     }
   });
 
-  $("#d_oy_val").on("click keydown", function (evt) {
+  $("#d_oy_val").on("click keydown", async function (evt) {
     if (evt.type == "click" || (evt.type == "keydown" && evt.keyCode == 13)) {
       let text = $("#d_otext_val").val().trim();
       let x = Number($("#d_ox_val").val());
@@ -864,11 +1043,11 @@ const getDevices = (socket) => {
       if (checkOled(x, y, size))
         socket.emit("set_oled", { x: x, y: y, size: size, text: text });
       else
-      alert(translations["oled_input_error"][lang]);
+      await alert_popup(translations["oled_input_error"][lang]);
     }
   });
 
-  $("#d_osize_val").on("click keydown", function (evt) {
+  $("#d_osize_val").on("click keydown", async function (evt) {
     if (evt.type == "click" || (evt.type == "keydown" && evt.keyCode == 13)) {
       let text = $("#d_otext_val").val().trim();
       let x = Number($("#d_ox_val").val());
@@ -880,11 +1059,11 @@ const getDevices = (socket) => {
       if (checkOled(x, y, size))
         socket.emit("set_oled", { x: x, y: y, size: size, text: text });
       else
-        alert(translations["oled_input_error"][lang]);
+        await alert_popup(translations["oled_input_error"][lang]);
     }
   });
 
-  $("#oled_bt").on("click", function (evt) {
+  $("#oled_bt").on("click", async function (evt) {
     let text = $("#d_otext_val").val().trim();
     let x = Number($("#d_ox_val").val());
     let y = Number($("#d_oy_val").val());
@@ -895,10 +1074,10 @@ const getDevices = (socket) => {
     if (checkOled(x, y, size))
       socket.emit("set_oled", { x: x, y: y, size: size, text: text });
     else
-    alert(translations["oled_input_error"][lang]);
+    await alert_popup(translations["oled_input_error"][lang]);
   });
 
-  $("#upload_oled").on("change", (e) => {
+  $("#upload_oled").on("change", async (e) => {
     let formData = new FormData();
     formData.append("data", $("#upload_oled")[0].files[0]);
     $("#upload_oled").val("");
@@ -910,9 +1089,9 @@ const getDevices = (socket) => {
       processData: false,
     }).always((xhr, status) => {
       if (status == "success") {
-        alert(translations["file_ok"][lang]);
+        await alert_popup(translations["file_ok"][lang]);
       } else {
-        alert(`${translations["file_error"][lang]}\n >> ${xhr.responseJSON["result"]}`);
+        await alert_popup(`${translations["file_error"][lang]}\n >> ${xhr.responseJSON["result"]}`);
         $("#upload_oled").val("");
       }
     });
@@ -962,7 +1141,7 @@ const getDevices = (socket) => {
   //   let max = Number($(tmictime).attr("max"));
 
   //   if (isNaN(val) || val < min || val > max) {
-  //     alert(translations["audio_input_error"][lang]);
+  //     await alert_popup(translations["audio_input_error"][lang]);
   //     return;
   //   }
 
@@ -998,11 +1177,11 @@ const getDevices = (socket) => {
     }
   });
 
-  $("#play_audio_bt").on("click", function () {
+  $("#play_audio_bt").on("click", async function () {
     let filename = $("#audiofiles").val();
 
     if (filename == "-") {
-      alert(translations["music_name_empty"][lang]);
+      await alert_popup(translations["music_name_empty"][lang]);
       return;
     }
     socket.emit("play_audio", {
@@ -1015,7 +1194,7 @@ const getDevices = (socket) => {
     socket.emit("stop_audio");
   });
 
-  $("#upload_audio").on("change", (e) => {
+  $("#upload_audio").on("change", async (e) => {
     let formData = new FormData();
     formData.append("data", $("#upload_audio")[0].files[0]);
     $("#upload_audio").val("");
@@ -1027,15 +1206,15 @@ const getDevices = (socket) => {
       processData: false,
     }).always((xhr, status) => {
       if (status == "success") {
-        alert(translations["file_ok"][lang]);
+        await alert_popup(translations["file_ok"][lang]);
       } else {
-        alert(`${translations["file_error"][lang]}\n >> ${xhr.responseJSON["result"]}`);
+        await alert_popup(`${translations["file_error"][lang]}\n >> ${xhr.responseJSON["result"]}`);
         $("#upload_audio").val("");
       }
     });
   });
 
-  $("#upload_image").on("change", (e) => {
+  $("#upload_image").on("change", async (e) => {
     let formData = new FormData();
     formData.append("data", $("#upload_image")[0].files[0]);
     $("#upload_image").val("");
@@ -1047,9 +1226,9 @@ const getDevices = (socket) => {
       processData: false,
     }).always((xhr, status) => {
       if (status == "success") {
-        alert(translations["file_ok"][lang]);
+        await alert_popup(translations["file_ok"][lang]);
       } else {
-        alert(`${translations["file_error"][lang]}\n >> ${xhr.responseJSON["result"]}`);
+        await alert_popup(`${translations["file_error"][lang]}\n >> ${xhr.responseJSON["result"]}`);
         $("#upload_image").val("");
       }
     });
@@ -1251,12 +1430,12 @@ const getSimulations = (socket) => {
           removeBtn.off("click").on("click", (e) => {
             const index = e.target.name.split("_")[2];
             if (fileList[index] === selectFile) {
-              if (confirm(translations["confirm_current_sequence_delete"][lang])) {
+              if (await confirm_popup(translations["confirm_current_sequence_delete"][lang])) {
                 simSocket("sim_remove_items", fileList[index]);
                 openSequence(null);
               }
             } else if (
-              confirm(translations["confirm_sequence_delete"][lang](fileList[index]))
+              await confirm_popup(translations["confirm_sequence_delete"][lang](fileList[index]))
             ) {
               simSocket("sim_remove_items", fileList[index]);
               openSequence(null);
@@ -1363,10 +1542,10 @@ const getSimulations = (socket) => {
           onFileList();
           openSequence(title);
         } else {
-          alert(translations["sequence_exist"][lang]);
+          await alert_popup(translations["sequence_exist"][lang]);
         }
       } else {
-        alert(translations["title_empty"][lang]);
+        await alert_popup(translations["title_empty"][lang]);
       }
     });
   // 저장된 시퀀스 모두 지우기 이벤트
@@ -1375,7 +1554,7 @@ const getSimulations = (socket) => {
     .on("click", function (e) {
       if (
         $("#sequence_list").children().length &&
-        confirm(translations["confirm_sequence_delete_all"][lang])
+        await confirm_popup(translations["confirm_sequence_delete_all"][lang])
       ) {
         simSocket("sim_remove_items");
         openSequence(null);
@@ -1591,8 +1770,8 @@ const getSimulations = (socket) => {
         ".timeline.row"
       );
       if (!rows.length) {
-        alert(translations["remove_timeline_empty"][lang]);
-      } else if (confirm(translations["confirm_sequence_timeline"][lang])) {
+        await alert_popup(translations["remove_timeline_empty"][lang]);
+      } else if (await confirm_popup(translations["confirm_sequence_timeline"][lang])) {
         const allCheck = allCheckbox.is(":checked");
         if (allCheck) {
           setTimelineSection([]);
@@ -1623,7 +1802,7 @@ const getSimulations = (socket) => {
         "#timeline_body .timeline.row:not(.hide) input[type=checkbox]:checked"
       ).parents(".timeline.row");
       if (!checkedRows.length) {
-        alert(translations["execute_timeline_empty"][lang]);
+        await alert_popup(translations["execute_timeline_empty"][lang]);
       } else {
         const icon = selPlayBtn.children("i");
         if (icon.hasClass("fa-play")) {
@@ -2423,10 +2602,10 @@ const getSimulations = (socket) => {
             .index($(`div[name=${itemName}]`));
           setSimFile({ name: selectFile, data: selectFileContents, index });
         } else {
-          alert(translations["not_complete_setting"][lang]);
+          await alert_popup(translations["not_complete_setting"][lang]);
         }
       } else {
-        alert(translations["unit_warn"][lang](0.1));
+        await alert_popup(translations["unit_warn"][lang](0.1));
       }
     });
   };
@@ -2520,7 +2699,7 @@ $(function () {
 
   const getStatus = (socket) => {
     $("#ide_bt").on("click", function () {
-      if (confirm(translations["move_to_ide"][lang])) {
+      if (await confirm_popup(translations["move_to_ide"][lang])) {
         socket.emit("onoff", "off");
         location.href = `http://${location.hostname}`;
       }
@@ -2699,7 +2878,7 @@ $(function () {
       comment += "\nPSK: " + $("#psk").val().trim();
       comment += "\nEncryption: " + ($("#psk").val().trim()==""?"OPEN":"WPA-PSK");
       comment += translations["confirm_wifi"][lang];
-      if (confirm(comment)) {
+      if (await confirm_popup(comment)) {
         $.ajax({
           url: `http://${location.hostname}:${system_port}/wifi`,
           type: "post",
@@ -2708,7 +2887,7 @@ $(function () {
         }).always((xhr, status) => {
           if (status == "success") {
           } else {
-            //alert("WPA-PSK 방식에서는 비밀번호가 8자리 이상이어야 합니다.")
+            //await alert_popup("WPA-PSK 방식에서는 비밀번호가 8자리 이상이어야 합니다.")
           }
         });
       }
@@ -2719,30 +2898,30 @@ $(function () {
     });
 
     $("#poweroff_bt").on("click", function () {
-      if (confirm(translations["confirm_poweroff"][lang])) socket.emit("poweroff");
+      if (await confirm_popup(translations["confirm_poweroff"][lang])) socket.emit("poweroff");
     });
 
     $("#restart_bt").on("click", function () {
-      if (confirm(translations["confirm_restart"][lang])) socket.emit("restart");
+      if (await confirm_popup(translations["confirm_restart"][lang])) socket.emit("restart");
     });
 
     $("#top_poweroff_bt").on("click", function () {
-      if (confirm(translations["confirm_poweroff"][lang])) socket.emit("poweroff");
+      if (await confirm_popup(translations["confirm_poweroff"][lang])) socket.emit("poweroff");
     });
 
     $("#top_restart_bt").on("click", function () {
-      if (confirm(translations["confirm_restart"][lang])) socket.emit("restart");
+      if (await confirm_popup(translations["confirm_restart"][lang])) socket.emit("restart");
     });
 
     $("#swupdate_bt").on("click", function () {
       if (
-        confirm(translations["confirm_swupdate"][lang])
+        await confirm_popup(translations["confirm_swupdate"][lang])
       )
         socket.emit("swupdate");
     });
 
     $("#restore_bt").on("click", function () {
-      if (confirm(translations["confirm_restore"][lang])){
+      if (await confirm_popup(translations["confirm_restore"][lang])){
         usedata = init_usedata;
         socket.emit("restore");
       }
@@ -2790,7 +2969,7 @@ $(function () {
       if (status == "success") {
         usedata = init_usedata;
       } else {
-        alert(`usedata error.\n >> ${xhr.responseJSON["result"]}`);
+        await alert_popup(`usedata error.\n >> ${xhr.responseJSON["result"]}`);
       }
     });
   });
@@ -2808,7 +2987,7 @@ $(function () {
         $("#usedata_json").JSONView(xhr, {collapsed:true});
         usedata = init_usedata;
       } else {
-        alert(`usedata error.\n >> ${xhr.responseJSON["result"]}`);
+        await alert_popup(`usedata error.\n >> ${xhr.responseJSON["result"]}`);
       }
     });
     document.getElementById("usedataPopup").style.display = "block";
