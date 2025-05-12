@@ -424,11 +424,10 @@ Functions:
 
     """
 
-    os.system(f"pkill llama-server;/home/pi/llama.cpp/build/bin/llama-server -m /home/pi/.model/llm/gemma-3-1b-it-Q2_K.gguf --log-disable --host 0.0.0.0 --port {port} &")    
+    os.system(f"systemctl start llama-server")
     print("Connect to http:{Device IP}:50020 for LLM Web-UI")
 
-
-  def call_llm(self, prompt=None, system_prompt=None):
+  def call_llm(self, prompt=None, system_prompt=None, max_tokens=100):
     """
     LLM 서버(OpenAI 호환 Chat Completions API)를 호출합니다.
     
@@ -441,30 +440,30 @@ Functions:
     """
 
     url = "http://0.0.0.0:50020/v1/chat/completions"
-    
+
     # Chat API 메시지 배열 구성
     messages = []
     if system_prompt:
         messages.append({"role": "system", "content": system_prompt})
     if prompt:
         messages.append({"role": "user", "content": prompt})
-    
+
     payload = {
-      "model": "gemma-3-1b-it-Q2_K",  # 모델명 (환경에 맞게 수정)
+      "model": "hyperclovax-seed-text-instruct-0.5b-q4_k_m.gguf",  # 모델명 (환경에 맞게 수정)
       "messages": messages,
       "temperature": 0.8,   # 생성 텍스트의 무작위성 조절
       "top_p": 0.95,        # 누적 확률 임계값
-      "max_tokens": 256     # 생성 최대 토큰 수 (필요에 따라 조정)
+      "max_tokens": max_tokens     # 생성 최대 토큰 수 (필요에 따라 조정)
     }
-    
+
     try:
       response = requests.post(url, json=payload)
       response.raise_for_status()  # 4xx, 5xx 에러 발생 시 예외 처리
     except requests.RequestException as e:
       raise Exception(f"LLM 서버 호출 실패: {e}")
-    
+
     data = response.json()
-    
+
     # OpenAI Chat API 표준 응답 형식에 따른 처리
     if "choices" in data and isinstance(data["choices"], list) and len(data["choices"]) > 0:
       return data["choices"][0]["message"]["content"]
@@ -482,4 +481,4 @@ Functions:
 
     """
 
-    os.system("pkill llama-server")    
+    os.system("systemctl stop llama-server")

@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>openpibo.speech &mdash; OPENPIBO 0.9.3.1 문서</title>
+  <title>openpibo.speech &mdash; OPENPIBO 0.9.3.2 문서</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=80d5e7a1" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
       <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -16,7 +16,7 @@
     <link rel="canonical" href="https://themakerrobot.github.io/openpibo-os.pibo/_modules/openpibo/speech.html" />
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=a094e606"></script>
+      <script src="../../_static/documentation_options.js?v=976c6c6c"></script>
       <script src="../../_static/doctools.js?v=9bcbadda"></script>
       <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
       <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -570,14 +570,13 @@
 
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">os</span><span class="o">.</span><span class="n">system</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;pkill llama-server;/home/pi/llama.cpp/build/bin/llama-server -m /home/pi/.model/llm/gemma-3-1b-it-Q2_K.gguf --log-disable --host 0.0.0.0 --port </span><span class="si">{</span><span class="n">port</span><span class="si">}</span><span class="s2"> &amp;&quot;</span><span class="p">)</span>    
+    <span class="n">os</span><span class="o">.</span><span class="n">system</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;systemctl start llama-server&quot;</span><span class="p">)</span>
     <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Connect to http:{Device IP}:50020 for LLM Web-UI&quot;</span><span class="p">)</span></div>
-
 
 
 <div class="viewcode-block" id="Dialog.call_llm">
 <a class="viewcode-back" href="../../libraries/speech.html#openpibo.speech.Dialog.call_llm">[문서]</a>
-  <span class="k">def</span> <span class="nf">call_llm</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prompt</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">system_prompt</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+  <span class="k">def</span> <span class="nf">call_llm</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prompt</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">system_prompt</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">max_tokens</span><span class="o">=</span><span class="mi">100</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    LLM 서버(OpenAI 호환 Chat Completions API)를 호출합니다.</span>
 <span class="sd">    </span>
@@ -590,30 +589,30 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">url</span> <span class="o">=</span> <span class="s2">&quot;http://0.0.0.0:50020/v1/chat/completions&quot;</span>
-    
+
     <span class="c1"># Chat API 메시지 배열 구성</span>
     <span class="n">messages</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">if</span> <span class="n">system_prompt</span><span class="p">:</span>
         <span class="n">messages</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">&quot;role&quot;</span><span class="p">:</span> <span class="s2">&quot;system&quot;</span><span class="p">,</span> <span class="s2">&quot;content&quot;</span><span class="p">:</span> <span class="n">system_prompt</span><span class="p">})</span>
     <span class="k">if</span> <span class="n">prompt</span><span class="p">:</span>
         <span class="n">messages</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">&quot;role&quot;</span><span class="p">:</span> <span class="s2">&quot;user&quot;</span><span class="p">,</span> <span class="s2">&quot;content&quot;</span><span class="p">:</span> <span class="n">prompt</span><span class="p">})</span>
-    
+
     <span class="n">payload</span> <span class="o">=</span> <span class="p">{</span>
-      <span class="s2">&quot;model&quot;</span><span class="p">:</span> <span class="s2">&quot;gemma-3-1b-it-Q2_K&quot;</span><span class="p">,</span>  <span class="c1"># 모델명 (환경에 맞게 수정)</span>
+      <span class="s2">&quot;model&quot;</span><span class="p">:</span> <span class="s2">&quot;hyperclovax-seed-text-instruct-0.5b-q4_k_m.gguf&quot;</span><span class="p">,</span>  <span class="c1"># 모델명 (환경에 맞게 수정)</span>
       <span class="s2">&quot;messages&quot;</span><span class="p">:</span> <span class="n">messages</span><span class="p">,</span>
       <span class="s2">&quot;temperature&quot;</span><span class="p">:</span> <span class="mf">0.8</span><span class="p">,</span>   <span class="c1"># 생성 텍스트의 무작위성 조절</span>
       <span class="s2">&quot;top_p&quot;</span><span class="p">:</span> <span class="mf">0.95</span><span class="p">,</span>        <span class="c1"># 누적 확률 임계값</span>
-      <span class="s2">&quot;max_tokens&quot;</span><span class="p">:</span> <span class="mi">256</span>     <span class="c1"># 생성 최대 토큰 수 (필요에 따라 조정)</span>
+      <span class="s2">&quot;max_tokens&quot;</span><span class="p">:</span> <span class="n">max_tokens</span>     <span class="c1"># 생성 최대 토큰 수 (필요에 따라 조정)</span>
     <span class="p">}</span>
-    
+
     <span class="k">try</span><span class="p">:</span>
       <span class="n">response</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">json</span><span class="o">=</span><span class="n">payload</span><span class="p">)</span>
       <span class="n">response</span><span class="o">.</span><span class="n">raise_for_status</span><span class="p">()</span>  <span class="c1"># 4xx, 5xx 에러 발생 시 예외 처리</span>
     <span class="k">except</span> <span class="n">requests</span><span class="o">.</span><span class="n">RequestException</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
       <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;LLM 서버 호출 실패: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-    
+
     <span class="n">data</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
-    
+
     <span class="c1"># OpenAI Chat API 표준 응답 형식에 따른 처리</span>
     <span class="k">if</span> <span class="s2">&quot;choices&quot;</span> <span class="ow">in</span> <span class="n">data</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;choices&quot;</span><span class="p">],</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;choices&quot;</span><span class="p">])</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
       <span class="k">return</span> <span class="n">data</span><span class="p">[</span><span class="s2">&quot;choices&quot;</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="s2">&quot;message&quot;</span><span class="p">][</span><span class="s2">&quot;content&quot;</span><span class="p">]</span>
@@ -634,7 +633,7 @@
 
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">os</span><span class="o">.</span><span class="n">system</span><span class="p">(</span><span class="s2">&quot;pkill llama-server&quot;</span><span class="p">)</span>    </div>
+    <span class="n">os</span><span class="o">.</span><span class="n">system</span><span class="p">(</span><span class="s2">&quot;systemctl stop llama-server&quot;</span><span class="p">)</span></div>
 </div>
 
 </pre></div>
@@ -646,7 +645,7 @@
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2025 THEMAKER. All rights reserved. openpibo-python-0.9.3.1.</p>
+    <p>&#169; Copyright 2025 THEMAKER. All rights reserved. openpibo-python-0.9.3.2.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

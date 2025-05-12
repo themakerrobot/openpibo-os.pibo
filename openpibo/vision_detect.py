@@ -102,7 +102,9 @@ Functions:
 :meth:`~openpibo.vision_detect.Detect.detect_qr`
 :meth:`~openpibo.vision_detect.Detect.detect_pose`
 :meth:`~openpibo.vision_detect.Detect.analyze_pose`
+:meth:`~openpibo.vision_detect.Detect.classify_image`
 :meth:`~openpibo.vision_detect.Detect.object_tracker_init`
+:meth:`~openpibo.vision_detect.Detect.track_object`
 :meth:`~openpibo.vision_detect.Detect.detect_marker`
 :meth:`~openpibo.vision_detect.Detect.detect_marker_vis`
 
@@ -237,7 +239,6 @@ Functions:
 
     del self.object_detector
     self.object_detector = YOLO(modelpath, task="detect")
-
 
   def detect_object(self, img):
     """
@@ -453,6 +454,7 @@ Functions:
     y1 = max(0, int(y1))
     x2 = min(width - 1, int(x2))
     y2 = min(height - 1, int(y2))
+
     return (x1, y1, x2, y2)
 
   def track_object_vis(self, img, item):

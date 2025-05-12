@@ -10,6 +10,14 @@ const translations = {
     ko: "인터넷 설정",
     en: "Internet settings"
   },
+  available_networks: {
+    ko: "사용 가능한 Wifi",
+    en: "Available networks"
+  },
+  manual_connection: {
+    ko: "수동 설정",
+    en: "Manual Connection / Other Network..."
+  },
   wifi_name: {
     ko: "이름",
     en: "Name"
@@ -25,6 +33,10 @@ const translations = {
   confirm: {
     ko: "확인",
     en: "Confirm"
+  },
+  cancel: {
+    ko: "취소",
+    en: "Cancel"
   },
   reset: {
     ko: "초기화",
@@ -87,8 +99,8 @@ const translations = {
     en: (oldname, newname) => {return `Are you sure you want to rename the file or folder ${oldname} to ${newname}?`}
   },
   confirm_restore: {
-    ko: "초기화하시겠습니까?",
-    en: "Are you sure you want to reset?"
+    ko: "초기화하시겠습니까?\n초기화 후 종료합니다.",
+    en: "Are you sure you want to reset?\nAfter reset, power off"
   },
   confirm_poweroff: {
     ko: "정말 종료하시겠습니까?",
@@ -297,5 +309,9 @@ const translations = {
   start: {
     ko: "시작",
     en: "Start"
+  },
+  classifier: {
+    ko: "분류기",
+    en: "Classifier"
   }
 };

@@ -1,14 +1,11 @@
-import openpibo
 import openpibo_models
 from openpibo.vision_camera import Camera
 from openpibo.vision_face import Face
 from openpibo.vision_detect import Detect
 from openpibo.vision_classify import CustomClassifier
 from openpibo.audio import Audio
-from openpibo.oled import Oled
 from openpibo.speech import Speech, Dialog
 from openpibo.motion import Motion
-from openpibo.device import Device
 import asyncio
 import numpy as np
 import time,datetime
@@ -26,62 +23,43 @@ def to_base64(im):
   _, buffer = cv2.imencode('.jpg', im, [int(cv2.IMWRITE_JPEG_QUALITY), 80])
   return base64.b64encode(buffer).decode('utf-8')
 
-def TimerStart(intv, func, daemon=True):
-  tim = Timer(intv, func)
-  tim.daemon = True
-  tim.start()
-  return tim
-
 class Pibo:
   def __init__(self, emit_func=None, logger=None):
     logging.info('Class INIT')
     self.emit = emit_func
-    self.system_status = os.popen('/home/pi/openpibo-os/system/system.sh').read().strip('\n').split(',')
-    self.dev = Device()
-    self.onoff = False
     self.mymodel_path = "/home/pi/mymodel"
     self.trackX, self.trackY = 0, 0
     self.imgX, self.imgY = 0,0
     self.marker_length = 2
-    self.aud = Audio()
+    self.motion_d = [0, 0, -80, 0, 0, 0, 0, 0, 80, 0] # current d value
+    self.motion_p = [] # current pos list value
+    self.motion_j = {} # current json value
+    try:
+      with open('/home/pi/mymotion.json', 'rb') as f:
+        self.motion_j = json.load(f)
+        #await self.emit('disp_code', self.motion_j)
+    except Exception as ex:
+      logging.error(f'[motion_start] Error: {ex}')
+      pass
+    self.vision_type = "camera"
+    self.vision_sleep = True
+    self.chat_list = []
+
     self.mot = Motion()
-    #self.pil_font = ImageFont.truetype(openpibo_models.filepath("KDL.ttf"), 20)
-    self.mot.set_motion("wake_up2", 1)
-    self.mot.set_motors([0,0,-80,0, 0,0, 0,0,80,0], 3000)
+    self.aud = Audio()
     self.speech = Speech()
-    self.ole = Oled()
-    self.cam = None
+    self.cam = Camera()
     self.fac = Face()
     self.det = Detect()
-    # self.tm = TeachableMachine()
-    self.device_start()
-    TimerStart(1, self.async_system_report, True)
+    self.dialog = Dialog()
 
-  ## system
-  def async_system_report(self):
-    self.system_status = os.popen('/home/pi/openpibo-os/system/system.sh').read().strip('\n').split(',')
-    asyncio.run(self.emit('system', self.system_status, callback=None))
-    TimerStart(10, self.async_system_report, True)
-
-  ## vision
-  def vision_start(self):
+    self.mot.set_motors(self.motion_d, movetime=1000)
     self.det.load_hand_gesture_model()
-    self.cam = Camera()
-    self.vision_type = "camera"
-    self.vision_flag, self.vision_sleep  = True, True
+    asyncio.run(self.emit('onoff', True, callback=None))
     Thread(name='vision_loop', target=self.vision_loop, args=(), daemon=True).start()
 
-  def vision_stop(self):
-    self.vision_flag = False
-    del self.det.hand_gesture_recognizer
-    self.det.hand_gesture_recognizer = None
-    self.cam.cap.stop()
-    self.cam.cap.close()
-    del self.cam
-    self.cam = None
-
   def vision_loop(self):
-    while self.vision_flag == True:
+    while True:
       if self.vision_sleep == True:
         time.sleep(1)
         continue
@@ -210,109 +188,21 @@ class Pibo:
   def detect_marker(self):
     im = self.frame.copy()
     res = self.det.detect_marker(im, self.marker_length)
+    cv2.imwrite("im.jpg", im)
+    print('marker', im.shape, self.marker_length, res)
     self.det.detect_marker_vis(im, res)
     return im, " ".join([ f'({d["id"]})-{d["distance"]}cm' for d in res])
 
   def imwrite(self, name):
     self.cam.imwrite(name, self.res_img.copy())
 
-  ## device
-  def device_start(self):
-    self.devque = Queue()
-    self.system_value = ['','','','','','']
-    self.battery = '0%'
-    
-    with open('/home/pi/config.json', 'r') as f:
-      tmp = json.load(f)
-      self.neopixel_value = tmp['eye'].split(',') if 'eye' in tmp else [0,0,0,0,0,0]
-    
-    Thread(name='device_loop', target=self.device_loop, args=(), daemon=True).start()
-    self.send_message("30", 'on')
-    time.sleep(0.1)
-    self.send_message("14")
-    time.sleep(0.1)
-    self.send_message("23", ','.join([str(_) for _ in self.neopixel_value]))
-
-  def device_stop(self):
-    pass
-
-  def send_message(self, code, data=""):
-    self.devque.put(f'#{code}:{data}!')
-
-  def decode_pkt(self, pkt):
-    logging.debug(f'Recv: {pkt}-1')
-    logging.debug(f'Recv: {pkt}-2, {pkt.split(":")[1].split("-")}')
-    pkt = pkt.split(":")
-    code, data = pkt[0], pkt[1]
-
-    if code == '15': # battery
-      self.battery = data
-      asyncio.run(self.emit('update_battery', self.battery, callback=None))
-    elif code == '14': # dc
-      self.system_value[2] = data
-      asyncio.run(self.emit('update_device', self.system_value, callback=None))
-    elif code == '40': # system
-      item = data.split("-")
-      item[2] = self.system_value[2] if item[2] == '' else item[2]
-      self.system_value = item
-      asyncio.run(self.emit('update_device', self.system_value, callback=None))
-
-  def device_loop(self):
-    system_check_time = time.time()
-
-    while True:
-      try:
-        res = None
-        if time.time() - system_check_time > 1:
-          self.decode_pkt(self.dev.send_raw("#40:!"))
-          self.decode_pkt(self.dev.send_raw("#15:!"))
-          system_check_time = time.time()
-        elif self.devque.qsize() > 0:
-          data = self.dev.send_raw(self.devque.get())
-          self.decode_pkt(data)
-        else:
-          pass
-      except Exception as ex:
-        logging.error(f'[device_loop] Error: {ex}')
-      time.sleep(0.1)
-
-  def set_neopixel(self, d):
-    if type(d) is dict and 'idx' in d and 'value' in d:
-      self.neopixel_value[d['idx']] = d['value']
-    if type(d) is list and len(d) == 6:
-      self.neopixel_value = d
-    self.send_message("23", ','.join([str(_) for _ in self.neopixel_value]))
-
-  def set_oled_image(self, filepath):
-    img = self.cam.imread(filepath)
-    self.ole.draw_data(cv2.resize(img, (128, 64)))
-    self.ole.show()
-
-  def set_oled(self, d):
-    self.ole.clear()
-    self.ole.set_font(size=d['size'])
-    x = d['x']
-    y = d['y']
-
-    for item in d['text'].split('\\n'):
-      #_, h = self.ole.font.getsize(item)
-      _,_,_, h = self.ole.font.getbbox(item)
-      self.ole.draw_text((x, y), item)
-      y += h
-    self.ole.show()
-
   def mic(self, d):
     record_time = d['time']
     filename = "/home/pi/myaudio/mic.wav"
-    os.system(f'arecord -D plug:dmic_sv -c2 -r 16000 -f S32_LE -d {record_time} -t wav -q -vv -V streo stream.raw;sox stream.raw -c 1 -b 16 {filename};rm stream.raw')
-
-  def play_audio(self, filename, volume, background):
-    self.aud.play(filename=filename, volume=volume, background=background)
-
-  def stop_audio(self):
-    self.aud.stop()
+    self.aud.record(filename=filename, timeout=record_time)
 
   def tts(self, d):
+    print("TTS", d)
     voice_type = d['voice_type']
     volume = d['volume']
     filename = "/home/pi/myaudio/tts.mp3"
@@ -323,21 +213,13 @@ class Pibo:
       else:
         lang = "en" if "e_" in voice_type else "ko"
         self.speech.tts(text=d['text'], filename=filename, voice=voice_type, lang=lang)
-      self.play_audio(filename, volume, True)
+      self.aud.play(filename=filename, volume=volume)
     except Exception as ex:
       logging.error(f'[tts] Error: {ex}')
       pass
     return
 
   ## chatbot
-  def chatbot_start(self):
-    self.chat_list = []
-    self.dialog = Dialog()
-
-  def chatbot_stop(self):
-    self.chat_list = []
-    del self.dialog
-
   def load_csv(self, d):
     with open(d, 'r', encoding='utf-8') as f:
       items = csv.reader(f)
@@ -388,30 +270,10 @@ class Pibo:
     volume = d['volume']
     filename = "/home/pi/myaudio/tts.mp3"
     self.speech.tts(text=res, filename=filename, voice=voice_type, lang=d['langtype'])
-    self.play_audio(filename, volume, True)
+    self.aud.play(filename=filename, volume=volume)
     return res
 
   ## motion
-  def motion_start(self):
-    self.motion_d = [0, 0, -80, 0, 0, 0, 0, 0, 80, 0] # current d value
-    self.motion_p = [] # current pos list value
-    self.motion_j = {} # current json value
-    self.mot.set_motors(self.motion_d, movetime=1000)
-
-    try:
-      with open('/home/pi/mymotion.json', 'rb') as f:
-        self.motion_j = json.load(f)
-        #await self.emit('disp_code', self.motion_j)
-    except Exception as ex:
-      logging.error(f'[motion_start] Error: {ex}')
-      pass
-
-  def motion_stop(self):
-    self.motion_d = [0, 0, -80, 0, 0, 0, 0, 0, 80, 0] # current d value
-    self.motion_p = [] # current pos list value
-    self.motion_j = {} # current json value
-    self.mot.set_motors(self.motion_d, movetime=1000)
-
   def make_raw(self):
     if len(self.motion_p) == 0:
       return {}
@@ -500,75 +362,3 @@ class Pibo:
       json.dump(self.motion_j, f)
     shutil.chown('/home/pi/mymotion.json', 'pi', 'pi')
     return self.motion_j
-
-  # simulate
-  def sim_motion(self, name, cycle=1, path=None, log=True):
-    self.mot.set_motion(name, cycle, path)
-    if log == True:
-      asyncio.run(self.emit('sim_result', {'motion':'stop'}, callback=None))
-
-  def async_sim_motion(self, name, cycle=1, path=None, log=True):
-    self.mot.stop()
-    try:
-      self.mot.simT.join()
-    except Exception as ex:
-      pass
-    self.mot.simT = Thread(name='sim_motion', target=self.sim_motion, args=(name, cycle, path, log), daemon=True)
-    self.mot.simT.start()
-
-  def sim_audio(self, filename, volume, log=True):
-    self.stop_audio()
-    self.play_audio(filename, volume, False)
-    if log == True:
-      asyncio.run(self.emit('sim_result', {'audio':'stop'}, callback=None))
-
-  def async_sim_audio(self, filename, volume, log=True):
-    Thread(name='sim_audio', target=self.sim_audio, args=(filename, volume, log), daemon=True).start()
-
-  def set_simulate(self, item):
-    logging.info(item)
-    if 'eye' in item:
-      d = item['eye']
-      content = d['content']
-      self.set_neopixel(content)
-    if 'motion' in item:
-      d = item['motion']
-      content = d['content']
-      if d['type'] == 'default':
-        self.async_sim_motion(content, d['cycle'], log=False)
-      if d['type'] == 'mymotion':
-        self.async_sim_motion(content, d['cycle'], "/home/pi/mymotion.json", log=False)
-    if 'audio' in item:
-      d = item['audio']
-      content = d['content']
-      self.async_sim_audio(d["type"]+content, d["volume"], log=False)
-    if 'oled' in item:
-      d = item['oled']
-      content = d['content']
-      if d['type'] == 'text':
-        self.set_oled({'x':d['x'], 'y': d['y'], 'size': d['size'], 'text': content})
-      else:
-        self.set_oled_image(content)
-    if 'tts' in item:
-      d = item['tts']
-      content = d['content']
-      self.tts({'text': content, 'voice_type': d['type'], 'volume': d['volume']})
-
-  def start_simulate(self, items):
-    self.stop_simulate()
-    self.timers = []
-    for idx, item in enumerate(items):
-      timer = Timer(item['time'], self.set_simulate, args=(item,))
-      timer.daemon = True
-      timer.start()
-      self.timers.append(timer)
-
-  def stop_simulate(self):
-    try:
-      for timer in self.timers:
-        timer.cancel()
-      self.stop_frame()
-      self.stop_audio()
-      self.set_motors([0, 0, -80, 0, 0, 0, 0, 0, 80, 0])
-    except Exception as ex:
-      logging.error(ex)

@@ -48,7 +48,6 @@ codeExec = {
 
 protectList = [
   '/home/pi/openpibo-',
-  '/home/pi/llama.cpp',
   '/home/pi/node_modules',
   '/home/pi/package.json',
   '/home/pi/package-lock.json',
@@ -69,7 +68,6 @@ def is_protect(p):
     if protected_path in p:
       return True
   return False
-
 
 def read_directory(d):
   dlst = []
@@ -187,11 +185,9 @@ async def show_file(data: UploadFile = File(...)):
     await socket_manager.emit('update', {'dialog': f'보기 오류: {str(err)}'})
   return JSONResponse(content={"message": "이미지 표시 완료"}, status_code=200)
 
-
 @app.sio.on('connection')
 async def handle_connection(sid, *args, **kwargs):
   pass  # Placeholder for any connection initialization
-
 
 @app.sio.on('init')
 async def handle_init(sid):
@@ -210,6 +206,33 @@ async def handle_init(sid):
     codeText = ''
   await app.sio.emit('init', {'codepath': codePath, 'codetext': codeText, 'path': PATH})
 
+@app.get('/tools')
+async def classifier(enable: str):
+  # print("Eanable tools:", enable)
+  if enable == "on":
+    subprocess.Popen(['systemctl', 'start', 'tools.service'])
+  elif enable == "off":
+    subprocess.Popen(['systemctl', 'stop', 'tools.service'])
+  return HTMLResponse(content="", status_code=200)
+
+@app.get('/classifier')
+async def classifier(enable: str):
+  # print("Eanable classifier:", enable)
+  if enable == "on":
+    subprocess.Popen(['systemctl', 'start', 'classify.service'])
+  elif enable == "off":
+    subprocess.Popen(['systemctl', 'stop', 'classify.service'])
+  return HTMLResponse(content="", status_code=200)
+
+@app.get('/llm')
+async def classifier(enable: str):
+  # print("Eanable llm:", enable)
+  if enable == "on":
+    subprocess.Popen(['systemctl', 'start', 'llama-server.service'])
+  elif enable == "off":
+    subprocess.Popen(['systemctl', 'stop', 'llama-server.service'])
+  await asyncio.sleep(2)
+  return HTMLResponse(content="", status_code=200)
 
 @app.sio.on('reset_log')
 async def handle_reset_log(sid):
@@ -264,7 +287,7 @@ async def handle_play(sid, p):
 @app.sio.on('load')
 async def handle_load(sid, p):
   global codeText, codePath
-  if is_protect(p):
+  if is_protect(p) :
     await app.sio.emit('update', {'dialog': '파일 불러오기 오류: 보호 파일입니다.'})
     return
   try:
@@ -324,52 +347,17 @@ async def handle_rename(sid, d):
 
 @app.sio.on('restore')
 async def handle_restore(sid):
-    base_path = Path("/home/pi/")
-    protected_files = {
-        ".tools.json", 
-        ".ide.json",
-        "openpibo-python",
-        "test.json",
-        "node_modules",
-        "package.json",
-        "package-lock.json",
-        "openpibo-os",
-        "openpibo-os.hat",
-        "openpibo-files"
-    }
-    protected_dirs = {"code", "myimage", "myaudio", "mymodel"}
-    
     try:
-        # Loop through the directory and handle files/directories
-        for item in base_path.iterdir():
-            try:
-                if item.name in protected_files or item.name.startswith('.'):
-                    continue
-
-                if item.name in protected_dirs:
-                    for sub_item in item.iterdir():
-                        if sub_item.is_file():
-                            sub_item.unlink()
-                        elif sub_item.is_dir():
-                            shutil.rmtree(sub_item)
-                    continue
-
-                if item.is_file() or item.is_dir():
-                    if item.is_file():
-                        item.unlink()
-                    elif item.is_dir():
-                        shutil.rmtree(item)
-
-            except Exception as e:
-                await sio.emit('update', {'dialog': f'초기화 오류: {str(e)}'}, room=sid)
-                return
-        
-        # Shutdown the system
+        os.system("rm -rf /home/pi/code/*")
+        os.system("rm -rf /home/pi/myimage/*")
+        os.system("rm -rf /home/pi/mymodel/*")
+        os.system("rm -rf /home/pi/myaudio/*")
+        os.system("rm -rf /home/pi/examples/*")
+        os.system("cp -rf /home/pi/openpibo-os/examples/* /home/pi/examples/")
+        os.system("sudo /home/pi/openpibo-os/system/conwifi.sh wpa-psk 'pibo' '!pibo0314'")
         subprocess.Popen(['shutdown', '-h', 'now'])
-
     except Exception as e:
         await sio.emit('update', {'dialog': f'초기화 오류: {str(e)}'}, room=sid)
-
 
 @app.sio.on('add_file')
 async def handle_add_file(sid, p):
@@ -395,7 +383,6 @@ async def handle_add_file(sid, p):
   except Exception as err:
     await app.sio.emit('update', {'dialog': f'파일 불러오기 오류: {str(err)}'})
 
-
 @app.sio.on('add_directory')
 async def handle_add_directory(sid, p):
   if is_protect(PATH):
@@ -408,7 +395,6 @@ async def handle_add_directory(sid, p):
     await app.sio.emit('update_file_manager', {'data': directory_data})
   except Exception as err:
     await app.sio.emit('update', {'dialog': f'디렉토리 생성 오류: {str(err)}'})
-
 
 @app.sio.on('save')
 async def handle_save(sid, d):
@@ -425,7 +411,6 @@ async def handle_save(sid, d):
     shutil.chown(os.path.dirname(codePath), user='pi', group='pi')
   except Exception as err:
     await app.sio.emit('update', {'dialog': f'파일 저장 오류: {str(err)}'})
-
 
 async def execute(EXEC, codepath):
   global record, ps
@@ -515,14 +500,12 @@ async def handle_stop(sid):
     ps.kill()
     await ps.wait()
 
-
 @app.sio.on('prompt')
 async def handle_prompt(sid, s):
   global ps
   if ps and ps.stdin:
     ps.stdin.write((s + "\n").encode())
     await ps.stdin.drain()
-
 
 # Additional code for the periodic system status updates
 async def periodic_system_update():
@@ -539,7 +522,6 @@ async def periodic_system_update():
 #async def on_startup():
 #  asyncio.create_task(periodic_system_update())
 
-
 if __name__ == '__main__':
   import argparse
   import uvicorn
@@ -547,8 +529,5 @@ if __name__ == '__main__':
   parser = argparse.ArgumentParser()
   parser.add_argument('--port', help='set port number', default=80)
   args = parser.parse_args()
-  # # 리디렉션 서버를 별도 스레드에서 실행
-  # threading.Thread(target=run_redirect_server, daemon=True).start()
 
   uvicorn.run('run_ide:app', host='0.0.0.0', port=int(args.port), access_log=False)
-

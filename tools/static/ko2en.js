@@ -846,24 +846,3 @@ const translations = {
     en: "Export"
   },
 };
-
-const setLanguage = (lang) => {
-  const elements = document.querySelectorAll('[data-key]');
-  elements.forEach(element => {
-      const key = element.getAttribute('data-key');
-      if (translations[key] && translations[key][lang]) {
-          element.textContent = translations[key][lang];
-      }
-  });
-}
-
-const language = document.getElementById("language");
-language.value = lang;
-setLanguage(lang);
-localStorage.setItem("language", lang);
-
-language.addEventListener("change", () => {
-  lang = language.value;
-  setLanguage(lang);
-  localStorage.setItem("language", lang);
-})
