@@ -213,7 +213,7 @@ socket.on("onoff", function (data) {
   document.getElementById('onoff_val').innerHTML = 
     data
     ? '<i class="fas fa-toggle-on">&nbsp;on</i>'
-    : '<i class="fas fa-toggle-off">&nbsp;off</i>'
+    : '<i class="fas fa-toggle-off">&nbsp;off</i>&nbsp;<i class="fa-solid fa-spinner fa-spin"></i>'
   console.log('onoff', data)
 });
 
