@@ -205,7 +205,10 @@ async function prompt_popup(message, defaultValue = '') {
   });
 }
 
-document.getElementById("tools_bt").addEventListener("click", function () {
+const tools_bt = document.getElementById("tools_bt")
+tools_bt.addEventListener("click", function () {
+  const tools_bt_innerHTML = tools_bt.innerHTML;
+  tools_bt.innerHTML = "<i class='fa-solid fa-spinner fa-spin'></i>";
   fetch(`http://${location.hostname}/tools?enable=on`)
   .then(response => {
     if (!response.ok) {
@@ -214,14 +217,21 @@ document.getElementById("tools_bt").addEventListener("click", function () {
     return response.text();
   })
   .then(data => {
-    window.open(`http://${location.hostname}:50000`);
+    setTimeout(function() {
+      window.open(`http://${location.hostname}:50000`);
+      tools_bt.innerHTML = tools_bt_innerHTML;
+    }, 3000);
   //   console.log('데이터 수신 성공:', data);
   })
   .catch(error => {
   //   console.error('데이터 요청 중 에러 발생:', error);
   });
 });
-document.getElementById("llm_bt").addEventListener("click", function () {
+
+const llm_bt = document.getElementById("llm_bt")
+llm_bt.addEventListener("click", function () {
+  const llm_bt_innerHTML = llm_bt.innerHTML;
+  llm_bt.innerHTML = "<i class='fa-solid fa-spinner fa-spin'></i>";
   fetch(`http://${location.hostname}/llm?enable=on`)
   .then(response => {
     if (!response.ok) {
@@ -230,14 +240,20 @@ document.getElementById("llm_bt").addEventListener("click", function () {
     return response.text();
   })
   .then(data => {
-    window.open(`http://${location.hostname}:50020`);
+    setTimeout(function() {
+      window.open(`http://${location.hostname}:50020`);
+      llm_bt.innerHTML = llm_bt_innerHTML;
+    }, 3000);
   //   console.log('데이터 수신 성공:', data);
   })
   .catch(error => {
   //   console.error('데이터 요청 중 에러 발생:', error);
   });
 });
-document.getElementById("classifier_bt").addEventListener("click", async function () {
+const classifier_bt = document.getElementById("classifier_bt")
+classifier_bt.addEventListener("click", async function () {
+  const classifier_bt_innerHTML = classifier_bt.innerHTML;
+  classifier_bt.innerHTML = "<i class='fa-solid fa-spinner fa-spin'></i>";
   fetch(`http://${location.hostname}/classifier?enable=on`)
   .then(response => {
     if (!response.ok) {
@@ -246,13 +262,17 @@ document.getElementById("classifier_bt").addEventListener("click", async functio
     return response.text();
   })
   .then(data => {
-    window.open(`http://${location.hostname}:50010`);
+    setTimeout(function() {
+      window.open(`http://${location.hostname}:50010`);
+      classifier_bt.innerHTML = classifier_bt_innerHTML;
+    }, 3000);
   //   console.log('데이터 수신 성공:', data);
   })
   .catch(error => {
   //   console.error('데이터 요청 중 에러 발생:', error);
   });
 });
+
 document.getElementById("guide_bt").addEventListener("click", function () {
   window.open(`http://${location.hostname}:8080`);
 });
@@ -465,7 +485,7 @@ socket.on("system", (data) => {
   $("#s_os_version").text(data[1]);
   $("#s_runtime").text(`${Math.floor(data[2] / 3600)} hours`);
   $("#s_cpu_temp").text(data[3]);
-  $("#s_memory").text(`${Math.floor(data[5] / data[4] / 4 * 100)} %`);
+  $("#s_memory").text(`${Math.floor( (data[4] - data[5]) / data[4] * 100)} %`);
   $("#s_network").html(`<i class="fas fa-network-wired"></i> ${data[7]}, <i class="fa-solid fa-wifi"></i> ${data[6]}/${data[8]}`);
   $("#network_info").html(`<i class="fas fa-network-wired"></i> ${data[7]}, <i class="fa-solid fa-wifi"></i> ${data[6]}/${data[8]}`);
 });

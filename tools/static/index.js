@@ -916,21 +916,6 @@ menus_ds.each((idx) => {
   element.addEventListener("click", () => handleMenu(name.split('_ds')[0]));
 });
 
-
-fetch(`http://${location.hostname}/tools?enable=on`)
-.then(response => {
-  if (!response.ok) {
-    throw new Error(`HTTP error! status: ${response.status}`);
-  }
-  return response.text();
-})
-.then(data => {
-//   //console.log('데이터 수신 성공:', data);
-})
-.catch(error => {
-//   console.error('데이터 요청 중 에러 발생:', error);
-})
-
 window.addEventListener('beforeunload', (evt) => {
   fetch(`http://${location.hostname}/tools?enable=off`)
   .then(response => {

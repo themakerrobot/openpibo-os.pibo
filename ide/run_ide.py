@@ -239,6 +239,7 @@ async def handle_reset_log(sid):
   global record
   record = f'[{datetime.datetime.now()}]: \n\n'
   subprocess.Popen([f'{ENV_PATH}/python3', '/home/pi/openpibo-os/system/network_disp.py'])
+  subprocess.Popen(['servo', 'init'])
 
 
 @app.sio.on('poweroff')

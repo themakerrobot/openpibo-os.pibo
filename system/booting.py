@@ -22,9 +22,11 @@ async def lifespan(app: FastAPI):
   ole = Oled()
   aud = Audio()
   device_control = DeviceControl()
+  device_control.send_raw("#20:150,150,150!")
   winfo = ['','','','','','']
   uart_ctrl.start()
   boot()
+  device_control.send_raw("#20:0,0,0!")
   yield
 
 app = FastAPI(lifespan=lifespan)
