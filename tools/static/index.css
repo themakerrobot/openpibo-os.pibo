@@ -863,7 +863,7 @@ i.fa > span {
 label[for=v_import_motion] {
   font-family: "Noto Sans Regular", sans-serif;
   font-size:1.2rem;
-  font-weight: 100;
+  font-weight: normal;
   padding: 0.5rem 1rem;
   outline: none;
   background-color: var(--yellow);
