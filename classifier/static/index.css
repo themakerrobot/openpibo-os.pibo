@@ -254,7 +254,6 @@ label.upload-button {
 
 button:hover,
 label.upload-button:hover {
-    background-color: var(--dark-yellow);
     transform: translateY(-1px);
     font-weight: bold;
 }
