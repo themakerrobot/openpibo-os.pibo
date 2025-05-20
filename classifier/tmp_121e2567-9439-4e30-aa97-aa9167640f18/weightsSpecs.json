@@ -1,1 +1,0 @@
-[{"name":"dense_Dense1/kernel","shape":[1280,128],"dtype":"float32"},{"name":"dense_Dense1/bias","shape":[128],"dtype":"float32"},{"name":"dense_Dense2/kernel","shape":[128,3],"dtype":"float32"},{"name":"dense_Dense2/bias","shape":[3],"dtype":"float32"}]
