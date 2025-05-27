@@ -121,6 +121,7 @@ def boot():
   aud.play("/home/pi/openpibo-os/system/opening.mp3", 70)
   ole.clear()
   ole.draw_image("/home/pi/openpibo-os/system/pibo.jpg")
+  ole.draw_text((5,0), os_version)
   ole.show()
   time.sleep(5)
   for i in range(1,10):

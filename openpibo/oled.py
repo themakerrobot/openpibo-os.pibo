@@ -45,8 +45,8 @@ Functions:
 
     self.width = w
     self.height = h
-    #self.font_path = openpibo_models.filepath("KDL.ttf") # KoPub Dotum Light
-    self.font_path = openpibo_models.filepath("NS_CJK_R.otf") # Noto Sans CJK Regular
+    self.font_path = openpibo_models.filepath("KDL.ttf") # KoPub Dotum Light
+    #self.font_path = openpibo_models.filepath("NS_CJK_R.otf") # Noto Sans CJK Regular
     self.font_size = 10
 
     spi = busio.SPI(11, 10, 9)
