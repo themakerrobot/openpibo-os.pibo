@@ -1,6 +1,6 @@
 <!DOCTYPE html>
   <head>
-    <title>Pibo Maker for piBo</title>
+    <title>Tools for piBo</title>
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
@@ -23,7 +23,8 @@
       <div style="float:left">
         <h2>
           <i class="fa-solid fa-microchip">Tools <span id="state"></span></i>&nbsp;
-          <span id="onoff_val"><i class="fas fa-toggle-off">&nbsp;off</i>&nbsp;<i class="fa-solid fa-spinner fa-spin"></i></span>
+          <span id="onoff_val"></span>
+          <span id="onoff_count"></span>
         </h2>
       </div>
       <div style="float:right">
@@ -39,6 +40,36 @@
         </h2>
       </div>
     </header>
+
+    <div class="alert-popup" id="alertPopup" style="display:none;">
+      <div class="alert-popup-content">
+        <p id="alertMessageElement">alert text</p>
+        <div class="popup-buttons">
+          <button id="alertOkBtn"><span data-key="confirm"></span></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="prompt-popup" id="promptPopup" style="display:none;">
+      <div class="prompt-popup-content">
+        <p id="promptMessageElement">prompt text</p>
+        <input type="text" id="promptInputElement" />
+        <div class="popup-buttons">
+          <button id="promptOkBtn"><span data-key="confirm"></span></button>
+          <button id="promptCancelBtn"><span data-key="cancel"></span></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="confirm-popup" id="confirmPopup" style="display:none;">
+      <div class="confirm-popup-content">
+        <p id="confirmMessageElement">confirm text</p>
+        <div class="popup-buttons">
+          <button id="confirmOkBtn"><span data-key="confirm"></span></button>
+          <button id="confirmCancelBtn"><span data-key="cancel"></span></button>
+        </div>
+      </div>
+    </div>
 
     <main>
       <nav>

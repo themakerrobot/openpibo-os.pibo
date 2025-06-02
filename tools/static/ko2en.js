@@ -2,53 +2,17 @@ const blang = (navigator.language || navigator.userLanguage).includes('ko')?'ko'
 let lang = localStorage.getItem("language")?localStorage.getItem("language"):blang;
 
 const translations = {
-  password: {
-    ko: "비밀번호",
-    en: "Password"
-  },
-  internet_settings: {
-    ko: "인터넷 설정",
-    en: "Internet settings"
-  },
-  wifi_name: {
-    ko: "이름",
-    en: "Name"
-  },
-  wifi_type: {
-    ko: "종류",
-    en: "Type"
-  },
-  wifi_identity: {
-    ko: "아이디",
-    en: "Identity"
-  },
   confirm: {
     ko: "확인",
     en: "Confirm"
   },
+  cancel: {
+    ko: "취소",
+    en: "Cancel"
+  },
   reset: {
     ko: "초기화",
     en: "Reset"
-  },
-  wifi_signal: {
-    ko: "신호세기",
-    en: "Signal"
-  },
-  wifi_psk: {
-    ko: "암호화방식",
-    en: "Encryption"
-  },
-  usedata: {
-    ko: "사용성 데이터",
-    en: "Used Data"
-  },
-  home_description: {
-    ko: "시스템 정보 확인, 설정하기",
-    en: "Checking system information and set it"
-  },
-  device_description: {
-    ko: "로봇 부품 제어, 센서 데이터 확인하기",
-    en: "Controlling robot parts and check sensor data"
   },
   motion_description: {
     ko: "서보 모터 제어, 나만의 모션 만들기",
@@ -61,14 +25,6 @@ const translations = {
   speech_description: {
     ko: "자연어 처리, 보이스 인공지능 이해하기",
     en: "Natural Language Processing and Understand Voice AI"
-  },
-  simulator_description: {
-    ko: "나만의 로봇 동작 시퀀스 만들기",
-    en: "Creating Your Own Robot Motion Sequences"
-  },
-  system_settings: {
-    ko: "시스템 설정",
-    en: "System settings"
   },
   volume: {
     ko: "음량",

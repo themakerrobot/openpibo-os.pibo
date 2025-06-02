@@ -25,6 +25,7 @@ fullscreenBt.addEventListener('click', (e) => {
   updateIcon();
 });
 
+const motor_default = [0, 0, -80, 0, 0, 0, 0, 0, 80, 0];
 
 // 사용자가 ESC 등으로 fullscreen 종료했을 때 아이콘 동기화
 document.addEventListener('fullscreenchange', function () {
@@ -209,12 +210,31 @@ document.getElementById("logo_bt").addEventListener("click", function () {
   location.href = `http://${location.hostname}`;
 });
 const socket = io(`http://${location.host}`, { path: "/socket.io" });
+
+const onoffVal = document.getElementById('onoff_val');
+const onoffCount = document.getElementById('onoff_count'); 
+onoffVal.innerHTML = '<i class="fas fa-toggle-off fa-fade">&nbsp;off</i>';
+
+let onoff_count = 0;
+let onoff_intv = setInterval(() => {
+  onoffCount.innerHTML = `<i style="opacity:0.5">${++onoff_count}</i>`;
+}, 2000);
+
 socket.on("onoff", function (data) {
-  document.getElementById('onoff_val').innerHTML = 
-    data
-    ? '<i class="fas fa-toggle-on">&nbsp;on</i>'
-    : '<i class="fas fa-toggle-off">&nbsp;off</i>&nbsp;<i class="fa-solid fa-spinner fa-spin"></i>'
+  onoffVal.innerHTML = data?
+    '<i class="fas fa-toggle-on">&nbsp;on</i>'
+    : '<i class="fas fa-toggle-off fa-fade">&nbsp;off</i>'
   console.log('onoff', data)
+
+  if (data == true) {
+    clearInterval(onoff_intv);
+    onoffCount.innerHTML = "";
+    for (let i = 0; i < 10; i++) {
+      $("#m" + i + "_value").val(motor_default[i]);
+      $("#m" + i + "_range").val(motor_default[i]);
+    }
+    socket.emit("set_motors", { pos_lst: motor_default });
+  }
 });
 
 const getVisions = (socket) => {
@@ -343,8 +363,6 @@ const getVisions = (socket) => {
 };
 
 const getMotions = (socket) => {
-  const motor_default = [0, 0, -80, 0, 0, 0, 0, 0, 80, 0];
-
   for (let i = 0; i < 10; i++) {
     let tval = "#m" + i + "_value";
     let trange = "#m" + i + "_range";
@@ -574,7 +592,7 @@ const getMotions = (socket) => {
     if (motionName == "") {
       await alert_popup(translations["motion_name_empty"][lang]);
       return;
-    }
+    }  
     if (await confirm_popup(translations["confirm_motion_register"][lang](motionName))) {
       socket.emit("add_motion", motionName);
       $("#motion_name_val").val("");
