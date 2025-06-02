@@ -213,20 +213,21 @@ const socket = io(`http://${location.host}`, { path: "/socket.io" });
 
 const onoffVal = document.getElementById('onoff_val');
 const onoffCount = document.getElementById('onoff_count'); 
-onoffVal.innerHTML = '<i class="fas fa-toggle-off fa-fade">&nbsp;off</i>';
+onoffVal.innerHTML = `<i class="fas fa-toggle-off fa-sm fa-fade" style="--fa-animation-duration: 2s; --fa-fade-opacity: 0.6">&nbsp;off</i>`;
 
 let onoff_count = 0;
 let onoff_intv = setInterval(() => {
-  onoffCount.innerHTML = `<i style="opacity:0.5">${++onoff_count}</i>`;
+  onoffCount.innerHTML = `<i style="opacity:0.6">${++onoff_count}</i>`;
 }, 2000);
 
 socket.on("onoff", function (data) {
   onoffVal.innerHTML = data?
-    '<i class="fas fa-toggle-on">&nbsp;on</i>'
-    : '<i class="fas fa-toggle-off fa-fade">&nbsp;off</i>'
+    `<i class="fas fa-toggle-on">&nbsp;on</i>`
+    : `<i class="fas fa-toggle-off fa-sm fa-fade" style="--fa-animation-duration: 2s; --fa-fade-opacity: 0.6">&nbsp;off</i>`
   console.log('onoff', data)
 
   if (data == true) {
+    socket.emit("disp_motion");
     clearInterval(onoff_intv);
     onoffCount.innerHTML = "";
     for (let i = 0; i < 10; i++) {
@@ -310,6 +311,7 @@ const getVisions = (socket) => {
   $("#v_capture").on("click", function () {
     let capture_a = document.createElement("a");
     capture_a.setAttribute("href", "/download_img");
+    capture_a.setAttribute("download", "");
     capture_a.click();
   });
 
@@ -523,6 +525,7 @@ const getMotions = (socket) => {
     let motion_a = document.createElement("a");
     if($("#motion_name_val").val() == "") motion_a.setAttribute("href", `/export_motion/all`);
     else motion_a.setAttribute("href", `/export_motion/${$("#motion_name_val").val()}`); 
+    motion_a.setAttribute("download", "");
     motion_a.click()
   });
 
