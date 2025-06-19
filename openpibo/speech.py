@@ -427,7 +427,7 @@ Functions:
     os.system(f"systemctl start llama-server")
     print("Connect to http:{Device IP}:50020 for LLM Web-UI")
 
-  def call_llm(self, prompt=None, system_prompt=None, temperature=0.8, repeat_penalty=1.1, max_tokens=100):
+  def call_llm(self, prompt=None, system_prompt=None, temperature=0.8, max_tokens=100):
     """
     LLM 서버(OpenAI 호환 Chat Completions API)를 호출합니다.
     
@@ -453,7 +453,6 @@ Functions:
       "messages": messages,
       "temperature": temperature,   # 생성 텍스트의 무작위성 조절
       "top_p": 0.95,        # 누적 확률 임계값
-      "repeat_penalty": repeat_penalty,
       "max_tokens": max_tokens     # 생성 최대 토큰 수 (필요에 따라 조정)
     }
 
