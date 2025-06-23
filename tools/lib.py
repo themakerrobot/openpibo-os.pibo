@@ -74,8 +74,6 @@ class Pibo:
           img, res = cv2.edgePreservingFilter(self.frame.copy()), ''
         elif self.vision_type == "cartoon":
           img, res = self.cam.stylization(self.frame.copy()), ''
-        elif self.vision_type == "sketch_g":
-          img, res = self.cam.pencilSketch(self.frame.copy())[0], ''
         elif self.vision_type == "sketch_rgb":
           img, res = self.cam.pencilSketch(self.frame.copy())[1], ''
         elif self.vision_type == "detail":
