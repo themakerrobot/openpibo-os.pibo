@@ -209,6 +209,8 @@ async def handle_init(sid):
 @app.get('/tools')
 async def classifier(enable: str):
   # print("Eanable tools:", enable)
+  if False:
+    return HTMLResponse(content="", status_code=200)
   if enable == "on":
     subprocess.Popen(['systemctl', 'stop', 'classify.service'])
     subprocess.Popen(['systemctl', 'stop', 'llama-server.service'])
@@ -220,6 +222,8 @@ async def classifier(enable: str):
 @app.get('/classifier')
 async def classifier(enable: str):
   # print("Eanable classifier:", enable)
+  if False:
+    return HTMLResponse(content="", status_code=200)
   if enable == "on":
     subprocess.Popen(['systemctl', 'stop', 'tools.service'])
     subprocess.Popen(['systemctl', 'stop', 'llama-server.service'])
@@ -231,6 +235,8 @@ async def classifier(enable: str):
 @app.get('/llm')
 async def classifier(enable: str):
   # print("Eanable llm:", enable)
+  if False:
+    return HTMLResponse(content="", status_code=200)
   if enable == "on":
     subprocess.Popen(['systemctl', 'stop', 'tools.service'])
     subprocess.Popen(['systemctl', 'stop', 'classify.service'])

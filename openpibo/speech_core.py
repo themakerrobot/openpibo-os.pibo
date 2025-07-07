@@ -20,34 +20,6 @@ from .modules.speech.mtts import OnDeviceTTS
 import openpibo_models
 #current_path = os.path.dirname(os.path.realpath(__file__))
 
-# =================================================================
-# API 통신 헬퍼 함수 (음성 합성 전용)
-# =================================================================
-def _api_call(endpoint: str, params: dict = None):
-    """
-    AI-Core 서버와 통신을 전담하는 내부 헬퍼 함수입니다.
-
-    :param str endpoint: 호출할 API의 엔드포인트 (예: "speech/tts")
-    :param dict params: API에 전달할 추가 파라미터
-    :return: 서버로부터 받은 데이터 (JSON)
-    """
-    SERVER_URL = "http://127.0.0.1:50050"  # AI-Core 서버 주소
-
-    # 음성 합성은 이미지를 사용하지 않으므로, params만 payload로 구성합니다.
-    payload = {"params": params or {}}
-
-    try:
-        # API 서버에 POST 요청
-        response = requests.post(f"{SERVER_URL}/{endpoint}", json=payload)
-        response.raise_for_status()  # 200번대 응답이 아니면 에러 발생
-        res_json = response.json()
-    except requests.exceptions.RequestException as e:
-        raise ConnectionError(f"AI-Core 서버({SERVER_URL}) 연결에 실패했습니다: {e}")
-
-    # JSON 데이터 반환
-    return res_json.get("data", res_json)
-
-
 def speech_api(mode, type, params={}, json_data={}):
   """
   인공지능 보이스 API를 호출합니다.
@@ -166,50 +138,48 @@ Functions:
 
     return res.json()['data']
 
-# =================================================================
-# SpeechOnDevice 클래스 (API 클라이언트 버전)
-# =================================================================
 class SpeechOnDevice:
   """
-  TTS (Text to Speech) 기능을 제공합니다. (API-backed)
-  이 클래스의 인스턴스는 내부적으로 AI-Core 서버와 통신하여 음성을 생성합니다.
+Functions:
+:meth:`~openpibo.speech.SpeechOnDevice.tts`
+
+  * TTS (Text to Speech)
+
+  example::
+
+    from openpibo.speech import SpeechOnDevice
+
+    speech_od = SpeechOnDevice()
+    # 아래의 모든 예제 이전에 위 코드를 먼저 사용합니다.
   """
 
   def __init__(self):
-    """
-    SpeechOnDevice 클래스를 초기화합니다.
-    실제 TTS 엔진은 서버에서 관리되므로, 이 메서드는 비어있습니다.
-    """
-    pass
+    self.otts = OnDeviceTTS()
   
   def tts(self, text, filename="tts.mp3", voice=2, lang="ko"):
     """
-    서버에 TTS(Text to Speech)를 요청하여 음성 파일을 생성합니다.
-    음성 파일은 서버(로봇)의 파일 시스템에 저장됩니다.
+    TTS(Text to Speech)
 
-    :param str text: 변환할 문장
-    :param str filename: 서버에 저장될 음성 파일의 경로 (mp3)
-    :param int voice: 목소리 번호 (0-5)
-    :param str lang: 사용할 언어 (ko)
+    Text(문자)를 Speech(말)로 변환하여 파일로 저장합니다.
+
+    example::
+
+      speech_od.tts(text='안녕하세요! 만나서 반가워요!', 'ko', '/home/pi/tts.mp3')
+
+    :param str text: 변환할 문장구
+
+    :param int voice: 목소리 번호 0 - 5
+
+    :param str lang: 사용할 언어(ko)
+
+    :param str filename: 변환된 음성파일의 경로 (mp3)
     """
 
-    if not isinstance(text, str):
-      raise TypeError(f'"{text}" must be str type')
+    if type(text) is not str:
+      raise Exception(f'"{text}" must be str type')
 
-    params = {
-        "text": text,
-        "filename": filename,
-        "voice": voice,
-        "lang": lang
-    }
-    
-    result = _api_call("speech/tts", params=params)
-    
-    if result.get("status") == "error":
-        raise RuntimeError(f"AI-Core 서버에서 TTS 파일 생성에 실패했습니다: {result.get('message')}")
-    
-    # 성공 시 특별한 반환값 없음 (기존과 동일)
-    return
+    self.otts.text_to_speech(text=text, filename=filename, voice=voice, lang=lang, static=0)
+
 
 class Dialog:
   """

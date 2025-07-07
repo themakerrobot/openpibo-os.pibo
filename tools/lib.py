@@ -104,6 +104,7 @@ class Pibo:
       if self.cam:
         self.cam.putText(img, '+', (self.imgX-5,self.imgY), 0.6, (100,100,200), 3)
       asyncio.run(self.emit('stream', {'img':to_base64(img), 'data':res}, callback=None))
+      time.sleep(0.5)
 
   def face_detect(self):
     im = self.frame.copy()

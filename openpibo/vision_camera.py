@@ -51,6 +51,7 @@ Functions:
     # 아래의 모든 예제 이전에 위 코드를 먼저 사용합니다.
   """
 
+
   def __init__(self, cam=0, width=None, height=None):
     """
     Camera 클래스를 초기화합니다.
