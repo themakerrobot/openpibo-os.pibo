@@ -490,6 +490,21 @@ socket.on("system", (data) => {
   $("#network_info").html(`<i class="fas fa-network-wired"></i> ${data[7]}, <i class="fa-solid fa-wifi"></i> ${data[6]}/${data[8]}`);
 });
 
+socket.on("update_battery", (data) => {
+  let bat = Number(data.split("%")[0]);
+  let bat_str = ['empty', 'quarter', 'half', 'three-quarters', 'full'];
+
+  $("#d_battery_val").html(
+    `<i class='fa fa-battery-${bat_str[Math.floor(bat / 25)]}' aria-hidden='true'></i>${data} `
+  );
+});
+
+socket.on("update_dc", (data) => {
+  $("#d_dc_val").html(
+    data.toUpperCase() == "ON" ? "<i class='fa fa-plug' aria-hidden='true'></i>" : ""
+  );
+});
+
 codeTypeBtns.forEach((btn) => {
   const handler = (e) => {
     let before_codetype = "";
@@ -1381,21 +1396,6 @@ $("#prompt").on("keypress", (evt) => {
 
 $("#prompt_bt").on('click', function () {
   socket.emit("prompt", $("#prompt").val().trim());
-});
-
-socket.on("update_battery", (data) => {
-  let bat = Number(data.split("%")[0]);
-  let bat_str = ['empty', 'quarter', 'half', 'three-quarters', 'full'];
-
-  $("#d_battery_val").html(
-    `<i class='fa fa-battery-${bat_str[Math.floor(bat / 25)]}' aria-hidden='true'></i>${data} `
-  );
-});
-
-socket.on("update_dc", (data) => {
-  $("#d_dc_val").html(
-    data.toUpperCase() == "ON" ? "<i class='fa fa-plug' aria-hidden='true'></i>" : ""
-  );
 });
 
 const setLanguage = (langCode) => {

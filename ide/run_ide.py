@@ -5,6 +5,7 @@ import shutil
 import base64
 import datetime
 import subprocess
+import requests
 from pathlib import Path
 from typing import List, Union
 
@@ -145,7 +146,7 @@ async def download_item(filename: str):
     shutil.make_archive(base_name, 'zip', root_dir=full_path)
 
     return FileResponse(zip_path, media_type="application/zip", filename="download.zip")
-    
+
   else:
     raise JSONResponse(content={'error':"올바른 파일 또는 폴더가 아닙니다."}, status_code=403)
 
@@ -534,6 +535,16 @@ async def periodic_system_update():
       await app.sio.emit('system', system_info)
     except Exception as err:
       await app.sio.emit('update', {'dialog': '초기화: 시스템 파일 오류입니다.'})
+
+    try:
+      await app.sio.emit('update_battery', requests.get('http://127.0.0.1:8080/device/%2315%3A%21').json().split(':')[1])
+    except Exception as err:
+      await app.sio.emit('update_battery', '0%')
+
+    try:
+      await app.sio.emit('update_dc', requests.get('http://127.0.0.1:8080/device/%2314%3A%21').json().split(':')[1])
+    except Exception as err:
+      await app.sio.emit('update_dc', 'off')
 
     await asyncio.sleep(10)
 
