@@ -121,3 +121,15 @@ class CustomClassifier:
         return result['name'], result['predictions']
     else:
         raise Exception(f"Failed to predict with Custom Classifier model: {result.get('message', 'Unknown error')}")
+
+  def convert_tfjs_to_keras(self, model_path, label_path):
+    """
+    tfjs 모델을 Keras 모델로 변환합니다. (서버 API 호출)
+
+    :param str model_path: 모델 파일 경로
+    :param str label_path: 라벨 파일 경로
+    """
+    params = {"model_path": model_path, "label_path": label_path}
+    result = _api_call("cf/convert_tfjs_to_keras", params=params)
+    if result.get("status") == "error":
+        raise Exception(f"Failed to convert Custom Classifier model on server: {result.get('message')}")

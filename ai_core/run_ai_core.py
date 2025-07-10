@@ -409,6 +409,15 @@ def cf_predict(req: AIRequest):
     except Exception as e:
         return create_json_response({"data": {"status": "error", "message": str(e)}})
 
+@app.post("/cf/convert_tfjs_to_keras")
+def cf_load(req: AIRequest):
+    p = req.params
+    try:
+        pibo_cf.convert_tfjs_to_keras(p["model_path"], p["label_path"])
+        return {"data": {"status": "success"}}
+    except Exception as e:
+        return create_json_response({"data": {"status": "error", "message": str(e)}})
+
 @app.post("/speech/tts")
 def speech_tts(req: AIRequest):
     p = req.params

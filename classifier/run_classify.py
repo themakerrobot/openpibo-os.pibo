@@ -167,7 +167,7 @@ def cleanup_work_dir(work_dir):
 
 @app.post("/convert")
 async def convert_tfjs_to_keras_api(tfjs_zip: UploadFile = File(...), background_tasks: BackgroundTasks = BackgroundTasks()):
-    work_dir = f"tmp_{uuid.uuid4()}"
+    work_dir = f"/home/pi/tmp_{uuid.uuid4()}"
     os.makedirs(work_dir, exist_ok=True)
     try:
         zip_path = os.path.join(work_dir, tfjs_zip.filename)

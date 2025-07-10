@@ -112,6 +112,10 @@ async def upload_csv(data:UploadFile = File(...)):
     return JSONResponse(content={'result':'csv 파일 에러'}, status_code=500)
 
 ## socktio
+@app.sio.on('onoff')
+async def onoff(sid, d=None):
+  await emit('onoff', False if pibo is None else True)
+
 # vision
 @app.sio.on('disp_vision')
 async def disp_vision(sid, d=None):
