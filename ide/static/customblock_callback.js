@@ -401,6 +401,28 @@ Blockly.Python.forBlock['speech_tts_play'] = function(block) {
   const volume = Blockly.Python.valueToCode(block, 'volume', Blockly.Python.ORDER_ATOMIC);
   return `speech.tts(text=${text}, filename='/home/pi/tmp.mp3', voice='${voice}')\naudio.play('/home/pi/tmp.mp3', ${volume})\n`;
 }
+Blockly.Python.forBlock['speech_mtts'] = function(block) {
+  Blockly.Python.definitions_['from_speech_import_Speech'] = 'from openpibo.speech import Speech';
+  Blockly.Python.definitions_['assign_speech'] = 'speech = Speech()';
+
+  const text = Blockly.Python.valueToCode(block, 'text', Blockly.Python.ORDER_ATOMIC);
+  const dir = block.getFieldValue("dir");
+  const filename = Blockly.Python.valueToCode(block, 'filename', Blockly.Python.ORDER_ATOMIC);
+  const extension = block.getFieldValue("extension");
+  const lang = block.getFieldValue("lang");
+  return `speech.tts(text=${text}, filename='${dir}'+${filename}+'${extension}', lang='${lang}')\n`;
+}
+Blockly.Python.forBlock['speech_mtts_play'] = function(block) {
+  Blockly.Python.definitions_['from_speech_import_Speech'] = 'from openpibo.speech import Speech';
+  Blockly.Python.definitions_['assign_speech'] = 'speech = Speech()';
+  Blockly.Python.definitions_['from_audio_import_Audio'] = 'from openpibo.audio import Audio';
+  Blockly.Python.definitions_['assign_audio'] = 'audio = Audio()';  
+
+  const text = Blockly.Python.valueToCode(block, 'text', Blockly.Python.ORDER_ATOMIC);
+  const volume = Blockly.Python.valueToCode(block, 'volume', Blockly.Python.ORDER_ATOMIC);
+  const lang = block.getFieldValue("lang");
+  return `speech.tts(text=${text}, filename='/home/pi/tmp.mp3', lang='${lang}')\naudio.play('/home/pi/tmp.mp3', ${volume})\n`;
+}
 Blockly.Python.forBlock['speech_gtts'] = function(block) {
   Blockly.Python.definitions_['from_speech_import_Speech'] = 'from openpibo.speech import Speech';
   Blockly.Python.definitions_['assign_speech'] = 'speech = Speech()';
