@@ -217,10 +217,10 @@ tools_bt.addEventListener("click", function () {
     return response.text();
   })
   .then(data => {
-    setTimeout(function() {
+    //setTimeout(function() {
       window.open(`http://${location.hostname}:50000`);
       tools_bt.innerHTML = tools_bt_innerHTML;
-    }, 3000);
+    //}, 3000);
   //   console.log('데이터 수신 성공:', data);
   })
   .catch(error => {
