@@ -40,7 +40,7 @@ except Exception as ex:
 # REST API
 @app.get('/', response_class=HTMLResponse)
 async def f(request:Request):
-  await emit('onoff', False if pibo is None else True)
+  #await emit('onoff', False if pibo is None else True)
   return templates.TemplateResponse("index.html", {"request": request})
 
 @app.post('/import_motion')

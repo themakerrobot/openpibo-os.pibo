@@ -220,9 +220,9 @@ let onoff_intv = setInterval(() => {
   onoffCount.innerHTML = `<i style="opacity:0.6">${++onoff_count}</i>`;
 }, 2000);
 
-setInterval(() => {
-  socket.emit("onoff");
-}, 5000);
+//setInterval(() => {
+//  socket.emit("onoff");
+//}, 5000);
 
 socket.on("onoff", function (data) {
   onoffVal.innerHTML = data?
