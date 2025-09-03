@@ -31,7 +31,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
-apmode = True
+apmode = False
 
 templates = Jinja2Templates(directory="/home/pi/openpibo-os/docs")
 app.mount("/build", StaticFiles(directory="/home/pi/openpibo-os/docs/build"), name="build")
@@ -127,7 +127,7 @@ def boot():
   for i in range(1,10):
     tmp = os.popen('/home/pi/openpibo-os/system/system.sh').read().strip('\n').split(',')
     if (tmp[6] != '' and tmp[6][0:3] != '169') or (tmp[7] != '' and tmp[7][0:3] != '169'):
-      os.system("/home/pi/openpibo-os/system/hotspot.sh stop")
+      #os.system("/home/pi/openpibo-os/system/hotspot.sh stop")
       break
     ole.draw_text((5,5), "˚".join(["" for _ in range(i+1)]))
     ole.show()

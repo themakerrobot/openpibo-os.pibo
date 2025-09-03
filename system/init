@@ -28,9 +28,15 @@ mkdir -p /home/pi/mymodel
 # motor init
 sudo servo init
 
+#sudo nmcli connection down "pibo-wifi" || true
+#sudo nmcli connection del "pibo-wifi" || true
+#sudo nmcli connection down "pibo-ap" || true
+#sudo nmcli connection del "pibo-ap" || true
+#sudo rm -rf /etc/NetworkManager/system-connections/*.nmconnection*
+
 # ap start
 echo "START - ap-start"
-sudo /home/pi/openpibo-os/system/hotspot.sh start
+#sudo /home/pi/openpibo-os/system/hotspot.sh start
 
 # network init
 echo "START - booting.py"
