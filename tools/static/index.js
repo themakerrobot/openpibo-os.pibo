@@ -230,7 +230,7 @@ socket.on("onoff", function (data) {
     : `<i class="fas fa-toggle-off fa-sm fa-fade" style="--fa-animation-duration: 2s; --fa-fade-opacity: 0.6">&nbsp;off</i>`
   console.log('onoff', data)
 
- /* if (data == true) {
+  if (data == true) {
     socket.emit("disp_motion");
     clearInterval(onoff_intv);
     onoffCount.innerHTML = "";
@@ -239,7 +239,7 @@ socket.on("onoff", function (data) {
       $("#m" + i + "_range").val(motor_default[i]);
     }
     socket.emit("set_motors", { pos_lst: motor_default });
-  }*/
+  }
 });
 
 const getVisions = (socket) => {
