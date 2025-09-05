@@ -494,7 +494,7 @@ async function predictImage() {
 socket.emit('control_cam', false);
 cameraEnabled = false;
 setTimeout(() => {
-    document.getElementById('camera').src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z/C/HwAF/gL+eCDUMAAAAABJRU5ErkJggg==";
+    document.getElementById('camera').src = "data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==";
 }, 2000);
 
 // 7) 카메라 활성화/비활성화 버튼은 기존 toggleCamera() 사용 (단, 상태에 따라 호출)
@@ -505,7 +505,7 @@ function toggleCamera() {
         cameraEnabled = false;
         // 버튼 상태는 각 버튼의 onclick 조건문에서 처리
         setTimeout(() => {
-            document.getElementById('camera').src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z/C/HwAF/gL+eCDUMAAAAABJRU5ErkJggg==";
+            document.getElementById('camera').src = "data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==";
         }, 2000);
     } else {
         socket.emit('control_cam', true);
