@@ -90,8 +90,8 @@ const translations = {
     en: "Mic"
   },
   file : {
-    ko: "파일",
-    en: "File"
+    ko: "파일 이름",
+    en: "File name"
   },
   second: {
     ko: "초",
@@ -106,7 +106,7 @@ const translations = {
     en: "Replay"
   },
   audio_play : {
-    ko: "음악재생",
+    ko: "음악 재생",
     en: "Play Audio"
   },
 
@@ -147,7 +147,7 @@ const translations = {
     en: "Stop"
   },
   upload_to_myaudio: {
-    ko: "내 오디오에 업로드하기",
+    ko: "내 오디오에 업로드",
     en: "Upload to my audio"
   },
   upload: {
@@ -163,7 +163,7 @@ const translations = {
     en: "Reset"
   },
   enter_text: {
-    ko: "문자입력하기",
+    ko: "문자 입력",
     en: "Enter text"
   },
   display: {
@@ -240,15 +240,11 @@ const translations = {
     en: "My image"
   },
   enter_image_robot: {
-    ko: "사진입력하기(로봇)",
+    ko: "사진 입력",
     en: "Enter image stored in the Robot"
   },
-  enter_image_pc: {
-    ko: "사진입력하기(PC)",
-    en: "Enter image stored in the PC"
-  },
   upload_to_myimage: {
-    ko: "내 이미지에 업로드하기",
+    ko: "내 이미지에 업로드",
     en: "Upload to my image"
   },
   check_sensor: {

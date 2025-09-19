@@ -840,27 +840,11 @@ i.fa > span {
   padding-left: 0.25em;
 }
 
-.upload_label {
-  cursor: pointer;
-  font-size:1.3rem;
-  background-color: var(--light-yellow);
-}
-
-.upload_label:hover {
-  box-shadow: 0 3px var(--mid-gray);
-}
-
-.upload_div input[type="file"] {
-  width: 0px;
-  height: 0px;
-  padding: 0;
-  overflow: hidden;
-  margin: -1px;
-  border: 0;
-  position:absolute;
-}
-
-label[for=v_import_motion] {
+label[for=v_import_motion],
+label[for=upload_audio],
+label[for=upload_image],
+label[for=s_upload_csv]
+{
   font-family: "Noto Sans Regular", sans-serif;
   font-size:1.2rem;
   font-weight: normal;
@@ -872,12 +856,20 @@ label[for=v_import_motion] {
   box-shadow: 0 4px var(--mid-gray);
 }
 
-label[for=v_import_motion]:hover {
+label[for=v_import_motion]:hover,
+label[for=upload_audio]:hover,
+label[for=upload_image]:hover,
+label[for=s_upload_csv]:hover
+{
   font-weight: bold;
   background-color: var(--dark-yellow);
 }
 
-label[for=v_import_motion]:active {
+label[for=v_import_motion]:active,
+label[for=upload_audio]:active,
+label[for=upload_image]:active,
+label[for=s_upload_csv]:active
+{
   background-color: var(--dark-yellow);
   box-shadow: 0 2px var(--mid-gray);
   position: relative;

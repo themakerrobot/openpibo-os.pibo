@@ -1,6 +1,6 @@
 <!DOCTYPE html>
   <head>
-    <title>Tools for piBo</title>
+    <title>Pibo Maker</title>
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
@@ -23,28 +23,20 @@
       <div style="float:left">
         <h2>
           <i class="fa-solid fa-microchip">Tools <span id="state"></span></i>&nbsp;
-          <span id="onoff_val"></span>
-          <span id="onoff_count"></span>
+          <i class="fa-solid fa-left-right" style="opacity:30%"></i>&nbsp;
+          <a id="devtool_bt">
+             <i class="fa-solid fa-code" style="opacity:30%">IDE</i>
+          </a>
         </h2>
       </div>
       <div style="float:right">
         <h2 style="display: flex; align-items: center; justify-content: center;">
-                    
-          <i class="fa-solid fa-volume-high"></i>&nbsp;
-          <select id="volume">
-            <option value="100">100</option>
-            <option value="90">90</option>
-            <option value="80" selected>80</option>
-            <option value="70">70</option>
-            <option value="60">60</option>
-            <option value="50">50</option>
-            <option value="40">40</option>
-            <option value="30">30</option>
-            <option value="20">20</option>
-            <option value="10">10</option>
-            <option value="0">0</option>
-          </select>&nbsp;&nbsp;
-          <a id="fullscreen_bt"><span id='fullscreen_txt'></span></a>&nbsp;&nbsp;
+          <a id="top_poweroff_bt">
+            <i class="fa-solid fa-power-off"></i>
+          </a>&nbsp;&nbsp;
+          <a id="top_restart_bt">
+            <i class="fa-solid fa-arrow-rotate-right"></i>
+          </a>&nbsp;&nbsp;
           <select id="language">
             <option value="ko">한국어</option>
             <option value="en">English</option>
@@ -56,39 +48,21 @@
       </div>
     </header>
 
-    <div class="alert-popup" id="alertPopup" style="display:none;">
-      <div class="alert-popup-content">
-        <p id="alertMessageElement">alert text</p>
-        <div class="popup-buttons">
-          <button id="alertOkBtn"><span data-key="confirm"></span></button>
-        </div>
-      </div>
-    </div>
-
-    <div class="prompt-popup" id="promptPopup" style="display:none;">
-      <div class="prompt-popup-content">
-        <p id="promptMessageElement">prompt text</p>
-        <input type="text" id="promptInputElement" />
-        <div class="popup-buttons">
-          <button id="promptOkBtn"><span data-key="confirm"></span></button>
-          <button id="promptCancelBtn"><span data-key="cancel"></span></button>
-        </div>
-      </div>
-    </div>
-
-    <div class="confirm-popup" id="confirmPopup" style="display:none;">
-      <div class="confirm-popup-content">
-        <p id="confirmMessageElement">confirm text</p>
-        <div class="popup-buttons">
-          <button id="confirmOkBtn"><span data-key="confirm"></span></button>
-          <button id="confirmCancelBtn"><span data-key="cancel"></span></button>
-        </div>
-      </div>
-    </div>
-
     <main>
       <nav>
         <ul>
+          <li style="padding: 10px 0 20px 0">
+            <label class="toggle">
+              <input
+                class="toggle-checkbox"
+                type="checkbox"
+                name="onoff_sel"
+                disabled
+              />
+              <div class="toggle-switch"></div>
+            </label>
+          </li>
+          <li><button name="home"></li>
           <li><button name="device"></li>
           <li><button name="motion"></li>
           <li><button name="vision"></li>
@@ -96,9 +70,173 @@
           <li><button name="simulator"></li>
         </ul>
       </nav>
+      <div class="wifi-popup" id="wifiPopup" style="display:none">
+        <div class="wifi-popup-content">
+          <h3>
+            <div style="float:left"><i class="fa-solid fa-circle-exclamation"></i>&nbsp;<span data-key="internet_settings"></span></div>
+            <div style="float:right"><a id="hidewifi"><i class="fa-solid fa-rectangle-xmark"></i></a></div>
+          </h3>
+          <h3>&nbsp;</h3>
+          <span id="network_info"></span>
+          <br>
+          <table style="width:100%">
+            <tr>
+              <td>
+                <span data-key="wifi_type"></span>
+              </td>
+              <td colspan="2">
+                <input type="radio" name="wifi_type_sel" value="wpa-psk" checked />wpa-psk
+                <input type="radio" name="wifi_type_sel" value="none" />none
+                <input type="radio" name="wifi_type_sel" value="wpa-eap" />wpa-eap
+                <input type="radio" name="wifi_type_sel" value="custom" />cutsom
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <span data-key="wifi_name"></span>
+              </td>
+              <td>
+                <input type="text" name="ssid" id="ssid" disabled />
+              </td>
+              <td rowspan="3">
+                <button type="button" class="confirm" id="wifi_bt"><i class="fa-solid fa-check-double"></i>&nbsp;<span data-key="confirm"></span></button>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <span data-key="wifi_identity"></span>
+              </td>
+              <td>
+                <input type="text" name="identity" id="identity" disabled />
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <span data-key="password"></span>
+              </td>
+              <td>
+                <input type="password" id="psk" name="psk" /><input type="checkbox" id="psk_visible" name="psk_visible" />
+              </td>
+            </tr>
+          </table>
+
+          <div style="height:190px;overflow-y:scroll;">
+            <table class="wifi_list" id="wifi_list">
+              <thead><tr><th style="width:450px;"><span data-key="wifi_name"></span></th><th><span data-key="wifi_signal"></span></th><th><span data-key="wifi_psk"></span></th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="usedata-popup" id="usedataPopup" style="display:none">
+        <div class="usedata-popup-content">
+          <h3>
+            <div style="float:left"><i class="fa-solid fa-circle-exclamation"></i>&nbsp;<span data-key="usedata"></span></div>
+            <div style="float:right"><a id="hideUsedata"><i class="fa-solid fa-rectangle-xmark"></i></a></div>
+          </h3>
+          <h3>&nbsp;</h3>
+          <div style="height:210px;overflow-y:scroll" id="usedata_json"></div>
+        </div>
+      </div>
 
       <div class="content">
         <div class="wrapper">
+          <h4 id="content_header">HOME</h4>
+          <article id="article_home">
+            <section>
+              <ul style="list-style-type:none">
+                <li>
+                  <header>
+                    <a name="home_ds"><i class="fa-solid fa-square-check">  Home</i></a>
+                  </header>
+                  <span data-key="home_description"></span>
+                </li>
+                <br>
+                <li>
+                  <header>
+                    <a name="device_ds"><i class="fa-solid fa-square-check">  Device</i></a>
+                  </header>
+                  <span data-key="device_description"></span>
+                </li>
+                <br>
+                <li>
+                  <header>
+                    <a name="motion_ds"><i class="fa-solid fa-square-check">  Motion</i></a>
+                  </header>
+                  <span data-key="motion_description"></span>
+                </li>
+                <br>
+                <li>
+                  <header>
+                    <a name="vision_ds"><i class="fa-solid fa-square-check">  Vision</i></a>
+                  </header>
+                  <span data-key="vision_description"></span>
+                </li>
+                <br>
+                <li>
+                  <header>
+                    <a name="speech_ds"><i class="fa-solid fa-square-check">  Speech</i></a>
+                  </header>
+                  <span data-key="speech_description"></span>
+                </li>
+                <br>
+                <li>
+                  <header>
+                    <a name="simulator_ds"><i class="fa-solid fa-square-check">  Simulator</i></a>
+                  </header>
+                  <span data-key="simulator_description"></span>
+                </li>
+              </ul>
+            </section>
+            <section>
+              <h3 class="mark"><span data-key="system_settings"></span></h3>
+              <div class="system-config-item">
+                <header><span data-key="volume_setting"></span></header>
+                <div>
+                  <input
+                    type="number"
+                    id="volume"
+                    min="0"
+                    max="100"
+                    value="80"
+                    pattern="\d*"
+                  />
+                  <i class="fa-solid fa-percent"></i>
+                </div>
+              </div>
+              <div class="system-config-item">
+                <header><span data-key="eyecolor_checking"></span></header>
+                <input
+                  type="text"
+                  name="eye"
+                  id="eye"
+                  style="width: 200px"
+                  disabled
+                />
+              </div>
+              <br>
+              <div class="system-config-item">
+                <div>
+                  <button id="poweroff_bt">
+                    <i class="fa-solid fa-power-off"></i>
+                    <span data-key="poweroff"></span>
+                  </button>
+                  <button id="restart_bt">
+                    <i class="fa-solid fa-arrow-rotate-right"></i>
+                    <span data-key="restart"></span>
+                  </button>
+                  <button id="restore_bt">
+                    <i class="fa-solid fa-eraser"></i>
+                    <span data-key="restore"></span>
+                  </button>
+                  <button id="swupdate_bt">
+                    <i class="fa-solid fa-cloud-arrow-down"></i>
+                    <span data-key="swupdate"></span>
+                  </button>
+                </div>
+              </div>
+            </section>
+          </article>
           <article id="article_device">
             <section>
               <div>
@@ -106,9 +244,9 @@
                   <h3 class="mark"><span data-key="eyecolor_setting"></span></h3>
                 </div>
                 <div style="float: right">
-                  <button id="eye_reset_bt">
-                    <i class="fa-solid fa-eraser"></i>
-                    <span data-key="reset"></span>
+                  <button id="eye_save_bt">
+                    <i class="fa-solid fa-floppy-disk"></i>
+                    <span data-key="save"></span>
                   </button>
                 </div>
               </div>
@@ -206,7 +344,10 @@
 
               <div style="margin-top: 20px">
                 <h3 class="mark"><span data-key="audio_use"></span></h3>
-                *<span class="label" data-key="mic"></span> 
+                <span class="label"><span data-key="mic"></span></span>
+                <div style="margin-top: 10px">
+                  <span data-key="file"></span> <i class="fa-solid fa-dollar-sign"></i>~/myaudio/mic.wav
+                </div>
                 <div style="margin-top: 10px">
                   <input
                     type="number"
@@ -232,7 +373,7 @@
               </div>
 
               <div style="margin-top: 20px">
-                *<span class="label" data-key="audio_play"></span>
+                <span class="label"><span data-key="audio_play"></span></span> <i class="fa-solid fa-dollar-sign"></i>~/openpibo-files/audio
                 <div style="margin-top: 10px">
                   <select id="audiopath" name="audiopath">
                     <option value="-" data-key="category"></option>
@@ -258,14 +399,13 @@
               </div>
 
               <div style="margin-top: 20px">
-                *<span class="label" data-key="upload_to_myaudio"></span>
-                <div style="margin-top: 10px">
-                  <label for="upload_audio" title="Upload"><i class="fa-solid fa-file-upload"></i>&nbsp;<span data-key="upload"></span></label>
-                  <div class="filebox">
-                    <form>
-                      <input type="file" id="upload_audio" accept=".mp3, .wav" />
-                    </form>
-                  </div>
+                <span class="label" data-key="upload_to_myaudio"></span> <i class="fa-solid fa-dollar-sign"></i>~/myaudio
+                &nbsp;&nbsp;
+                <label for="upload_audio" class="upload_label" title="Upload"><i class="fa-solid fa-file-upload"></i>&nbsp;<span data-key="upload"></span></label>
+                <div class="upload_div">
+                  <form>
+                    <input type="file" id="upload_audio" accept=".mp3, .wav" />
+                  </form>
                 </div>
               </div>
             </section>
@@ -283,7 +423,7 @@
                 </div>
               </div>
               <div class="oled-group">
-                *<span class="label" data-key="enter_text"></span>
+                <span class="label" data-key="enter_text"></span>
                 <div style="margin-top: 10px" class="horizontal input-wrap">
                   <label for="d_ox_val" class="label">
                     <i class="fa-solid fa-x"></i>
@@ -337,8 +477,8 @@
                   </button>
                 </div>
 
-                <div style="margin-top: 20px">
-                  *<span class="label" data-key="enter_image_robot"></span>
+                <div style="margin-top: 10px">
+                  <span class="label" data-key="enter_image_robot"></span> <i class="fa-solid fa-dollar-sign"></i>~/openpibo-files/image
                   <div style="margin-top: 10px">
                     <select id="oledpath" name="oledpath">
                       <option value="-" data-key="category"></option>
@@ -367,32 +507,38 @@
                 </div>
 
                 <div style="margin-top: 20px">
-                  *<span class="label" data-key="upload_to_myimage"></span>
-                  <div style="margin-top: 10px">
-                    <label for="upload_image"><i class="fa-solid fa-file-upload"></i>&nbsp;<span data-key="upload"></span></label>
-                    <div class="filebox">
-                      <form>
-                        <input type="file" id="upload_image" accept=".jpg, .png" />
-                      </form>
-                    </div>
+                  <span class="label" data-key="enter_image_pc"></span>
+                  &nbsp;&nbsp;
+                  <label for="upload_oled" class="upload_label"><i class="fa-solid fa-file-upload"></i>&nbsp;<span data-key="upload"></span></label>
+                  <div class="upload_div">
+                    <form>
+                      <input type="file" id="upload_oled" accept=".jpg, .png" />
+                    </form>
+                  </div>
+                </div>
+
+                <div style="margin-top: 20px">
+                  <span class="label" data-key="upload_to_myimage"></span> <i class="fa-solid fa-dollar-sign"></i>~/myimage
+                  &nbsp;&nbsp;
+                  <label for="upload_image" class="upload_label"><i class="fa-solid fa-file-upload"></i>&nbsp;<span data-key="upload"></span></label>
+                  <div class="upload_div">
+                    <form>
+                      <input type="file" id="upload_image" accept=".jpg, .png" />
+                    </form>
                   </div>
                 </div>
               </div>
               <div class="device-status-group">
-                <div style="margin-top: 20px">
                 <h3 class="mark" data-key="check_sensor"></h3>
-                  <div style="margin-top: 10px">
-                    <i class="fa-solid fa-person-rays"></i>&nbsp;&nbsp;
-                    <span class="label" data-key="check_pir"></span>
-                    <i class="fa-solid fa-terminal fa-beat-fade"></i>&nbsp;
-                    <i><span id="d_pir_val"></span></i>
-                  </div>
-                  <div style="margin-top: 10px">
-                    <i class="fa-solid fa-hand-sparkles"></i>&nbsp;
-                    <span class="label" data-key="check_touch"></span>
-                    <i class="fa-solid fa-terminal fa-beat-fade"></i>&nbsp;
-                    <i><span id="d_touch_val"></span></i>
-                  </div>
+                <div>
+                  <i class="fa-solid fa-person-rays"></i>&nbsp;<span data-key="check_pir"></span>
+                  <i class="fa-solid fa-terminal fa-beat-fade"></i>
+                  <i><span id="d_pir_val"></span></i>
+                </div>
+                <div>
+                  <i class="fa-solid fa-hand-sparkles"></i>&nbsp;<span data-key="check_touch"></span>
+                  <i class="fa-solid fa-terminal fa-beat-fade"></i>
+                  <i><span id="d_touch_val"></span></i>
                 </div>
               </div>
             </section>
@@ -407,7 +553,7 @@
                   </button>
                 </div>
                 <div style="float:right">
-                  <span data-key="time"></span>
+                  <span data-key="time"></span>:
                   <input
                     type="number"
                     name="m_time_val"
@@ -643,7 +789,7 @@
             <section>
               <div class="motion-record">
                 <div>
-                  <span data-key="play_cycle"></span>
+                  <span data-key="play_cycle"></span>:
                   <input
                     type="number"
                     name="play_cycle_val"
@@ -689,7 +835,7 @@
                   </table>
                 </div>
                 <div class="motion-name-wrap">
-                  <span data-key="motion_name"></span>
+                  <span data-key="motion_name"></span>:
                   <input
                     type="text"
                     name="motion_name_val"
@@ -718,7 +864,7 @@
                     <i class="fas fa-file-export"></i>
                     <span data-key="export"></span>
                   </button>
-                  <label for="v_import_motion"><i class="fas fa-file-import"></i>&nbsp;<span data-key="import"></span></label>      
+                  <label for="v_import_motion"><i class="fas fa-file-import"></i>&nbsp;</i><span data-key="import"></span></label>      
                   <div class="filebox">
                     <form>
                       <input type="file" id="v_import_motion" accept=".json" />
@@ -731,12 +877,11 @@
                   <textarea
                     name="motor_record"
                     id="motor_record"
-                    rows="5"
+                    rows="7"
                     wrap="hard"
                     disabled
                   ></textarea>
-                  <span class="label" data-key="example"></span>
-                  <i class="fa-solid fa-terminal fa-beat-fade"></i>&nbsp;
+                  <span data-key="example"></span>:
                   <b><span id="motion_samples"></span></b>
                 </div>
               </div>
@@ -752,6 +897,10 @@
                   <button id="v_capture">
                     <i class="fa-solid fa-image"></i>
                     <span data-key="save_image"></span>
+                  </button>
+                  <button id="v_capture_multi">
+                    <i class="fa-solid fa-images"></i>
+                    <span data-key="save_images"></span>
                   </button>
                 </div>
               </div>
@@ -786,34 +935,40 @@
                 <h3 class="mark" data-key="vision_use"></h3>
               </div>
               <div>
-                *<span class="label" data-key="function_setting"></span> 
-                <div style="margin-top: 10px">
-                  <select id="v_func_type">
-                    <option value="camera" data-key="category"></option>
-                    <option value="grayscale" data-key="v_grayscale"></option>
-                    <option value="canny" data-key="v_canny"></option>
-                    <option value="cartoon" data-key="v_cartoon"></option>
-                    <option value="sketch_rgb" data-key="v_sketch_rgb"></option>
-                    <option value="detail" data-key="v_detail"></option>
-                    <option value="edgePreservingFilter" data-key="v_edgePreservingFilter"></option>
-                    <option value="qr" data-key="v_qr"></option>
-                    <option value="face" data-key="v_face"></option>
-                    <option value="face_landmark" data-key="v_face_landmark"></option>
-                    <option value="object" data-key="v_object"></option>
-                    <!-- <option value="classify" data-key="v_classify"></option> -->
-                    <option value="hand" data-key="v_hand"></option> 
-                    <option value="pose" data-key="v_pose"></option>
-                    <!-- <option value="tm" data-key="v_tm"></option> -->
-                    <option value="track" data-key="v_track"></option>
-                    <option value="marker" data-key="v_marker"></option>
-                  </select>
+                <header data-key="function_setting"></header>
+                <select id="v_func_type">
+                  <option value="camera" data-key="category"></option>
+                  <option value="grayscale" data-key="v_grayscale"></option>
+                  <option value="canny" data-key="v_canny"></option>
+                  <option value="cartoon" data-key="v_cartoon"></option>
+                  <option value="sketch_g" data-key="v_sketch_g"></option>
+                  <option value="sketch_rgb" data-key="v_sketch_rgb"></option>
+                  <option value="detail" data-key="v_detail"></option>
+                  <option value="edgePreservingFilter" data-key="v_edgePreservingFilter"></option>
+                  <option value="qr" data-key="v_qr"></option>
+                  <option value="face" data-key="v_face"></option>
+                  <option value="face_landmark" data-key="v_face_landmark"></option>
+                  <option value="object" data-key="v_object"></option>
+                  <option value="classify" data-key="v_classify"></option>
+                  <option value="pose" data-key="v_pose"></option>
+                  <option value="tm" data-key="v_tm"></option>
+                  <option value="track" data-key="v_track"></option>
+                  <option value="marker" data-key="v_marker"></option>
+                </select>
+              </div>
+              <div>
+                <span class="label" style="font-size:medium" data-key="v_tm_model"></span> <i class="fa-solid fa-dollar-sign"></i>~/mymodel:
+                &nbsp;
+                <label for="v_upload_tm" class="upload_label"><i class="fa-solid fa-file-upload">&nbsp;</i><span data-key="upload"></span></label>      
+                <div class="upload_div">
+                  <form>
+                    <input type="file" id="v_upload_tm" accept=".zip" />
+                  </form>
                 </div>
               </div>
               <div>
-                *<span class="label" data-key="v_marker_length"></span> 
-                <div style="margin-top: 10px">
-                  <input type="number" id="marker_length" min="1" max="50" value="5" step="0.1" pattern="\d*" style="width:60px"/> cm
-                </div>
+                <span class="label" style="font-size:medium" data-key="v_marker_length"></span>: &nbsp;
+                <input type="number" id="marker_length" min="1" max="50" value="5" step="0.1" pattern="\d*" style="width:60px"/> cm
               </div>
               <h3 class="mark" data-key="result"></h3>
                 <textarea
@@ -832,12 +987,16 @@
                 <h3 class="mark" data-key="speak"></h3>
               </div>
               <div class="speech-input-group">
-                <span class="label" data-key="voice"></span>
+                <span class="label" data-key="voice"></span>:
                 <input type="radio" name="s_voice_en" value="on" checked />On
                 <input type="radio" name="s_voice_en" value="off" />Off
               </div>
               <div class="speech-input-group">
-                <span class="label" data-key="voice_type"></span>
+                <span class="label" data-key="file"></span>:
+                <i class="fa-solid fa-dollar-sign"></i>~/myaudio/tts.mp3
+              </div>
+              <div class="speech-input-group">
+                <span class="label" data-key="voice_type"></span>:
                 <select name="s_voice_type">
                   <option value="espeak" data-key="espeak"></option>
                   <option value="main" data-key="main"></option>
@@ -850,16 +1009,18 @@
                 </select>
               </div>
               <div class="speech-input-group">
-                <span class="label" data-key="text"></span>
+                <span class="label" data-key="text"></span>:
                 <input type="text" id="s_tts_val" />
                 <button id="s_tts_bt" style="width:120px">
                   <i class="fa-solid fa-play"></i>
                   <span data-key="execute"></span>
                 </button>
               </div>
-              <h3 class="mark" data-key="translate"></h3>
+              <div>
+                <h3 class="mark" data-key="translate"></h3>
+              </div>
               <div class="speech-input-group">
-                <span class="label" data-key="language_type"></span>
+                <span class="label" data-key="language_type"></span>:
                 <select name="s_lang_type">
                   <option value="en" data-key="s_lang_en"></option>
                   <option value="ko" data-key="s_lang_ko"></option>
@@ -875,7 +1036,7 @@
                 </select>
               </div>
               <div class="speech-input-group">
-                <span class="label" data-key="text"></span>
+                <span class="label" data-key="text"></span>:
                 <input type="text" id="s_translate_val" />
                 <button id="s_translate_bt" style="width:120px">
                   <i class="fa-solid fa-language"></i>
@@ -883,27 +1044,31 @@
                 </button>
               </div>
               <div class="speech-input-group">
-                <span class="label" data-key="result"></span>
+                <span class="label" data-key="result"></span>:
                 <input type="text" id="s_translate_result_val" disabled/>
               </div>
             </section>
             <section>
-              <h3 class="mark" data-key="talk"></h3>
+              <div>
+                <h3 class="mark" data-key="talk"></h3>
+              </div>
               <div class="speech-input-group">
-                <span class="label" data-key="conversation_dataset"></span>
-                <label for="s_upload_csv"><i class="fa-solid fa-file-upload">&nbsp;</i><span data-key="upload"></span></label>
-                <div class="filebox">
+                <span class="label" data-key="conversation_dataset"></span>:
+                &nbsp;
+                <label for="s_upload_csv" class="upload_label"><i class="fa-solid fa-file-upload">&nbsp;</i><span data-key="upload"></span></label>
+                <div class="upload_div">
                   <form>
                     <input type="file" id="s_upload_csv" accept=".csv" />
                   </form>
                 </div>
-                <button id="s_reset_csv_bt">
-                  <i class="fa-solid fa-eraser"></i>
-                  <span data-key="reset"></span>
-                </button>
+                  <!-- <label for="s_reset_csv" class="upload_label" title="초기화"> -->
+                    <a id="s_reset_csv_bt" class="upload_label" style="cursor:pointer">
+                      <i class="fa-solid fa-eraser">&nbsp;</i><b><span data-key="reset"></span></b>
+                    </a>
+                  <!-- </label> -->
               </div>
               <div class="speech-input-group">
-                <span class="label" data-key="question"></span>
+                <span class="label" data-key="question"></span>:
                 <input
                   type="text"
                   name="s_question_val"
@@ -915,7 +1080,7 @@
                 </button>
               </div>
               <div class="speech-input-group">
-                <span class="label" data-key="answer"></span>
+                <span class="label" data-key="answer"></span>:
                 <input
                   type="text"
                   name="s_answer_val"
@@ -1360,6 +1525,26 @@
       </div>
     </main>
   </body>
+  <footer>
+    <div style="float: left; padding: 0.7rem 0 0.7rem 0">
+      <i class="fa-solid fa-robot fa-flip"></i>
+      <span id="s_os_version"></span>,
+      <a id="usedata_bt"><i class="fa-solid fa-tags"></i><span id="s_serial"></span></a>
+      &nbsp;&nbsp;<a id="fullscreen_bt"><span id='fullscreen_txt'></span></a>
+    </div>
+    <div style="float: right; padding: 0.7rem 0 0.7rem 0">
+      <a id="showNetwork">
+        <span id="s_network"></span>
+      </a>,
+      <i class="fa-solid fa-temperature-empty"></i>
+      <span id="s_cpu_temp"></span>,
+      <i class="fa-solid fa-memory"></i>
+      <span id="s_memory"></span>,
+      <i class="fa-solid fa-clock"></i>
+      <span id="s_runtime"></span>, <span id="d_battery_val"></span>
+      <span id="d_dc_val"></span>
+    </div>
+  </footer>
   <script src="../static/ko2en.js?ver=240325v2"></script>
-  <script src="../static/index.js?ver=250919v2"></script>
+  <script src="../static/index.js?ver=240325v9"></script>
 </html>
