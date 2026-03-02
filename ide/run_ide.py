@@ -5,18 +5,24 @@ import shutil
 import base64
 import datetime
 import subprocess
+import json
 import requests
 from pathlib import Path
-from typing import List, Union
+from typing import List
 
-from fastapi import FastAPI, Request, UploadFile, File, Form, Body, Depends
-from fastapi.responses import HTMLResponse, FileResponse, JSONResponse, RedirectResponse
+from fastapi import FastAPI, Request, UploadFile, File, Body
+from fastapi.responses import HTMLResponse, FileResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi_socketio import SocketManager
-from starlette.websockets import WebSocketDisconnect
 from fastapi.templating import Jinja2Templates
 from contextlib import asynccontextmanager
+
+# SSE broadcast: list of asyncio.Queue per connected client
+sse_clients: list = []
+
+async def broadcast(data: dict):
+  for q in sse_clients:
+    await q.put(data)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -25,14 +31,12 @@ async def lifespan(app: FastAPI):
 
 try:
   app = FastAPI(lifespan=lifespan)
-  socket_manager = SocketManager(app=app, mount_location='/socket.io')
   templates = Jinja2Templates(directory="templates")
-
   app.mount("/static", StaticFiles(directory="static"), name="static")
   app.mount("/svg", StaticFiles(directory="svg"), name="svg")
   app.mount("/webfonts", StaticFiles(directory="webfonts"), name="webfonts")
 except Exception as ex:
-  print(f'Server error{ex}')
+  print(f'Server error: {ex}')
 
 app.add_middleware(
   CORSMiddleware,
@@ -90,354 +94,264 @@ def read_directory(d):
   except Exception as err:
     print(err)
     return False
-  return sorted(dlst, key=lambda x:x['name'])  + sorted(flst, key=lambda x:x['name'])
+  return sorted(dlst, key=lambda x: x['name']) + sorted(flst, key=lambda x: x['name'])
 
 
-def file_extension_check(filename):
-  return filename.split('.')[-1].lower()
-
-
-@app.get('/dir')
-async def get_directory(folderName: str):
-  #file_types = filetype.split(",")
-  files = []
-  try:
-    for p in os.scandir(folderName):
-      if not p.is_dir() and not p.is_symlink() and not p.name.startswith('.'):
-        #ext = file_extension_check(p.name)
-        #if ext in file_types:
-        files.append(p.name)
-  except Exception as err:
-    files = []
-  return files
-
+# ─── REST API endpoints ────────────────────────────────────────────────────────
 
 @app.get('/', response_class=HTMLResponse)
 async def read_root(request: Request):
   return templates.TemplateResponse("index.html", {"request": request})
 
-@app.get("/download")
-async def download_item(filename: str):
-  full_path = os.path.join(PATH, filename)
 
-  # 보호 디렉토리 체크
-  if is_protect(full_path):
-    await socket_manager.emit('update', {'dialog': '파일 다운로드 오류: 보호 디렉토리입니다.'})
-    return JSONResponse(content={'error': '파일 다운로드 오류: 보호 디렉토리입니다.'}, status_code=403)
-
-  # 존재 여부 체크
-  if not os.path.exists(full_path):
-    raise JSONResponse(content={'error':"파일 또는 폴더를 찾을 수 없습니다."}, status_code=404)
-
-  # 파일인 경우: 그대로 다운로드
-  if os.path.isfile(full_path):
-    return FileResponse(full_path, filename=filename)
-
-  # 폴더인 경우: /tmp/download.zip 로 압축 후 다운로드 (매번 새로 생성)
-  elif os.path.isdir(full_path):
-    zip_path = "/tmp/download.zip"
-
-    # 기존 압축 파일이 있다면 삭제
-    if os.path.exists(zip_path):
-      os.remove(zip_path)
-
-    # shutil.make_archive는 base_name 인자로 확장자 없는 경로를 요구함
-    base_name = "/tmp/download"  # 결과적으로 /tmp/download.zip 생성됨
-    shutil.make_archive(base_name, 'zip', root_dir=full_path)
-
-    return FileResponse(zip_path, media_type="application/zip", filename="download.zip")
-
-  else:
-    raise JSONResponse(content={'error':"올바른 파일 또는 폴더가 아닙니다."}, status_code=403)
-
-@app.post('/upload')
-async def upload_file(files: List[UploadFile] = File(...)):
-  if is_protect(PATH):
-    await socket_manager.emit('update', {'dialog': '파일 업로드 오류: 보호 디렉토리입니다.'})
-    return JSONResponse(content={'error': '파일 업로드 오류: 보호 디렉토리입니다.'}, status_code=403)
-  for file in files:
-    file_location = os.path.join(PATH, file.filename)
-    with open(file_location, "wb") as f:
-      content = await file.read()
-      f.write(content)
-  # Update file manager
-  directory_data = read_directory(PATH)
-  await socket_manager.emit('update_file_manager', {'data': directory_data})
-  try:
-    shutil.chown(PATH, user='pi', group='pi')
-  except Exception as err:
-    print(err)
-  return JSONResponse(content={"message": "파일 업로드 완료"}, status_code=200)
-
-
-@app.post('/show')
-async def show_file(data: UploadFile = File(...)):
-  try:
-    tmp_path = '/home/pi/.tmp.jpg'
-    with open(tmp_path, 'wb') as f:
-      content = await data.read()
-      f.write(content)
-    with open(tmp_path, 'rb') as f:
-      image_data = f.read()
-      encoded_image = base64.b64encode(image_data).decode('utf-8')
-      await socket_manager.emit('update', {'image': encoded_image, 'filepath': tmp_path})
-  except Exception as err:
-    print(err)
-    await socket_manager.emit('update', {'dialog': f'보기 오류: {str(err)}'})
-  return JSONResponse(content={"message": "이미지 표시 완료"}, status_code=200)
-
-@app.sio.on('connection')
-async def handle_connection(sid, *args, **kwargs):
-  pass  # Placeholder for any connection initialization
-
-@app.sio.on('init')
-async def handle_init(sid):
+@app.get('/api/init')
+async def api_init():
   global codeText, codePath
+  system_info = []
   try:
-    system_info = subprocess.check_output(['/home/pi/openpibo-os/system/system.sh']).decode().strip().split(',')
-    await app.sio.emit('system', system_info)
+    system_info = subprocess.check_output(
+      ['/home/pi/openpibo-os/system/system.sh']
+    ).decode().strip().split(',')
   except Exception as err:
     print(err)
-    await app.sio.emit('update', {'dialog': '초기화: 시스템 파일 오류입니다.'})
-
   try:
     with open(codePath, 'r') as f:
       codeText = f.read()
-  except Exception as err:
+  except Exception:
     codeText = ''
-  await app.sio.emit('init', {'codepath': codePath, 'codetext': codeText, 'path': PATH})
-
-@app.get('/tools')
-async def classifier(enable: str):
-  # print("Eanable tools:", enable)
-  if False:
-    return HTMLResponse(content="", status_code=200)
-  if enable == "on":
-    subprocess.Popen(['systemctl', 'stop', 'classify.service'])
-    subprocess.Popen(['systemctl', 'stop', 'llama-server.service'])
-    subprocess.Popen(['systemctl', 'start', 'tools.service'])
-  elif enable == "off":
-    subprocess.Popen(['systemctl', 'stop', 'tools.service'])
-  return HTMLResponse(content="", status_code=200)
-
-@app.get('/classifier')
-async def classifier(enable: str):
-  # print("Eanable classifier:", enable)
-  if False:
-    return HTMLResponse(content="", status_code=200)
-  if enable == "on":
-    subprocess.Popen(['systemctl', 'stop', 'tools.service'])
-    subprocess.Popen(['systemctl', 'stop', 'llama-server.service'])
-    subprocess.Popen(['systemctl', 'start', 'classify.service'])
-  elif enable == "off":
-    subprocess.Popen(['systemctl', 'stop', 'classify.service'])
-  return HTMLResponse(content="", status_code=200)
-
-@app.get('/llm')
-async def classifier(enable: str):
-  # print("Eanable llm:", enable)
-  if False:
-    return HTMLResponse(content="", status_code=200)
-  if enable == "on":
-    subprocess.Popen(['systemctl', 'stop', 'tools.service'])
-    subprocess.Popen(['systemctl', 'stop', 'classify.service'])
-    subprocess.Popen(['systemctl', 'start', 'llama-server.service'])
-  elif enable == "off":
-    subprocess.Popen(['systemctl', 'stop', 'llama-server.service'])
-  await asyncio.sleep(2)
-  return HTMLResponse(content="", status_code=200)
-
-@app.sio.on('reset_log')
-async def handle_reset_log(sid):
-  global record
-  record = f'[{datetime.datetime.now()}]: \n\n'
-  subprocess.Popen([f'{ENV_PATH}/python3', '/home/pi/openpibo-os/system/network_disp.py'])
-  subprocess.Popen(['servo', 'init'])
+  return JSONResponse(content={
+    'codepath': codePath,
+    'codetext': codeText,
+    'path': PATH,
+    'system': system_info,
+  })
 
 
-@app.sio.on('poweroff')
-async def handle_poweroff(sid):
-  os.system('echo "#11:!" > /dev/ttyS0')
-  subprocess.Popen(['shutdown', '-h', 'now'])
+@app.get('/api/system_status')
+async def api_system_status():
+  result = {}
+  try:
+    system_info = subprocess.check_output(
+      ['/home/pi/openpibo-os/system/system.sh']
+    ).decode().strip().split(',')
+    result['system'] = system_info
+  except Exception:
+    pass
+  try:
+    result['battery'] = requests.get(
+      'http://127.0.0.1:8080/device/%2315%3A%21', timeout=2
+    ).json().split(':')[1]
+  except Exception:
+    result['battery'] = '0%'
+  try:
+    result['dc'] = requests.get(
+      'http://127.0.0.1:8080/device/%2314%3A%21', timeout=2
+    ).json().split(':')[1]
+  except Exception:
+    result['dc'] = 'off'
+  return JSONResponse(content=result)
 
-@app.sio.on('restart')
-async def handle_restart(sid):
-  subprocess.Popen(['shutdown', '-r', 'now'])
+
+@app.get('/api/stream')
+async def api_stream(request: Request):
+  """SSE endpoint – clients subscribe here for real-time updates."""
+  q: asyncio.Queue = asyncio.Queue()
+  sse_clients.append(q)
+
+  async def generate():
+    try:
+      while True:
+        if await request.is_disconnected():
+          break
+        try:
+          data = await asyncio.wait_for(q.get(), timeout=30)
+          yield f"data: {json.dumps(data, ensure_ascii=False)}\n\n"
+        except asyncio.TimeoutError:
+          yield "data: {\"ping\": true}\n\n"
+    finally:
+      if q in sse_clients:
+        sse_clients.remove(q)
+
+  return StreamingResponse(
+    generate(),
+    media_type='text/event-stream',
+    headers={
+      'Cache-Control': 'no-cache',
+      'X-Accel-Buffering': 'no',
+    }
+  )
 
 
-@app.sio.on('load_directory')
-async def handle_load_directory(sid, p):
+@app.get('/dir')
+async def get_directory(folderName: str):
+  files = []
+  try:
+    for p in os.scandir(folderName):
+      if not p.is_dir() and not p.is_symlink() and not p.name.startswith('.'):
+        files.append(p.name)
+  except Exception:
+    files = []
+  return files
+
+
+@app.get('/api/load_directory')
+async def api_load_directory(p: str):
   global PATH
   res = read_directory(p)
   if res is not False:
     PATH = p
   else:
     res = read_directory(PATH)
-  await app.sio.emit('update_file_manager', {'data': res, 'path': PATH})
+  return JSONResponse(content={'data': res, 'path': PATH})
 
-@app.sio.on('view')
-async def handle_view(sid, p):
+
+@app.get('/api/view')
+async def api_view(p: str):
   try:
     with open(p, 'rb') as f:
-      data = f.read()
-      encoded_image = base64.b64encode(data).decode('utf-8')
-      await app.sio.emit('update', {'image': encoded_image, 'filepath': p})
+      encoded = base64.b64encode(f.read()).decode('utf-8')
+    return JSONResponse(content={'image': encoded, 'filepath': p})
   except Exception as err:
-    await app.sio.emit('update', {'dialog': f'보기 오류: {str(err)}'})
+    return JSONResponse(content={'error': str(err)}, status_code=500)
 
 
-@app.sio.on('play')
-async def handle_play(sid, p):
+@app.get('/api/play_file')
+async def api_play_file(p: str):
   try:
     with open(p, 'rb') as f:
-      data = f.read()
-      encoded_audio = base64.b64encode(data).decode('utf-8')
-      await app.sio.emit('update', {'audio': encoded_audio, 'filepath': p})
+      encoded = base64.b64encode(f.read()).decode('utf-8')
+    return JSONResponse(content={'audio': encoded, 'filepath': p})
   except Exception as err:
-    await app.sio.emit('update', {'dialog': f'재생 오류: {str(err)}'})
+    return JSONResponse(content={'error': str(err)}, status_code=500)
 
 
-@app.sio.on('load')
-async def handle_load(sid, p):
+@app.post('/api/load')
+async def api_load(data: dict = Body(...)):
   global codeText, codePath
-  if is_protect(p) :
-    await app.sio.emit('update', {'dialog': '파일 불러오기 오류: 보호 파일입니다.'})
-    return
+  p = data.get('path', '')
+  if is_protect(p):
+    return JSONResponse(content={'error': '파일 불러오기 오류: 보호 파일입니다.'}, status_code=403)
   try:
     with open(p, 'r') as f:
       codeText = f.read()
       codePath = p
-      await app.sio.emit('update', {'code': codeText, 'filepath': codePath})
+    return JSONResponse(content={'code': codeText, 'filepath': codePath})
   except Exception as err:
-    await app.sio.emit('update', {'dialog': f'파일 불러오기 오류: {str(err)}'})
+    return JSONResponse(content={'error': str(err)}, status_code=500)
 
 
-@app.sio.on('delete')
-async def handle_delete(sid, d):
+@app.post('/api/delete')
+async def api_delete(data: dict = Body(...)):
   global codeText, codePath
+  d = data.get('path', '')
   if is_protect(d):
-    await app.sio.emit('update', {'dialog': '파일 삭제 오류: 보호 파일입니다.'})
-    return
+    return JSONResponse(content={'error': '파일 삭제 오류: 보호 파일입니다.'}, status_code=403)
   if d == codePath:
-    codePath = ""
-    codeText = ""
+    codePath = ''
+    codeText = ''
   try:
     if os.path.isdir(d):
       shutil.rmtree(d)
     else:
       os.remove(d)
   except Exception as err:
-    print(err)
-    await app.sio.emit('update', {'dialog': '파일 삭제 오류: 파일명 파싱 에러입니다.'})
-    return
-  directory_data = read_directory(PATH)
-  await app.sio.emit('update_file_manager', {'data': directory_data})
+    return JSONResponse(content={'error': '파일 삭제 오류: 파일명 파싱 에러입니다.'}, status_code=500)
+  return JSONResponse(content={'data': read_directory(PATH)})
 
 
-@app.sio.on('rename')
-async def handle_rename(sid, d):
+@app.post('/api/rename')
+async def api_rename(data: dict = Body(...)):
   global codeText, codePath
-  oldpath = d['oldpath']
-  newpath = d['newpath']
+  oldpath = data.get('oldpath', '')
+  newpath = data.get('newpath', '')
   if is_protect(oldpath) or is_protect(newpath):
-    await app.sio.emit('update', {'dialog': '파일 이름 변경 오류: 보호 파일입니다.'})
-    return
+    return JSONResponse(content={'error': '파일 이름 변경 오류: 보호 파일입니다.'}, status_code=403)
   try:
     os.rename(oldpath, newpath)
-  except Exception as err:
-    await app.sio.emit('update', {'dialog': '파일 이름 변경 오류: 파일명 파싱 에러입니다.'})
-    return
-  directory_data = read_directory(PATH)
-  await app.sio.emit('update_file_manager', {'data': directory_data})
+  except Exception:
+    return JSONResponse(content={'error': '파일 이름 변경 오류: 파일명 파싱 에러입니다.'}, status_code=500)
+  result: dict = {'data': read_directory(PATH)}
   if oldpath == codePath:
     try:
       with open(newpath, 'r') as f:
         codeText = f.read()
         codePath = newpath
-        await app.sio.emit('update', {'code': codeText, 'filepath': codePath})
+      result['code'] = codeText
+      result['filepath'] = codePath
     except Exception as err:
-      await app.sio.emit('update', {'dialog': f'파일 불러오기 오류: {str(err)}'})
+      return JSONResponse(content={'error': str(err)}, status_code=500)
+  return JSONResponse(content=result)
 
-@app.sio.on('restore')
-async def handle_restore(sid):
-    try:
-        os.system("rm -rf /home/pi/code/*")
-        os.system("rm -rf /home/pi/myimage/*")
-        os.system("rm -rf /home/pi/mymodel/*")
-        os.system("rm -rf /home/pi/myaudio/*")
-        os.system("rm -rf /home/pi/examples/*")
-        os.system("cp -rf /home/pi/openpibo-os/examples/* /home/pi/examples/")
-        os.system("sudo /home/pi/openpibo-os/system/conwifi.sh wpa-psk 'pibo' '!pibo0314'")
-        os.system('echo "#11:!" > /dev/ttyS0')
-        subprocess.Popen(['shutdown', '-h', 'now'])
-    except Exception as e:
-        await sio.emit('update', {'dialog': f'초기화 오류: {str(e)}'}, room=sid)
 
-@app.sio.on('add_file')
-async def handle_add_file(sid, p):
+@app.post('/api/add_file')
+async def api_add_file(data: dict = Body(...)):
   global codeText, codePath
+  p = data.get('path', '')
   if is_protect(PATH):
-    await app.sio.emit('update', {'dialog': '파일 생성 오류: 보호 디렉토리입니다.'})
-    return
+    return JSONResponse(content={'error': '파일 생성 오류: 보호 디렉토리입니다.'}, status_code=403)
   if not os.path.exists(p):
     try:
       os.makedirs(os.path.dirname(p), exist_ok=True)
       open(p, 'a').close()
       shutil.chown(os.path.dirname(p), user='pi', group='pi')
-      directory_data = read_directory(PATH)
-      await app.sio.emit('update_file_manager', {'data': directory_data})
     except Exception as err:
-      await app.sio.emit('update', {'dialog': f'파일 생성 오류: {str(err)}'})
-      return
+      return JSONResponse(content={'error': str(err)}, status_code=500)
   codePath = p
   try:
     with open(p, 'r') as f:
       codeText = f.read()
-      await app.sio.emit('update', {'code': codeText, 'filepath': p})
+    return JSONResponse(content={
+      'code': codeText,
+      'filepath': p,
+      'data': read_directory(PATH),
+    })
   except Exception as err:
-    await app.sio.emit('update', {'dialog': f'파일 불러오기 오류: {str(err)}'})
+    return JSONResponse(content={'error': str(err)}, status_code=500)
 
-@app.sio.on('add_directory')
-async def handle_add_directory(sid, p):
+
+@app.post('/api/add_directory')
+async def api_add_directory(data: dict = Body(...)):
+  p = data.get('path', '')
   if is_protect(PATH):
-    await app.sio.emit('update', {'dialog': '디렉토리 생성 오류: 보호 폴더입니다.'})
-    return
+    return JSONResponse(content={'error': '디렉토리 생성 오류: 보호 폴더입니다.'}, status_code=403)
   try:
     os.makedirs(p, exist_ok=True)
     shutil.chown(p, user='pi', group='pi')
-    directory_data = read_directory(PATH)
-    await app.sio.emit('update_file_manager', {'data': directory_data})
+    return JSONResponse(content={'data': read_directory(PATH)})
   except Exception as err:
-    await app.sio.emit('update', {'dialog': f'디렉토리 생성 오류: {str(err)}'})
+    return JSONResponse(content={'error': str(err)}, status_code=500)
 
-@app.sio.on('save')
-async def handle_save(sid, d):
+
+@app.post('/api/save')
+async def api_save(data: dict = Body(...)):
   global codeText, codePath
   try:
-    if is_protect(d['codepath']) or is_protect(os.path.dirname(d['codepath'])):
-      await app.sio.emit('update', {'dialog': '파일 저장 오류: 보호 파일입니다.'})
-      return
-    codeText = d['codetext']
-    codePath = d['codepath']
+    cp = data['codepath']
+    if is_protect(cp) or is_protect(os.path.dirname(cp)):
+      return JSONResponse(content={'error': '파일 저장 오류: 보호 파일입니다.'}, status_code=403)
+    codeText = data['codetext']
+    codePath = cp
     os.makedirs(os.path.dirname(codePath), exist_ok=True)
     with open(codePath, 'w') as f:
       f.write(codeText)
     shutil.chown(os.path.dirname(codePath), user='pi', group='pi')
+    return JSONResponse(content={'ok': True})
   except Exception as err:
-    await app.sio.emit('update', {'dialog': f'파일 저장 오류: {str(err)}'})
+    return JSONResponse(content={'error': str(err)}, status_code=500)
 
-async def execute(EXEC, codepath):
+
+async def run_execute(EXEC: str, codepath: str):
   global record, ps
   async with mutex:
     record = f'[{datetime.datetime.now()}]: \n\n'
-    await app.sio.emit('update', {'record': record})
+    await broadcast({'record': record})
     if EXEC == 'python3':
       ps = await asyncio.create_subprocess_exec(
         f"{ENV_PATH}/{EXEC}", '-u', codepath,
         cwd=PATH,
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
-        stdin=asyncio.subprocess.PIPE
+        stdin=asyncio.subprocess.PIPE,
       )
     else:
       ps = await asyncio.create_subprocess_exec(
@@ -445,40 +359,36 @@ async def execute(EXEC, codepath):
         cwd=PATH,
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
-        stdin=asyncio.subprocess.PIPE
+        stdin=asyncio.subprocess.PIPE,
       )
     while True:
       line = await ps.stdout.readline()
       if not line:
         break
       record += line.decode()
-      await app.sio.emit('update', {'record': record})
-
+      await broadcast({'record': record})
     err = await ps.stderr.read()
     if err:
       record += f'\n{err.decode()}'
-      await app.sio.emit('update', {'record': record})
-
+      await broadcast({'record': record})
     await ps.wait()
-    ps = None  # 프로세스가 종료되었으므로 ps를 None으로 설정
-    record += "\n종료됨."
-    await app.sio.emit('update', {'record': record, 'exit': True})
-    directory_data = read_directory(PATH)
-    await app.sio.emit('update_file_manager', {'data': directory_data})
+    ps = None
+    record += '\n종료됨.'
+    await broadcast({'record': record, 'exit': True, 'file_manager': read_directory(PATH)})
 
-# execute 핸들러 수정
-@app.sio.on('execute')
-async def handle_execute(sid, d):
+
+@app.post('/api/execute')
+async def api_execute(data: dict = Body(...)):
   global codeText, codePath, ps
   subprocess.Popen(['systemctl', 'stop', 'tools.service'])
   subprocess.Popen(['systemctl', 'stop', 'classify.service'])
   subprocess.Popen(['systemctl', 'stop', 'llama-server.service'])
   try:
-    if is_protect(d['codepath']) or is_protect(os.path.dirname(d['codepath'])):
-      await app.sio.emit('update', {'dialog': '실행 오류: 보호 파일입니다.', 'exit': True})
-      return
-    codeText = d['codetext']
-    codePath = d['codepath']
+    cp = data['codepath']
+    if is_protect(cp) or is_protect(os.path.dirname(cp)):
+      return JSONResponse(content={'error': '실행 오류: 보호 파일입니다.'}, status_code=403)
+    codeText = data['codetext']
+    codePath = cp
     if ps and ps.returncode is None:
       ps.kill()
       await ps.wait()
@@ -486,13 +396,14 @@ async def handle_execute(sid, d):
     with open(codePath, 'w') as f:
       f.write(codeText)
     shutil.chown(os.path.dirname(codePath), user='pi', group='pi')
-    await execute(codeExec[d["codetype"]], codePath)
+    asyncio.create_task(run_execute(codeExec[data['codetype']], codePath))
+    return JSONResponse(content={'ok': True})
   except Exception as err:
-    await app.sio.emit('update', {'dialog': f'실행 오류: {str(err)}', 'exit': True})
+    return JSONResponse(content={'error': str(err)}, status_code=500)
 
-# executeb 핸들러 수정
-@app.sio.on('executeb')
-async def handle_executeb(sid, d):
+
+@app.post('/api/executeb')
+async def api_executeb(data: dict = Body(...)):
   global ps
   subprocess.Popen(['systemctl', 'stop', 'tools.service'])
   subprocess.Popen(['systemctl', 'stop', 'classify.service'])
@@ -501,17 +412,19 @@ async def handle_executeb(sid, d):
     if ps and ps.returncode is None:
       ps.kill()
       await ps.wait()
-    os.makedirs(os.path.dirname(d['codepath']), exist_ok=True)
-    with open(d['codepath'], 'w') as f:
-      f.write(d['codetext'])
-    shutil.chown(os.path.dirname(d['codepath']), user='pi', group='pi')
-    await execute(codeExec[d["codetype"]], d['codepath'])
+    cp = data['codepath']
+    os.makedirs(os.path.dirname(cp), exist_ok=True)
+    with open(cp, 'w') as f:
+      f.write(data['codetext'])
+    shutil.chown(os.path.dirname(cp), user='pi', group='pi')
+    asyncio.create_task(run_execute(codeExec[data['codetype']], cp))
+    return JSONResponse(content={'ok': True})
   except Exception as err:
-    await app.sio.emit('update', {'dialog': f'실행 오류: {str(err)}', 'exit': True})
+    return JSONResponse(content={'error': str(err)}, status_code=500)
 
-# stop 핸들러 수정
-@app.sio.on('stop')
-async def handle_stop(sid):
+
+@app.post('/api/stop')
+async def api_stop():
   global ps
   subprocess.Popen(['pkill', 'play'])
   subprocess.Popen(['pkill', 'llama-server'])
@@ -519,38 +432,167 @@ async def handle_stop(sid):
   if ps and ps.returncode is None:
     ps.kill()
     await ps.wait()
+  return JSONResponse(content={'ok': True})
 
-@app.sio.on('prompt')
-async def handle_prompt(sid, s):
+
+@app.post('/api/prompt')
+async def api_prompt(data: dict = Body(...)):
   global ps
   if ps and ps.stdin:
-    ps.stdin.write((s + "\n").encode())
+    ps.stdin.write((data.get('text', '') + '\n').encode())
     await ps.stdin.drain()
+  return JSONResponse(content={'ok': True})
 
-# Additional code for the periodic system status updates
+
+@app.post('/api/reset_log')
+async def api_reset_log():
+  global record
+  record = f'[{datetime.datetime.now()}]: \n\n'
+  subprocess.Popen([f'{ENV_PATH}/python3', '/home/pi/openpibo-os/system/network_disp.py'])
+  subprocess.Popen(['servo', 'init'])
+  return JSONResponse(content={'ok': True})
+
+
+@app.post('/api/poweroff')
+async def api_poweroff():
+  os.system('echo "#11:!" > /dev/ttyS0')
+  subprocess.Popen(['shutdown', '-h', 'now'])
+  return JSONResponse(content={'ok': True})
+
+
+@app.post('/api/restart')
+async def api_restart():
+  subprocess.Popen(['shutdown', '-r', 'now'])
+  return JSONResponse(content={'ok': True})
+
+
+@app.post('/api/restore')
+async def api_restore():
+  try:
+    os.system('rm -rf /home/pi/code/*')
+    os.system('rm -rf /home/pi/myimage/*')
+    os.system('rm -rf /home/pi/mymodel/*')
+    os.system('rm -rf /home/pi/myaudio/*')
+    os.system('rm -rf /home/pi/examples/*')
+    os.system('cp -rf /home/pi/openpibo-os/examples/* /home/pi/examples/')
+    os.system("sudo /home/pi/openpibo-os/system/conwifi.sh wpa-psk 'pibo' '!pibo0314'")
+    os.system('echo "#11:!" > /dev/ttyS0')
+    subprocess.Popen(['shutdown', '-h', 'now'])
+    return JSONResponse(content={'ok': True})
+  except Exception as e:
+    return JSONResponse(content={'error': str(e)}, status_code=500)
+
+
+# ─── Original REST endpoints kept as-is ───────────────────────────────────────
+
+@app.get('/download')
+async def download_item(filename: str):
+  full_path = os.path.join(PATH, filename)
+  if is_protect(full_path):
+    return JSONResponse(content={'error': '파일 다운로드 오류: 보호 디렉토리입니다.'}, status_code=403)
+  if not os.path.exists(full_path):
+    return JSONResponse(content={'error': '파일 또는 폴더를 찾을 수 없습니다.'}, status_code=404)
+  if os.path.isfile(full_path):
+    return FileResponse(full_path, filename=filename)
+  elif os.path.isdir(full_path):
+    zip_path = '/tmp/download.zip'
+    if os.path.exists(zip_path):
+      os.remove(zip_path)
+    shutil.make_archive('/tmp/download', 'zip', root_dir=full_path)
+    return FileResponse(zip_path, media_type='application/zip', filename='download.zip')
+  return JSONResponse(content={'error': '올바른 파일 또는 폴더가 아닙니다.'}, status_code=403)
+
+
+@app.post('/upload')
+async def upload_file(files: List[UploadFile] = File(...)):
+  if is_protect(PATH):
+    return JSONResponse(content={'error': '파일 업로드 오류: 보호 디렉토리입니다.'}, status_code=403)
+  for file in files:
+    file_location = os.path.join(PATH, file.filename)
+    with open(file_location, 'wb') as f:
+      f.write(await file.read())
+  directory_data = read_directory(PATH)
+  try:
+    shutil.chown(PATH, user='pi', group='pi')
+  except Exception as err:
+    print(err)
+  return JSONResponse(content={'message': '파일 업로드 완료', 'data': directory_data}, status_code=200)
+
+
+@app.post('/show')
+async def show_file(data: UploadFile = File(...)):
+  try:
+    tmp_path = '/home/pi/.tmp.jpg'
+    with open(tmp_path, 'wb') as f:
+      f.write(await data.read())
+    with open(tmp_path, 'rb') as f:
+      encoded_image = base64.b64encode(f.read()).decode('utf-8')
+    return JSONResponse(content={'image': encoded_image, 'filepath': tmp_path})
+  except Exception as err:
+    return JSONResponse(content={'error': str(err)}, status_code=500)
+
+
+@app.get('/tools')
+async def tools_service(enable: str):
+  if enable == 'on':
+    subprocess.Popen(['systemctl', 'stop', 'classify.service'])
+    subprocess.Popen(['systemctl', 'stop', 'llama-server.service'])
+    subprocess.Popen(['systemctl', 'start', 'tools.service'])
+  elif enable == 'off':
+    subprocess.Popen(['systemctl', 'stop', 'tools.service'])
+  return HTMLResponse(content='', status_code=200)
+
+
+@app.get('/classifier')
+async def classifier_service(enable: str):
+  if enable == 'on':
+    subprocess.Popen(['systemctl', 'stop', 'tools.service'])
+    subprocess.Popen(['systemctl', 'stop', 'llama-server.service'])
+    subprocess.Popen(['systemctl', 'start', 'classify.service'])
+  elif enable == 'off':
+    subprocess.Popen(['systemctl', 'stop', 'classify.service'])
+  return HTMLResponse(content='', status_code=200)
+
+
+@app.get('/llm')
+async def llm_service(enable: str):
+  if enable == 'on':
+    subprocess.Popen(['systemctl', 'stop', 'tools.service'])
+    subprocess.Popen(['systemctl', 'stop', 'classify.service'])
+    subprocess.Popen(['systemctl', 'start', 'llama-server.service'])
+  elif enable == 'off':
+    subprocess.Popen(['systemctl', 'stop', 'llama-server.service'])
+  await asyncio.sleep(2)
+  return HTMLResponse(content='', status_code=200)
+
+
+# ─── Periodic system status broadcast ─────────────────────────────────────────
+
 async def periodic_system_update():
   while True:
     try:
-      system_info = subprocess.check_output(['/home/pi/openpibo-os/system/system.sh']).decode().strip().split(',')
-      await app.sio.emit('system', system_info)
-    except Exception as err:
-      await app.sio.emit('update', {'dialog': '초기화: 시스템 파일 오류입니다.'})
-
+      system_info = subprocess.check_output(
+        ['/home/pi/openpibo-os/system/system.sh']
+      ).decode().strip().split(',')
+      await broadcast({'system': system_info})
+    except Exception:
+      pass
     try:
-      await app.sio.emit('update_battery', requests.get('http://127.0.0.1:8080/device/%2315%3A%21').json().split(':')[1])
-    except Exception as err:
-      await app.sio.emit('update_battery', '0%')
-
+      battery = requests.get(
+        'http://127.0.0.1:8080/device/%2315%3A%21', timeout=2
+      ).json().split(':')[1]
+      await broadcast({'battery': battery})
+    except Exception:
+      await broadcast({'battery': '0%'})
     try:
-      await app.sio.emit('update_dc', requests.get('http://127.0.0.1:8080/device/%2314%3A%21').json().split(':')[1])
-    except Exception as err:
-      await app.sio.emit('update_dc', 'off')
-
+      dc = requests.get(
+        'http://127.0.0.1:8080/device/%2314%3A%21', timeout=2
+      ).json().split(':')[1]
+      await broadcast({'dc': dc})
+    except Exception:
+      await broadcast({'dc': 'off'})
     await asyncio.sleep(10)
 
-#@app.on_event('startup')
-#async def on_startup():
-#  asyncio.create_task(periodic_system_update())
 
 if __name__ == '__main__':
   import argparse

@@ -209,40 +209,138 @@ async function prompt_popup(message, defaultValue = '') {
 document.getElementById("logo_bt").addEventListener("click", function () {
   location.href = `http://${location.hostname}`;
 });
-const socket = io(`http://${location.host}`, { path: "/socket.io" });
+
+// ── REST API helper ────────────────────────────────────────────────────────────
+async function api(method, path, data = null) {
+  const opts = { method, headers: {} };
+  if (data !== null) {
+    opts.headers['Content-Type'] = 'application/json';
+    opts.body = JSON.stringify(data);
+  }
+  const resp = await fetch(path, opts);
+  if (!resp.ok) {
+    const err = await resp.json().catch(() => ({}));
+    throw new Error(err.error || `HTTP ${resp.status}`);
+  }
+  return resp.json();
+}
 
 const onoffVal = document.getElementById('onoff_val');
 const onoffCount = document.getElementById('onoff_count'); 
 onoffVal.innerHTML = `<i class="fas fa-toggle-off fa-sm fa-fade" style="--fa-animation-duration: 2s; --fa-fade-opacity: 0.6">&nbsp;off</i>`;
 
 let onoff_count = 0;
-let onoff_intv = setInterval(() => {
+let onoff_intv = setInterval(async () => {
   onoffCount.innerHTML = `<i style="opacity:0.6">${++onoff_count}</i>`;
+  try {
+    const d = await api('GET', '/api/status');
+    if (d.onoff === true) {
+      onoffVal.innerHTML = `<i class="fas fa-toggle-on">&nbsp;on</i>`;
+      clearInterval(onoff_intv);
+      onoffCount.innerHTML = "";
+      const info = await api('GET', '/api/motion/info');
+      dispMotion(info);
+      for (let i = 0; i < 10; i++) {
+        $("#m" + i + "_value").val(motor_default[i]);
+        $("#m" + i + "_range").val(motor_default[i]);
+      }
+      await api('POST', '/api/motion/motors', { pos_lst: motor_default });
+    }
+  } catch(e) {}
 }, 2000);
 
-//setInterval(() => {
-//  socket.emit("onoff");
-//}, 5000);
+// ── SSE for device status updates ─────────────────────────────────────────────
+const es = new EventSource('/api/stream');
+es.onmessage = (event) => {
+  const d = JSON.parse(event.data);
+  if (d.ping) return;
+};
 
-socket.on("onoff", function (data) {
-  onoffVal.innerHTML = data?
-    `<i class="fas fa-toggle-on">&nbsp;on</i>`
-    : `<i class="fas fa-toggle-off fa-sm fa-fade" style="--fa-animation-duration: 2s; --fa-fade-opacity: 0.6">&nbsp;off</i>`
-  console.log('onoff', data)
-
-  if (data == true) {
-    socket.emit("disp_motion");
-    clearInterval(onoff_intv);
-    onoffCount.innerHTML = "";
-    for (let i = 0; i < 10; i++) {
-      $("#m" + i + "_value").val(motor_default[i]);
-      $("#m" + i + "_range").val(motor_default[i]);
+// ── Camera stream via SSE ──────────────────────────────────────────────────────
+let visionES = null;
+function startVisionStream() {
+  if (visionES) visionES.close();
+  visionES = new EventSource('/api/vision/stream');
+  visionES.onmessage = (event) => {
+    const data = JSON.parse(event.data);
+    if (data.img) {
+      $("#v_img").prop("src", `data:image/jpeg;charset=utf-8;base64,${data.img}`);
+      $("#v_result").text(data.data || '');
     }
-    socket.emit("set_motors", { pos_lst: motor_default });
-  }
-});
+  };
+}
 
-const getVisions = (socket) => {
+function dispMotion(datas) {
+  if ("pos" in datas) {
+    let data = datas["pos"];
+    for (let i = 0; i < 10; i++) {
+      $("#m" + i + "_value").val(data[i]);
+      $("#m" + i + "_range").val(data[i]);
+    }
+  }
+  if ("record" in datas) {
+    let res = [];
+    for (let name in datas["record"]) res.push(name);
+    $('#motor_record').text(res.join(', '));
+  }
+  if ("table" in datas) {
+    let data = datas["table"];
+    for (let i = 0; i < data.length; i++) {
+      if (i != 0)
+        for (let j = 0; j < 10; j++) {
+          data[i].d[j] = data[i].d[j] == 999 ? data[i - 1].d[j] : data[i].d[j];
+        }
+    }
+    $("#motor_table > tbody").empty();
+    for (let i = 0; i < data.length; i++) {
+      $("#motor_table > tbody").append(
+        $("<tr>")
+          .append(
+            $("<td>").append(data[i].seq / 1000 + " 초"),
+            $("<td>").append(data[i].d[0]),
+            $("<td>").append(data[i].d[1]),
+            $("<td>").append(data[i].d[2]),
+            $("<td>").append(data[i].d[3]),
+            $("<td>").append(data[i].d[4]),
+            $("<td>").append(data[i].d[5]),
+            $("<td>").append(data[i].d[6]),
+            $("<td>").append(data[i].d[7]),
+            $("<td>").append(data[i].d[8]),
+            $("<td>").append(data[i].d[9])
+          )
+          .hover(
+            function () { $(this).animate({ opacity: "0.5" }, 100); },
+            function () { $(this).animate({ opacity: "1" }, 100); }
+          )
+          .click(async function () {
+            let pos_lst = [];
+            let lst = $(this).children();
+            lst.each((idx) => {
+              if (idx == 0) {
+                $("#m_time_val").val(Number(lst.eq(idx).text().split(" 초")[0]));
+                return;
+              } else {
+                let val = Number(lst.eq(idx).text());
+                $("#m" + (idx - 1) + "_value").val(val);
+                $("#m" + (idx - 1) + "_range").val(val);
+                pos_lst[idx - 1] = val;
+              }
+            });
+            await api('POST', '/api/motion/motors', { pos_lst: pos_lst });
+          })
+          .dblclick(async function () {
+            let t = $(this).text().split(" 초")[0];
+            if (await confirm_popup(translations["confirm_motion_delete"][lang](t))) {
+              await api('POST', '/api/motion/frame/delete', { seq: Number(t) * 1000 });
+              $(this).remove();
+            }
+          })
+      );
+    }
+  }
+}
+
+const getVisions = () => {
   $("#v_img").on("click", (evt) => {
     let rect = evt.target.getBoundingClientRect();
     x = Math.floor(evt.clientX - rect.left);
@@ -257,7 +355,7 @@ const getVisions = (socket) => {
     x2 = x1+200>640?640:x1+200;
     y2 = y1+200>480?480:y1+200;
 
-    socket.emit("object_tracker_init", {x1:x1,y1:y1, x2:x2, y2:y2});
+    api('POST', '/api/vision/tracker/init', {x1:x1,y1:y1, x2:x2, y2:y2});
   });
 
   let img_x = 0;
@@ -278,38 +376,30 @@ const getVisions = (socket) => {
     cy = cy>480?480:cy;
 
     if (Math.abs(img_x - cx) > 10 || Math.abs(img_y - cy) > 10 ) {
-      socket.emit('update_img_pointer', {x:cx, y:cy})
+      api('POST', '/api/vision/pointer', {x:cx, y:cy})
       img_x = cx;
       img_y = cy;
     }
   });
 
-  socket.on("disp_vision", function (data) {
-    $("#v_func_type").val(data);
-  });
-
-  socket.on("stream", function (data) {
-    //console.log('stream', data)
-    $("#v_img").prop("src", `data:image/jpeg;charset=utf-8;base64,${data["img"]}`);
-    $("#v_result").text(data["data"]);
-  });
+  // Vision stream via SSE (startVisionStream() called on tab show)
   
   $("#v_func_type").change(function () {
-    socket.emit("detect", $(this).val());
+    api('POST', '/api/vision/type', {vision_type: $(this).val()});
   });
 
-  socket.emit("marker_length",  Number($('#marker_length').val()));
+  api('POST', '/api/vision/marker_length', {marker_length: Number($('#marker_length').val())});
   $('#marker_length').on("focusout keydown", function (evt) {
     if (
       evt.type == "focusout" ||
       (evt.type == "keydown" && evt.keyCode == 13)
     ) {
-      socket.emit("marker_length",  Number($('#marker_length').val()));
+      api('POST', '/api/vision/marker_length', {marker_length: Number($('#marker_length').val())});
     }
   });
 
   $('#marker_length').on("click", function (evt) {
-    socket.emit("marker_length",  Number($('#marker_length').val()));
+    api('POST', '/api/vision/marker_length', {marker_length: Number($('#marker_length').val())});
   });
 
   $("#v_capture").on("click", function () {
@@ -343,13 +433,13 @@ const getVisions = (socket) => {
     $("#m5_range").val(Number($("#v_tilt_range").val()));
     $("#m5_value").val(Number($("#v_tilt_range").val()));
     $("#v_location").text(`${$("#m4_range").val()}, ${$("#m5_range").val()}`);
-    socket.emit("set_motor", { idx: 5, pos: Number($("#v_tilt_range").val()) });
+    api('POST', '/api/motion/motor', { idx: 5, pos: Number($('#v_tilt_range').val()) });
   });
   $("#v_pan_range").on("click touchend", function (evt) {
     $("#m4_range").val(Number($("#v_pan_range").val()));
     $("#m4_value").val(Number($("#v_pan_range").val()));
     $("#v_location").text(`${$("#m4_range").val()}, ${$("#m5_range").val()}`);
-    socket.emit("set_motor", { idx: 4, pos: Number($("#v_pan_range").val()) });
+    api('POST', '/api/motion/motor', { idx: 4, pos: Number($('#v_pan_range').val()) });
   });
 
   $("#v_tilt_reset").on("click", function (evt) {
@@ -357,14 +447,14 @@ const getVisions = (socket) => {
     $("#m5_range").val(Number($("#v_tilt_range").val()));
     $("#m5_value").val(Number($("#v_tilt_range").val()));
     $("#v_location").text(`${$("#m4_range").val()}, ${$("#m5_range").val()}`);
-    socket.emit("set_motor", { idx: 5, pos: Number($("#v_tilt_range").val()) });
+    api('POST', '/api/motion/motor', { idx: 5, pos: Number($('#v_tilt_range').val()) });
   });
   $("#v_pan_reset").on("click", () => {
     $("#v_pan_range").val(0);
     $("#m4_range").val(Number($("#v_pan_range").val()));
     $("#m4_value").val(Number($("#v_pan_range").val()));
     $("#v_location").text(`${$("#m4_range").val()}, ${$("#m5_range").val()}`);
-    socket.emit("set_motor", { idx: 4, pos: Number($("#v_pan_range").val()) });
+    api('POST', '/api/motion/motor', { idx: 4, pos: Number($('#v_pan_range').val()) });
   });
 };
 
@@ -394,15 +484,17 @@ let checkOled = (x, y, size) => {
   return true;
 };
 
-const getDevices = (socket) => {
-  socket.on("update_neopixel", function (data) {
-    for (let i = 0; i < 6; i++) $("#d_n" + i + "_val").val(data[i]);
-  });
-
-  socket.on("update_device", function (data) {
-    $("#d_pir_val").text(data[0].toLowerCase());
-    $("#d_touch_val").text(data[1].toLowerCase());
-  });
+const getDevices = () => {
+  // Device status polled via REST API
+  setInterval(async () => {
+    try {
+      const d = await api('GET', '/api/device/status');
+      if (d.system) {
+        $("#d_pir_val").text((d.system[0] || '').toLowerCase());
+        $("#d_touch_val").text((d.system[1] || '').toLowerCase());
+      }
+    } catch(e) {}
+  }, 2000);
 
   for (let i = 0; i < 6; i++) {
     let tneopixel = "#d_n" + i + "_val";
@@ -420,13 +512,13 @@ const getDevices = (socket) => {
           alert(translations["range_warn"][lang](min, max));
           $(this).val(0);
         } else {
-          socket.emit("set_neopixel", { idx: i, value: val });
+          api('POST', '/api/device/neopixel', { value: { idx: i, value: val } });
         }
       }
     });
 
     $(tneopixel).on("click", function (evt) {
-      socket.emit("set_neopixel", { idx: i, value: $(this).val() });
+      api('POST', '/api/device/neopixel', { value: { idx: i, value: $(this).val() } });
     });
   }
 
@@ -437,7 +529,7 @@ const getDevices = (socket) => {
       let tneopixel = "#d_n" + i + "_val";
       $(tneopixel).val(0);
     }
-    socket.emit("eye_update", "0,0,0,0,0,0");
+    api('POST', '/api/device/eye', { value: '0,0,0,0,0,0' });
   });
 
   $("#d_otext_val").on("keydown", function (evt) {
@@ -449,7 +541,7 @@ const getDevices = (socket) => {
       let size = Number($("#d_osize_val").val());
 
       if (checkOled(x, y, size))
-        socket.emit("set_oled", { x: x, y: y, size: size, text: text });
+        api('POST', '/api/device/oled/text', { x: x, y: y, size: size, text: text });
       else
       alert(translations["oled_input_error"][lang]);
     }
@@ -465,7 +557,7 @@ const getDevices = (socket) => {
       if (text == "") return;
 
       if (checkOled(x, y, size))
-        socket.emit("set_oled", { x: x, y: y, size: size, text: text });
+        api('POST', '/api/device/oled/text', { x: x, y: y, size: size, text: text });
       else
       alert(translations["oled_input_error"][lang]);
     }
@@ -481,7 +573,7 @@ const getDevices = (socket) => {
       if (text == "") return;
 
       if (checkOled(x, y, size))
-        socket.emit("set_oled", { x: x, y: y, size: size, text: text });
+        api('POST', '/api/device/oled/text', { x: x, y: y, size: size, text: text });
       else
       alert(translations["oled_input_error"][lang]);
     }
@@ -497,7 +589,7 @@ const getDevices = (socket) => {
       if (text == "") return;
 
       if (checkOled(x, y, size))
-        socket.emit("set_oled", { x: x, y: y, size: size, text: text });
+        api('POST', '/api/device/oled/text', { x: x, y: y, size: size, text: text });
       else
         alert(translations["oled_input_error"][lang]);
     }
@@ -512,7 +604,7 @@ const getDevices = (socket) => {
     if (text == "") return;
 
     if (checkOled(x, y, size))
-      socket.emit("set_oled", { x: x, y: y, size: size, text: text });
+      api('POST', '/api/device/oled/text', { x: x, y: y, size: size, text: text });
     else
     alert(translations["oled_input_error"][lang]);
   });
@@ -538,43 +630,36 @@ const getDevices = (socket) => {
   });
 
   $("#clear_oled_bt").on("click", function () {
-    socket.emit("clear_oled");
+    api('POST', '/api/device/oled/clear');
   });
 
-  socket.on("oled_path", (data) => {
+  function updateOledFiles(data) {
     $("#oledfiles").empty();
     $("#oledfiles").append(`<option value='-'>${translations["select"][lang]}</option>`);
     for (let i = 0; i < data.length; i++) {
       let filename = data[i];
       let extension = filename.split(".")[1].toLowerCase();
-
       if (["png", "jpg"].includes(extension))
-        $("#oledfiles").append(
-          `<option value="${filename}">${filename.split(".jpg")[0]}</option>`
-        );
+        $("#oledfiles").append(`<option value="${filename}">${filename.split(".jpg")[0]}</option>`);
     }
-  });
+  }
 
-  $("#oledpath").on("change", () => {
+  $("#oledpath").on("change", async () => {
     let p = $("#oledpath").val();
     if (p != "-") {
-      socket.emit("oled_path", p);
+      const d = await api('GET', `/api/device/oled/path?p=${encodeURIComponent(p)}`);
+      updateOledFiles(d.files);
     }
   });
 
-  $("#oledfiles").on("change", () => {
+  $("#oledfiles").on("change", async () => {
     let filename = $("#oledfiles").val();
-
     if (filename != "-") {
-      socket.emit("set_oled_image", `${$("#oledpath").val()}/${filename}`);
+      await api('POST', '/api/device/oled/image', { path: `${$("#oledpath").val()}/${filename}` });
     }
   });
 
-  socket.on("mic", function (d) {
-    $("#mic_status").text(d);
-  });
-
-  $("#mic_bt").on("click", function () {
+  $("#mic_bt").on("click", async function () {
     let tmictime = "#mic_time_val";
     let val = Number($(tmictime).val());
     let min = Number($(tmictime).attr("min"));
@@ -586,52 +671,44 @@ const getDevices = (socket) => {
     }
 
     $("#mic_status").html("<i class='fa-solid fa-fade'>녹음 중</i>");
-    socket.emit("mic", {
-      time: val,
-      volume: Number($("#volume").val()),
-    });
+    await api('POST', '/api/audio/mic', { time: val, volume: Number($("#volume").val()) });
+    $("#mic_status").text('완료');
   });
 
-  $("#mic_replay_bt").on("click", function () {
-    socket.emit("mic_replay", { volume: Number($("#volume").val()) });
+  $("#mic_replay_bt").on("click", async function () {
+    await api('POST', '/api/audio/mic/replay', { volume: Number($("#volume").val()) });
   });
 
-  socket.on("audio_path", (data) => {
+  function updateAudioFiles(data) {
     $("#audiofiles").empty();
     $("#audiofiles").append(`<option value='-'>${translations["select"][lang]}</option>`);
     for (let i = 0; i < data.length; i++) {
       let filename = data[i];
       let extension = filename.split(".")[1];
-
       if (["mp3", "wav"].includes(extension))
-        $("#audiofiles").append(
-          `<option value="${filename}">${filename.split(".")[0]}</option>`
-        );
+        $("#audiofiles").append(`<option value="${filename}">${filename.split(".")[0]}</option>`);
     }
-  });
+  }
 
-  $("#audiopath").on("change", () => {
+  $("#audiopath").on("change", async () => {
     let p = $("#audiopath").val();
     if (p != "-") {
-      socket.emit("audio_path", p);
+      const d = await api('GET', `/api/audio/path?p=${encodeURIComponent(p)}`);
+      updateAudioFiles(d.files);
     }
   });
 
-  $("#play_audio_bt").on("click", function () {
+  $("#play_audio_bt").on("click", async function () {
     let filename = $("#audiofiles").val();
-
     if (filename == "-") {
       alert(translations["music_name_empty"][lang]);
       return;
     }
-    socket.emit("play_audio", {
-      filename: `${$("#audiopath").val()}/${filename}`,
-      volume: Number($("#volume").val()),
-    });
+    await api('POST', '/api/audio/play', { filename: `${$("#audiopath").val()}/${filename}`, volume: Number($("#volume").val()) });
   });
 
-  $("#stop_audio_bt").on("click", function () {
-    socket.emit("stop_audio");
+  $("#stop_audio_bt").on("click", async function () {
+    await api('POST', '/api/audio/stop');
   });
 
   $("#upload_audio").on("change", (e) => {
@@ -675,7 +752,7 @@ const getDevices = (socket) => {
   });
 };
 
-const getMotions = (socket) => {
+const getMotions = () => {
   for (let i = 0; i < 10; i++) {
     let tval = "#m" + i + "_value";
     let trange = "#m" + i + "_range";
@@ -685,7 +762,7 @@ const getMotions = (socket) => {
     });
 
     $(trange).on("click touchend", function (evt) {
-      socket.emit("set_motor", { idx: i, pos: Number($(trange).val()) });
+      api('POST', '/api/motion/motor', { idx: i, pos: Number($(trange).val()) });
     });
 
     $(tval).on("focusout keydown", async function (evt) {
@@ -702,7 +779,7 @@ const getMotions = (socket) => {
           await alert_popup(translations["range_warn"][lang](min, max));
         } else {
           $(trange).val(pos);
-          socket.emit("set_motor", { idx: i, pos: pos });
+          api('POST', '/api/motion/motor', { idx: i, pos: pos });
         }
       }
     });
@@ -710,7 +787,7 @@ const getMotions = (socket) => {
     $(tval).on("click", function (evt) {
       let pos = $(tval).val();
       $(trange).val(pos);
-      socket.emit("set_motor", { idx: i, pos: Number(pos) });
+      api('POST', '/api/motion/motor', { idx: i, pos: Number(pos) });
     });
   }
 
@@ -735,102 +812,15 @@ const getMotions = (socket) => {
       $("#m" + i + "_value").val(motor_default[i]);
       $("#m" + i + "_range").val(motor_default[i]);
     }
-    socket.emit("set_motors", { pos_lst: motor_default });
+    api('POST', '/api/motion/motors', { pos_lst: motor_default });
   });
 
   // 저장 버튼
   $("#add_frame_bt").on("click", function () {
-    socket.emit("add_frame", $("#m_time_val").val() * 1000);
+    api('POST', '/api/motion/frame/add', { seq: Number($('#m_time_val').val()) * 1000 }).then(d => dispMotion(d));
   });
 
-  socket.on("disp_motion", function (datas) {
-    // 모터 값 로드
-    if ("pos" in datas) {
-      let data = datas["pos"];
-      for (let i = 0; i < 10; i++) {
-        let tval = "#m" + i + "_value";
-        let trange = "#m" + i + "_range";
-        $(tval).val(data[i]);
-        $(trange).val(data[i]);
-      }
-    }
-
-    // json 로드
-    if ("record" in datas) {
-      let res = [];
-      for(name in datas["record"]) {
-        res.push(name);
-      }
-      $('#motor_record').text(res.join(', '));
-    }
-
-    // 테이블 로드
-    if ("table" in datas) {
-      let data = datas["table"];
-
-      for (let i = 0; i < data.length; i++) {
-        if (i != 0)
-          for (let j = 0; j < 10; j++) {
-            data[i].d[j] =
-              data[i].d[j] == 999 ? data[i - 1].d[j] : data[i].d[j];
-          }
-      }
-
-      $("#motor_table > tbody").empty();
-      for (let i = 0; i < data.length; i++) {
-        $("#motor_table > tbody").append(
-          $("<tr>")
-            .append(
-              $("<td>").append(data[i].seq / 1000 + " 초"),
-              $("<td>").append(data[i].d[0]),
-              $("<td>").append(data[i].d[1]),
-              $("<td>").append(data[i].d[2]),
-              $("<td>").append(data[i].d[3]),
-              $("<td>").append(data[i].d[4]),
-              $("<td>").append(data[i].d[5]),
-              $("<td>").append(data[i].d[6]),
-              $("<td>").append(data[i].d[7]),
-              $("<td>").append(data[i].d[8]),
-              $("<td>").append(data[i].d[9])
-            )
-            .hover(
-              function () {
-                $(this).animate({ opacity: "0.5" }, 100);
-              },
-              function () {
-                $(this).animate({ opacity: "1" }, 100);
-              }
-            )
-            .click(function () {
-              let pos_lst = [];
-              let lst = $(this).children();
-              lst.each((idx) => {
-                if (idx == 0) {
-                  $("#m_time_val").val(
-                    Number(lst.eq(idx).text().split(" 초")[0])
-                  );
-                  return;
-                } else {
-                  let val = Number(lst.eq(idx).text());
-                  $("#m" + (idx - 1) + "_value").val(val);
-                  $("#m" + (idx - 1) + "_range").val(val);
-                  pos_lst[idx - 1] = val;
-                }
-              });
-
-              socket.emit("set_motors", { pos_lst: pos_lst });
-            })
-            .dblclick(async function () {
-              let t = $(this).text().split(" 초")[0];
-              if (await confirm_popup(translations["confirm_motion_delete"][lang](t))) {
-                socket.emit("delete_frame", Number(t) * 1000);
-                $(this).remove();
-              }
-            })
-        );
-      }
-    }
-  });
+  // dispMotion() defined globally above
 
   $("#export_motion_bt").on("click", function() {
     let motion_a = document.createElement("a");
@@ -863,7 +853,7 @@ const getMotions = (socket) => {
   // 테이블 초기화
   $("#init_frame_bt").on("click", async function () {
     if (await confirm_popup(translations["confirm_motion_delete_all"][lang])) {
-      socket.emit("init_frame");
+      api('POST', '/api/motion/frame/init').then(d => dispMotion(d));
       $("#motor_table > tbody").empty();
     }
   });
@@ -872,7 +862,7 @@ const getMotions = (socket) => {
   $("#play_frame_bt").on("click", async function () {
     if ($("#motor_table > tbody").text()) {
       let cycle = $("#play_cycle_val").val();
-      socket.emit("play_frame", cycle);
+      api('POST', '/api/motion/frame/play', { cycle: cycle });
     } else {
       await alert_popup(translations["motion_empty"][lang]);
     }
@@ -896,7 +886,7 @@ const getMotions = (socket) => {
 
   // 동작 정지
   $("#stop_frame_bt").on("click", function () {
-    socket.emit("stop_frame");
+    api('POST', '/api/motion/frame/stop');
   });
 
   // 모션 추가
@@ -908,7 +898,7 @@ const getMotions = (socket) => {
       return;
     }  
     if (await confirm_popup(translations["confirm_motion_register"][lang](motionName))) {
-      socket.emit("add_motion", motionName);
+      api('POST', '/api/motion/add', { name: motionName }).then(d => dispMotion(d));
       $("#motion_name_val").val("");
     }
   });
@@ -923,7 +913,7 @@ const getMotions = (socket) => {
     }
 
     if (await confirm_popup(translations["confirm_motion_load"][lang](motionName))) {
-      socket.emit("load_motion", motionName);
+      api('POST', '/api/motion/load', { name: motionName }).then(d => dispMotion(d));
       $("#motion_name_val").val("");
     }
   });
@@ -939,7 +929,7 @@ const getMotions = (socket) => {
   for (idx in sample_motions) {
     $(`#motion_${sample_motions[idx]}_bt`).on("click", function () {
       let i = sample_motions.indexOf($(this).text());
-      socket.emit("load_motion", sample_motions[i]);
+      api('POST', '/api/motion/load', { name: sample_motions[i] }).then(d => dispMotion(d));
     });
   }
 
@@ -952,18 +942,18 @@ const getMotions = (socket) => {
       return;
     }
     if (await confirm_popup(translations["confirm_motion_delete"][lang](motionName))) {
-      socket.emit("delete_motion", motionName);
+      api('POST', '/api/motion/delete', { name: motionName }).then(d => dispMotion(d));
       $("#motion_name_val").val("");
     }
   });
 
   // 모션 삭제
   $("#reset_motion_bt").on("click", async function () {
-    if (await confirm_popup(translations["confirm_motion_delete_all"][lang])) socket.emit("reset_motion");
+    if (await confirm_popup(translations["confirm_motion_delete_all"][lang])) api('POST', '/api/motion/reset').then(d => dispMotion(d));
   });
 };
 
-const getSpeech = (socket) => {
+const getSpeech = () => {
   const max_tts_length = 100;
   $("#s_tts_bt").on("click", async function () {
     if ($("input[name=s_voice_en]:checked").val() == "off") {
@@ -980,7 +970,7 @@ const getSpeech = (socket) => {
       await alert_popup(translations["text_size_limit"][lang](max_tts_length));
       return;
     }
-    socket.emit("tts", {
+    api('POST', '/api/audio/tts', {
       text: string,
       voice_type: $("select[name=s_voice_type]").val(),
       volume: Number($("#volume").val()),
@@ -1002,7 +992,7 @@ const getSpeech = (socket) => {
         await alert_popup(translations["text_size_limit"][lang](max_tts_length));
         return;
       }
-      socket.emit("tts", {
+      api('POST', '/api/audio/tts', {
         text: string,
         voice_type: $("select[name=s_voice_type]").val(),
         volume: Number($("#volume").val()),
@@ -1031,7 +1021,7 @@ const getSpeech = (socket) => {
   });
 
   $("#s_reset_csv_bt").on("click", async function () {
-    socket.emit("reset_csv", {lang: lang});
+    api('POST', '/api/speech/reset_csv', {lang: lang});
     $("#s_upload_csv").val("");
     await alert_popup(translations["reset_ok"][lang]);
   });
@@ -1066,7 +1056,7 @@ const getSpeech = (socket) => {
       }, 600);
 
       setTimeout(function () {
-        socket.emit("question", {
+        api('POST', '/api/speech/question', {
           question: q.toLowerCase(),
           n: lang=="ko"?2:4,
           voice_en: $("input[name=s_voice_en]:checked").val(),
@@ -1099,7 +1089,7 @@ const getSpeech = (socket) => {
     }, 600);
 
     setTimeout(function () {
-      socket.emit("question", {
+      api('POST', '/api/speech/question', {
         question: q.toLowerCase(),
         n: lang=="ko"?2:4,
         voice_en: $("input[name=s_voice_en]:checked").val(),
@@ -1118,7 +1108,7 @@ const getSpeech = (socket) => {
       return;
     }
 
-    socket.emit("translate", {
+    api('POST', '/api/speech/translate', {
       langtype:$("select[name=s_lang_type]").val(),
       voice_en: $("input[name=s_voice_en]:checked").val(),
       volume: Number($("#volume").val()),
@@ -1134,7 +1124,7 @@ const getSpeech = (socket) => {
         return;
       }
   
-      socket.emit("translate", {
+      api('POST', '/api/speech/translate', {
         langtype:$("select[name=s_lang_type]").val(),
         voice_en: $("input[name=s_voice_en]:checked").val(),
         volume: Number($("#volume").val()),
@@ -1143,15 +1133,6 @@ const getSpeech = (socket) => {
     }
   });
 
-  socket.on("disp_translate", (data) => {
-    $("#s_translate_result_val").val(data);
-  });
-
-
-  socket.on("mic", function (d) {
-    //console.log('mic', d)
-    $("#mic_status").text(d);
-  });
 
   $("#mic_bt").on("click", async function () {
     let tmictime = "#mic_time_val";
@@ -1165,17 +1146,16 @@ const getSpeech = (socket) => {
     }
 
     $("#mic_status").html("<i class='fa-solid fa-fade'>녹음 중</i>");
-    socket.emit("mic", {
-      time: val,
-      volume: Number($("#volume").val()),
-    });
+    $("#mic_status").html("<i class='fa-solid fa-fade'>녹음 중</i>");
+    await api('POST', '/api/audio/mic', { time: val, volume: Number($("#volume").val()) });
+    $("#mic_status").text('완료');
   });
 
-  $("#mic_replay_bt").on("click", function () {
-    socket.emit("mic_replay", { volume: Number($("#volume").val()) });
+  $("#mic_replay_bt").on("click", async function () {
+    await api('POST', '/api/audio/mic/replay', { volume: Number($("#volume").val()) });
   });
 
-  socket.on("disp_speech", function (data) {
+  function dispSpeech(data) {
     if ("answer" in data) {
       $("#s_answer_val").val(data["answer"]);
     }
@@ -1199,8 +1179,7 @@ const getSpeech = (socket) => {
   });
 };
 
-const getSimulations = (socket) => {
-  /* 함수 호출: 부분에 socket 이용한 코드 삽입 */
+const getSimulations = () => {
   let selectFile = null;
   let selectFileContents = [];
   $("#sequence_title").hide();
@@ -1231,7 +1210,7 @@ const getSimulations = (socket) => {
     // play 되는 socket 함수들 cb으로 실행완료 후 동작 넘기도록?
     const tempSocket = {
       sim_play_item: (data) => {
-        socket.emit("sim_play_item", data);
+        api('POST', '/api/simulate/play', data);
       },
       sim_play_items: (data) => {
         playing.status = true;
@@ -1275,52 +1254,48 @@ const getSimulations = (socket) => {
           const itemName = `timeline_row_${timeVal}`;
           handleTimelineItemClick($(`div[name=${itemName}]`));
         });
-        socket.emit("sim_play_items", data);
+        api('POST', '/api/simulate/items/play', {items: data});
       },
       sim_stop_item: (data) => {
-        socket.emit("sim_stop_item", data);
+        api('POST', '/api/simulate/stop', {key: data});
       },
       sim_stop_items: () => {
         playing.status = false;
-        socket.emit("sim_stop_items");
+        api('POST', '/api/simulate/items/stop');
       },
       sim_update_audio: (type, cb) => {
-        socket.on("sim_update_audio", cb);
-        socket.emit("sim_update_audio", type);
+        api('GET', `/api/simulate/audio?p=${encodeURIComponent(type)}`).then(d => cb(d.files));
       },
       sim_update_oled: (type, cb) => {
-        socket.on("sim_update_oled", cb);
-        socket.emit("sim_update_oled", type);
+        api('GET', `/api/simulate/oled?p=${encodeURIComponent(type)}`).then(d => cb(d.files));
       },
       sim_update_motion: (type, cb) => {
-        socket.on("sim_update_motion", cb);
-        socket.emit("sim_update_motion", type);
+        api('GET', `/api/simulate/motion?type=${encodeURIComponent(type)}`).then(d => cb(d.motions));
       },
       sim_add_items: ({ name, data }) => {
-        socket.emit("sim_add_items", { name, data });
+        api('POST', '/api/simulate/items', { name, data });
       },
       sim_remove_items: (name) => {
         if (name) {
-          socket.emit("sim_remove_items", name);
+          api('DELETE', `/api/simulate/items?name=${encodeURIComponent(name)}`);
         } else {
-          socket.emit("sim_remove_items");
+          api('DELETE', '/api/simulate/items');
         }
       },
       sim_load_item: (name, cb) => {
         // 파일
-        socket.on("sim_load_item", (data) => cb({ name, data }));
-        socket.emit("sim_load_item", name);
+        api('GET', `/api/simulate/item?name=${encodeURIComponent(name)}`).then(d => cb({ name, item: d.item }));
       },
       sim_load_items: (cb) => {
         // 목록
-        socket.on("sim_load_items", (data) => cb(data));
-        socket.emit("sim_load_items");
+        api('GET', '/api/simulate/items').then(d => cb(d.items));
       },
     };
     const result = cb ? tempSocket[name](params, cb) : tempSocket[name](params);
     return result;
   };
-  socket.on("sim_result", (res) => {
+  // sim_result is now returned directly from API calls
+  function handleSimResult(res) {
     // 완료 신호 올 경우 상태 변경할 것
     if (typeof res === "object") {
       const [[key, v]] = Object.entries(res);
@@ -2597,20 +2572,20 @@ const handleMenu = (name) => {
   if (name === "speech") {
     $("#s_question_val").val("");
     $("#s_answer_val").val("");
-    socket.emit("disp_speech");
+    api('GET', '/api/speech/chat_list').then(dispSpeech);
   } else if (name === "vision") {
     $("#v_tilt_range").val($("#m5_range").val());
     $("#v_pan_range").val($("#m4_range").val());
     $("#v_location").text(`${$("#m4_range").val()}, ${$("#m5_range").val()}`);
-    socket.emit("disp_vision");
+    api('GET', '/api/vision/type').then(d => { if(d.vision_type) $('#v_func_type').val(d.vision_type); }); startVisionStream();
   } else if (name === "motion") {
-    socket.emit("disp_motion");
+    api('GET', '/api/motion/info').then(dispMotion);
   }
 
-  socket.emit("vision_sleep", name=="vision"?"off":"on");
+  api('POST', '/api/vision/sleep', { sleep: name=="vision"?"off":"on" });
   if (name != "motion") {
-    socket.emit("set_motor", { idx: 0, pos: 0});
-    socket.emit("set_motor", { idx: 6, pos: 0});
+    api('POST', '/api/motion/motor', { idx: 0, pos: 0});
+    api('POST', '/api/motion/motor', { idx: 6, pos: 0});
   }
 
   $("h4#content_header").text(name.toUpperCase());
@@ -2621,11 +2596,11 @@ const handleMenu = (name) => {
   $(`#article_${name}`).show("slide");
 };
 
-getVisions(socket);
-getMotions(socket);
-getSpeech(socket);
-getDevices(socket);
-getSimulations(socket);
+getVisions();
+getMotions();
+getSpeech();
+getDevices();
+getSimulations();
 
 handleMenu("device");
 const menus = $("nav").find("button");
