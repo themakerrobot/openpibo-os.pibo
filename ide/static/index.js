@@ -279,13 +279,13 @@ document.getElementById("guide_bt").addEventListener("click", function () {
 
 document.getElementById("restore_bt").addEventListener("click", async function () {
   if (await confirm_popup(translations["confirm_restore"][lang])) {
-    socket.emit("restore");
+    api('POST', '/api/restore');
   }
 });
 
 document.getElementById("poweroff_bt").addEventListener("click", async function () {
   if (await confirm_popup(translations["confirm_poweroff"][lang])) {
-      socket.emit("poweroff");
+    api('POST', '/api/poweroff');
   }
 });
 document.getElementById("logo_bt").addEventListener("click", function () {
@@ -310,7 +310,7 @@ const codeEditor = CodeMirror.fromTextArea(
         }
         saveCode = codeEditor.getValue();
         CodeMirror.signal(codeEditor, "change");
-        socket.emit("save", { codepath: $("#codepath").html(), codetext: saveCode });
+        api('POST', '/api/save', { codepath: $("#codepath").html(), codetext: saveCode });
       },
       "Ctrl-/": "toggleComment"
     },
@@ -321,7 +321,21 @@ const execute = document.getElementById("execute");
 const stop = document.getElementById("stop");
 const codeTypeBtns = document.querySelectorAll("div[name=codetype] button");
 const result = document.getElementById("result");
-const socket = io();
+
+// ── REST API helper ────────────────────────────────────────────────────────────
+async function api(method, path, data = null) {
+  const opts = { method, headers: {} };
+  if (data !== null) {
+    opts.headers['Content-Type'] = 'application/json';
+    opts.body = JSON.stringify(data);
+  }
+  const resp = await fetch(path, opts);
+  if (!resp.ok) {
+    const err = await resp.json().catch(() => ({}));
+    throw new Error(err.error || `HTTP ${resp.status}`);
+  }
+  return resp.json();
+}
 
 let CURRENT_DIR;
 let CODE_PATH = '';
@@ -335,7 +349,8 @@ $("#fontsize").on("change", function () {
   document.getElementById("result").style.fontSize = `${$("#fontsize").val()}px`;
 });
 
-socket.on("update", async (data) => {
+// ── Central update handler (used by both SSE and direct API responses) ─────────
+async function handleUpdate(data) {
   if ("code" in data) {
     const oldpath = $("#codepath").html();
     $("#codepath").html(data["filepath"]);
@@ -405,7 +420,49 @@ socket.on("update", async (data) => {
     stop.classList.add("disabled");
     execute.disabled = false;
   }
-});
+}
+
+function handleFileManager(d) {
+  CURRENT_DIR = "path" in d ? d["path"].split("/") : CURRENT_DIR;
+  $('#path').text(CURRENT_DIR.join("/"));
+  renderFileManager(d['data']);
+}
+
+function handleSystem(data) {
+  $("#s_serial").text(data[0]);
+  $("#s_os_version").text(data[1]);
+  $("#s_runtime").text(`${Math.floor(data[2] / 3600)} hours`);
+  $("#s_cpu_temp").text(data[3]);
+  $("#s_memory").text(`${Math.floor( (data[4] - data[5]) / data[4] * 100)} %`);
+  $("#s_network").html(`<i class="fas fa-network-wired"></i> ${data[7]}, <i class="fa-solid fa-wifi"></i> ${data[6]}/${data[8]}`);
+  $("#network_info").html(`<i class="fas fa-network-wired"></i> ${data[7]}, <i class="fa-solid fa-wifi"></i> ${data[6]}/${data[8]}`);
+}
+
+function handleBattery(data) {
+  let bat = Number(data.split("%")[0]);
+  let bat_str = ['empty', 'quarter', 'half', 'three-quarters', 'full'];
+  $("#d_battery_val").html(
+    `<i class='fa fa-battery-${bat_str[Math.floor(bat / 25)]}' aria-hidden='true'></i>${data} `
+  );
+}
+
+function handleDC(data) {
+  $("#d_dc_val").html(
+    data.toUpperCase() == "ON" ? "<i class='fa fa-plug' aria-hidden='true'></i>" : ""
+  );
+}
+
+// ── SSE connection for real-time server push ───────────────────────────────────
+const es = new EventSource('/api/stream');
+es.onmessage = async (event) => {
+  const data = JSON.parse(event.data);
+  if (data.ping) return;
+  if (data.system) handleSystem(data.system);
+  if (data.battery !== undefined) handleBattery(data.battery);
+  if (data.dc !== undefined) handleDC(data.dc);
+  if ("record" in data || "exit" in data || "dialog" in data) await handleUpdate(data);
+  if (data.exit && data.file_manager) renderFileManager(data.file_manager);
+};
 
 function findBlocks(data) {
   if (data && typeof data === 'object') {
@@ -420,90 +477,80 @@ function findBlocks(data) {
     }
   }
 }
-socket.emit("init");
-socket.on("init", (d) => {
-  let filepath = d["codepath"];
-  let file_extension = filepath.substring(filepath.lastIndexOf(".") + 1, filepath.length).toLowerCase();
 
-  if (file_extension == "py") {
-    saveCode = d["codetext"];
-    codeEditor.setValue(saveCode);
+// ── Initialize IDE via REST ────────────────────────────────────────────────────
+async function initIDE() {
+  try {
+    const d = await api('GET', '/api/init');
+    handleSystem(d.system || []);
+    let filepath = d["codepath"];
+    let file_extension = filepath.substring(filepath.lastIndexOf(".") + 1, filepath.length).toLowerCase();
 
-    codeTypeBtns.forEach((el) => {
-      if (el.name == "python") el.classList.add("checked");
-      else el.classList.remove("checked");
-    });
-    $("#codepath").text(d["codepath"]);
-    $("#codeDiv").show();
-    $("#blocklyDiv").hide();
-    setLanguage(lang);
-  }
-  else {
-    try {
+    if (file_extension == "py") {
+      saveCode = d["codetext"];
+      codeEditor.setValue(saveCode);
       codeTypeBtns.forEach((el) => {
-        if (el.name == "block") el.classList.add("checked");
+        if (el.name == "python") el.classList.add("checked");
         else el.classList.remove("checked");
       });
-
-      Blockly.serialization.workspaces.load(JSON.parse(d["codetext"]), workspace);
-      workspace.scrollCenter();
-      if (d["codetext"] != "{}" && 'blocks' in JSON.parse(d["codetext"])) {
-        for (jdata of JSON.parse(d["codetext"])["blocks"]["blocks"]) {
-          findBlocks({ block: jdata })
-        }
-      }
-      saveBlock = d["codetext"];
-      update_block();
       $("#codepath").text(d["codepath"]);
+      $("#codeDiv").show();
+      $("#blocklyDiv").hide();
+      setLanguage(lang);
     }
-    catch (e) {
-      if (d["codetext"] == "") {
-        saveBlock = "{}";
-        Blockly.serialization.workspaces.load(JSON.parse("{}"), workspace);
+    else {
+      try {
+        codeTypeBtns.forEach((el) => {
+          if (el.name == "block") el.classList.add("checked");
+          else el.classList.remove("checked");
+        });
+        Blockly.serialization.workspaces.load(JSON.parse(d["codetext"]), workspace);
         workspace.scrollCenter();
+        if (d["codetext"] != "{}" && 'blocks' in JSON.parse(d["codetext"])) {
+          for (jdata of JSON.parse(d["codetext"])["blocks"]["blocks"]) {
+            findBlocks({ block: jdata })
+          }
+        }
+        saveBlock = d["codetext"];
         update_block();
         $("#codepath").text(d["codepath"]);
       }
-      else {
-        $("#codepath").html("");
+      catch (e) {
+        if (d["codetext"] == "") {
+          saveBlock = "{}";
+          Blockly.serialization.workspaces.load(JSON.parse("{}"), workspace);
+          workspace.scrollCenter();
+          update_block();
+          $("#codepath").text(d["codepath"]);
+        }
+        else {
+          $("#codepath").html("");
+        }
+      }
+      finally {
+        $("#codeDiv").hide();
+        $("#blocklyDiv").show();
+        setLanguage(lang);
+        Blockly.svgResize(workspace);
       }
     }
-    finally {
-      $("#codeDiv").hide();
-      $("#blocklyDiv").show();
-      setLanguage(lang);
-      Blockly.svgResize(workspace);
-    }
+    CURRENT_DIR = d["path"].split("/");
+    await loadDirectory(CURRENT_DIR.join("/"));
+  } catch(e) {
+    console.error("Init error:", e);
   }
+}
 
-  CURRENT_DIR = d["path"].split("/");
-  socket.emit("load_directory", CURRENT_DIR.join("/"));
-});
-
-socket.on("system", (data) => {
-  $("#s_serial").text(data[0]);
-  $("#s_os_version").text(data[1]);
-  $("#s_runtime").text(`${Math.floor(data[2] / 3600)} hours`);
-  $("#s_cpu_temp").text(data[3]);
-  $("#s_memory").text(`${Math.floor( (data[4] - data[5]) / data[4] * 100)} %`);
-  $("#s_network").html(`<i class="fas fa-network-wired"></i> ${data[7]}, <i class="fa-solid fa-wifi"></i> ${data[6]}/${data[8]}`);
-  $("#network_info").html(`<i class="fas fa-network-wired"></i> ${data[7]}, <i class="fa-solid fa-wifi"></i> ${data[6]}/${data[8]}`);
-});
-
-socket.on("update_battery", (data) => {
-  let bat = Number(data.split("%")[0]);
-  let bat_str = ['empty', 'quarter', 'half', 'three-quarters', 'full'];
-
-  $("#d_battery_val").html(
-    `<i class='fa fa-battery-${bat_str[Math.floor(bat / 25)]}' aria-hidden='true'></i>${data} `
-  );
-});
-
-socket.on("update_dc", (data) => {
-  $("#d_dc_val").html(
-    data.toUpperCase() == "ON" ? "<i class='fa fa-plug' aria-hidden='true'></i>" : ""
-  );
-});
+async function loadDirectory(p) {
+  try {
+    const d = await api('GET', `/api/load_directory?p=${encodeURIComponent(p)}`);
+    CURRENT_DIR = d.path.split("/");
+    $('#path').text(CURRENT_DIR.join("/"));
+    renderFileManager(d.data);
+  } catch(e) {
+    console.error("loadDirectory error:", e);
+  }
+}
 
 codeTypeBtns.forEach((btn) => {
   const handler = (e) => {
@@ -556,24 +603,16 @@ execute.addEventListener("click", async function () {
     if (el.classList.value.includes("checked")) codetype = el.name;
   });
   if (codetype == "block") {
-    // if (filepath.substring(filepath.lastIndexOf(".") + 1, filepath.length) != "json") {
-    //   await alert_popup("json 파일만 실행 가능합니다.");
-    //   return;
-    // }
     saveBlock = JSON.stringify(Blockly.serialization.workspaces.save(workspace))
-    socket.emit("save", {
-      codepath: filepath,
-      codetext: saveBlock
-    });
+    await api('POST', '/api/save', { codepath: filepath, codetext: saveBlock });
     update_block();
-    // for block
-    socket.emit("executeb", { codetype: "python", codepath: "/home/pi/.tmp.py", codetext: Blockly.Python.workspaceToCode(workspace) });
+    await api('POST', '/api/executeb', { codetype: "python", codepath: "/home/pi/.tmp.py", codetext: Blockly.Python.workspaceToCode(workspace) });
   }
   else {
     saveCode = codeEditor.getValue();
     codepath = $("#codepath").html();
     CodeMirror.signal(codeEditor, "change");
-    socket.emit("execute", { codetype: codetype, codepath: codepath, codetext: saveCode });
+    await api('POST', '/api/execute', { codetype: codetype, codepath: codepath, codetext: saveCode });
   }
 
   execute.classList.add("disabled");
@@ -583,25 +622,23 @@ execute.addEventListener("click", async function () {
   $("#respath").text($("#codepath").html());
 });
 
-stop.addEventListener("click", function () {
-  socket.emit("stop");
+stop.addEventListener("click", async function () {
+  await api('POST', '/api/stop');
   stop.disabled = true;
 });
 
-socket.on("update_file_manager", (d) => {
-  CURRENT_DIR = "path" in d ? d["path"].split("/") : CURRENT_DIR;
-  $('#path').text(CURRENT_DIR.join("/"));
+function renderFileManager(rawData) {
   $("#fm_table > tbody").empty();
 
   let data;
   if ($("#hiddenfile").is(":checked") == false) {
     data = [];
-    for (let i = 0; i < d['data'].length; i++)
-      if (d['data'][i].name[0] != ".")
-        data.push(d['data'][i])
+    for (let i = 0; i < rawData.length; i++)
+      if (rawData[i].name[0] != ".")
+        data.push(rawData[i])
   }
   else {
-    data = d['data'];
+    data = rawData;
   }
 
   data.unshift({ name: "..", type: "" });
@@ -626,11 +663,11 @@ socket.on("update_file_manager", (d) => {
                   return;
                 }
                 CURRENT_DIR.pop();
-                socket.emit("load_directory", CURRENT_DIR.join("/"));
+                await loadDirectory(CURRENT_DIR.join("/"));
               }
               else if (type.includes("folder")) {
                 CURRENT_DIR.push(name);
-                socket.emit("load_directory", CURRENT_DIR.join("/"));
+                await loadDirectory(CURRENT_DIR.join("/"));
               }
               else if (type.includes("file")) {
                 let ext = name.split(".");
@@ -639,10 +676,12 @@ socket.on("update_file_manager", (d) => {
 
                 if (await confirm_popup(translations['confirm_load_file'][lang](filepath)) == false) return;
                 if (["jpg", "png", "jpeg"].includes(ext.toLowerCase())) {
-                  socket.emit("view", filepath);
+                  const d = await api('GET', `/api/view?p=${encodeURIComponent(filepath)}`);
+                  await handleUpdate(d);
                 }
                 else if (["wav", "mp3"].includes(ext.toLowerCase())) {
-                  socket.emit("play", filepath);
+                  const d = await api('GET', `/api/play_file?p=${encodeURIComponent(filepath)}`);
+                  await handleUpdate(d);
                 }
                 else {
                   let codetype = "";
@@ -650,28 +689,24 @@ socket.on("update_file_manager", (d) => {
                     if (el.classList.value.includes("checked")) codetype = el.name;
                   });
                   if (codetype == "block") {
-                    // if(["json"].includes(ext.toLowerCase()) == false) {
-                    //   await alert_popup("json 파일만 로드 가능합니다.");
-                    //   return;
-                    // }
                     if (saveBlock != JSON.stringify(Blockly.serialization.workspaces.save(workspace))) {
                       if (await confirm_popup(translations['confirm_save_file'][lang]($("#codepath").html())))
-                        socket.emit("save", { codepath: $("#codepath").html(), codetext: JSON.stringify(Blockly.serialization.workspaces.save(workspace)) });
+                        await api('POST', '/api/save', { codepath: $("#codepath").html(), codetext: JSON.stringify(Blockly.serialization.workspaces.save(workspace)) });
                     }
                   }
                   else {
                     if (saveCode != codeEditor.getValue()) {
                       if (await confirm_popup(translations['confirm_save_file'][lang]($("#codepath").html())))
-                        socket.emit("save", { codepath: $("#codepath").html(), codetext: codeEditor.getValue() });
+                        await api('POST', '/api/save', { codepath: $("#codepath").html(), codetext: codeEditor.getValue() });
                     }
                   }
-                  socket.emit("load", filepath);
+                  const d = await api('POST', '/api/load', { path: filepath });
+                  await handleUpdate(d);
                 }
               }
             })
           ,
           $("<td style='width:15px;text-align:center'>").append(data[i].type == "" || data[i].protect == true ? "" : `<a href='/download?filename=${data[i].name}'><i class='fa-solid fa-circle-down'></i></a>`)
-            //$("<td style='width:15px;text-align:center'>").append(["", "folder"].includes(data[i].type) || data[i].protect==true?"":`<a href='/download?filename=${data[i].name}'><i class='fa-solid fa-circle-down'></i></a>`)
             .hover(
               function () { $(this).animate({ opacity: "0.3" }, 100); },
               function () { $(this).animate({ opacity: "1" }, 100); }
@@ -686,7 +721,6 @@ socket.on("update_file_manager", (d) => {
               if ($(this).html() == "") return;
 
               let idx = $(this).closest('tr').index();
-              //let type = $(`#fm_table tr:eq(${idx}) td:eq(0)`).html();
               let name = $(`#fm_table tr:eq(${idx}) td:eq(1)`).html();
               let newname = await prompt_popup(translations['check_newfile_name'][lang], name);
 
@@ -695,7 +729,7 @@ socket.on("update_file_manager", (d) => {
                   await alert_popup(translations['check_newfile_name'][lang]);
                   return;
                 }
-                newname = newname.trim()//.replace(/ /g, "_");
+                newname = newname.trim();
                 if (newname.length > MAX_FILENAME_LENGTH) {
                   await alert_popup(translations['name_size_limit'][lang](MAX_FILENAME_LENGTH));
                   return;
@@ -721,7 +755,9 @@ socket.on("update_file_manager", (d) => {
                 Blockly.serialization.workspaces.load(JSON.parse(saveBlock), workspace);
                 workspace.scrollCenter();
               }
-              socket.emit('rename', { oldpath: CURRENT_DIR.join("/") + "/" + name, newpath: CURRENT_DIR.join("/") + "/" + newname });
+              const d = await api('POST', '/api/rename', { oldpath: CURRENT_DIR.join("/") + "/" + name, newpath: CURRENT_DIR.join("/") + "/" + newname });
+              if (d.data) renderFileManager(d.data);
+              if (d.code !== undefined) await handleUpdate(d);
             })
           ,
           $("<td style='width:15px;text-align:center'>").append([""].includes(data[i].type) || data[i].protect == true ? "" : "<i class='fa-solid fa-trash-can'></i>")
@@ -733,7 +769,6 @@ socket.on("update_file_manager", (d) => {
               if ($(this).html() == "") return;
 
               let idx = $(this).closest('tr').index();
-              //let type = $(`#fm_table tr:eq(${idx}) td:eq(0)`).html();
               let name = $(`#fm_table tr:eq(${idx}) td:eq(1)`).html();
               if (await confirm_popup(translations['confirm_delete_file'][lang](`${CURRENT_DIR.join("/")}/${name}`))) {
                 if ($("#codepath").html().includes(CURRENT_DIR.join("/") + "/" + name)) {
@@ -750,17 +785,18 @@ socket.on("update_file_manager", (d) => {
                   Blockly.serialization.workspaces.load(JSON.parse(saveBlock), workspace);
                   workspace.scrollCenter();
                 }
-                socket.emit('delete', CURRENT_DIR.join("/") + "/" + name);
+                const d = await api('POST', '/api/delete', { path: CURRENT_DIR.join("/") + "/" + name });
+                if (d.data) renderFileManager(d.data);
               }
             })
           ,
         )
     );
   }
-});
+}
 
-$("#hiddenfile").on("change", function () {
-  socket.emit("load_directory", CURRENT_DIR.join("/"));
+$("#hiddenfile").on("change", async function () {
+  await loadDirectory(CURRENT_DIR.join("/"));
 });
 
 $("#add_directory").on("click", async function () {
@@ -776,7 +812,8 @@ $("#add_directory").on("click", async function () {
       return;
     }
 
-    socket.emit('add_directory', CURRENT_DIR.join("/") + "/" + name);
+    const d = await api('POST', '/api/add_directory', { path: CURRENT_DIR.join("/") + "/" + name });
+    if (d.data) renderFileManager(d.data);
   }
 });
 
@@ -799,9 +836,11 @@ $("#add_file").on("click", async function () {
     }
     if (saveCode != codeEditor.getValue()) {
       if (await confirm_popup(translations['confirm_save_file'][lang]($("#codepath").html())))
-        socket.emit("save", { codepath: $("#codepath").html(), codetext: codeEditor.getValue() });
+        await api('POST', '/api/save', { codepath: $("#codepath").html(), codetext: codeEditor.getValue() });
     }
-    socket.emit('add_file', CURRENT_DIR.join("/") + "/" + name);
+    const df = await api('POST', '/api/add_file', { path: CURRENT_DIR.join("/") + "/" + name });
+    if (df.data) renderFileManager(df.data);
+    if (df.code !== undefined || df.filepath !== undefined) await handleUpdate(df);
   }
 });
 
@@ -843,11 +882,11 @@ $("#upload").on("change", async (e) => {
     });
 });
 
-$("#eraser").on("click", function () {
+$("#eraser").on("click", async function () {
   result.value = "";
   $("#respath").text("");
   $("#prompt").val("");
-  socket.emit('reset_log');
+  await api('POST', '/api/reset_log');
 });
 
 window.dispatchEvent(new Event('onresize'));
@@ -902,19 +941,9 @@ $("#save").on("click", async function () {
     if (el.classList.value.includes("checked")) codetype = el.name;
   });
   if (codetype == "block") {
-    // if (filepath.substring(filepath.lastIndexOf(".") + 1, filepath.length) != "json") {
-    //   await alert_popup("json 파일만 저장 가능합니다.");
-    //   return;
-    // }
     saveBlock = JSON.stringify(Blockly.serialization.workspaces.save(workspace))
-    socket.emit("save", {
-      codepath: "/home/pi/.tmp.py",
-      codetext: Blockly.Python.workspaceToCode(workspace)
-    });
-    socket.emit("save", {
-      codepath: $("#codepath").html(),
-      codetext: saveBlock
-    });
+    await api('POST', '/api/save', { codepath: "/home/pi/.tmp.py", codetext: Blockly.Python.workspaceToCode(workspace) });
+    await api('POST', '/api/save', { codepath: $("#codepath").html(), codetext: saveBlock });
     result.value = Blockly.Python.workspaceToCode(workspace);
     update_block();
   }
@@ -922,10 +951,9 @@ $("#save").on("click", async function () {
     codeTypeBtns.forEach((el) => {
       if (el.classList.value.includes("checked")) codetype = el.name;
     });
-
     saveCode = codeEditor.getValue();
     CodeMirror.signal(codeEditor, "change");
-    socket.emit("save", { codepath: $("#codepath").html(), codetext: saveCode });
+    await api('POST', '/api/save', { codepath: $("#codepath").html(), codetext: saveCode });
   }
 });
 
@@ -1135,14 +1163,8 @@ $(document).keydown(async (evt) => {
       //   return;
       // }
       saveBlock = JSON.stringify(Blockly.serialization.workspaces.save(workspace))
-      socket.emit("save", {
-        codepath: "/home/pi/.tmp.py",
-        codetext: Blockly.Python.workspaceToCode(workspace)
-      });
-      socket.emit("save", {
-        codepath: $("#codepath").html(),
-        codetext: saveBlock
-      });
+      api('POST', '/api/save', { codepath: "/home/pi/.tmp.py", codetext: Blockly.Python.workspaceToCode(workspace) });
+      api('POST', '/api/save', { codepath: $("#codepath").html(), codetext: saveBlock });
       result.value = Blockly.Python.workspaceToCode(workspace);
       update_block();
     }
@@ -1152,7 +1174,7 @@ $(document).keydown(async (evt) => {
       });
       saveCode = codeEditor.getValue();
       CodeMirror.signal(codeEditor, "change");
-      socket.emit("save", { codepath: $("#codepath").html(), codetext: saveCode });
+      api('POST', '/api/save', { codepath: $("#codepath").html(), codetext: saveCode });
     }
     return false;
   }
@@ -1355,7 +1377,7 @@ $(document).keydown(async (evt) => {
     });
 
 window.addEventListener('beforeunload', (evt) => {
-  socket.emit("stop");
+  navigator.sendBeacon('/api/stop', JSON.stringify({}));
 });
 
 $('input[name="wifi_type_sel"]').on('click', function () {
@@ -1389,13 +1411,12 @@ $('input[name="wifi_type_sel"]').on('click', function () {
 
 $("#prompt").on("keypress", (evt) => {
   if (evt.keyCode == 13) {
-    socket.emit("prompt", $("#prompt").val().trim());
-    //$("#prompt").val("");
+    api('POST', '/api/prompt', { text: $("#prompt").val().trim() });
   }
 });
 
 $("#prompt_bt").on('click', function () {
-  socket.emit("prompt", $("#prompt").val().trim());
+  api('POST', '/api/prompt', { text: $("#prompt").val().trim() });
 });
 
 const setLanguage = (langCode) => {
@@ -1447,3 +1468,6 @@ language.addEventListener("change", function () {
 
 // warning
 document.querySelector("div.CodeMirror textarea").setAttribute("name", "ctx");
+
+// Initialize IDE
+initIDE();

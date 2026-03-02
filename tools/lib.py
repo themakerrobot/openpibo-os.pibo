@@ -26,9 +26,11 @@ def to_base64(im):
   return base64.b64encode(buffer).decode('utf-8')
 
 class Pibo:
-  def __init__(self, emit_func=None, logger=None):
+  def __init__(self, logger=None):
     logging.info('Class INIT')
-    self.emit = emit_func
+    # latest vision frame (updated by vision_loop, read by SSE endpoint)
+    self.last_frame_b64 = None
+    self.last_res = ''
     self.mymodel_path = "/home/pi/mymodel"
     self.trackX, self.trackY = 0, 0
     self.imgX, self.imgY = 0,0
@@ -60,7 +62,6 @@ class Pibo:
 
     self.mot.set_motors(self.motion_d, movetime=1000)
     self.det.load_hand_gesture_model()
-    asyncio.run(self.emit('onoff', True, callback=None))
     Thread(name='vision_loop', target=self.vision_loop, args=(), daemon=True).start()
 
   def vision_loop(self):
@@ -108,7 +109,8 @@ class Pibo:
       self.res_img = img.copy()
       if self.cam:
         self.cam.putText(img, '+', (self.imgX-5,self.imgY), 0.6, (100,100,200), 3)
-      asyncio.run(self.emit('stream', {'img':to_base64(img), 'data':res}, callback=None))
+      self.last_frame_b64 = to_base64(img)
+      self.last_res = res
       time.sleep(0.5)
 
   def face_detect(self):
@@ -196,6 +198,9 @@ class Pibo:
     print('marker', im.shape, self.marker_length, res)
     self.det.detect_marker_vis(im, res)
     return im, " ".join([ f'({d["id"]})-{d["distance"]}cm' for d in res])
+
+  def get_frame_b64(self):
+    return self.last_frame_b64
 
   def imwrite(self, name):
     self.cam.imwrite(name, self.res_img.copy())
@@ -399,7 +404,6 @@ class Pibo:
       item = data.split("-")
       item[2] = self.system_value[2] if item[2] == '' else item[2]
       self.system_value = item
-      asyncio.run(self.emit('update_device', self.system_value, callback=None))
 
   def device_loop(self):
     system_check_time = time.time()
@@ -454,8 +458,6 @@ class Pibo:
   # simulate
   def sim_motion(self, name, cycle=1, path=None, log=True):
     self.mot.set_motion(name, cycle, path)
-    if log == True:
-      asyncio.run(self.emit('sim_result', {'motion':'stop'}, callback=None))
 
   def async_sim_motion(self, name, cycle=1, path=None, log=True):
     self.mot.stop()
@@ -469,8 +471,6 @@ class Pibo:
   def sim_audio(self, filename, volume, log=True):
     self.stop_audio()
     self.play_audio(filename, volume, False)
-    if log == True:
-      asyncio.run(self.emit('sim_result', {'audio':'stop'}, callback=None))
 
   def async_sim_audio(self, filename, volume, log=True):
     Thread(name='sim_audio', target=self.sim_audio, args=(filename, volume, log), daemon=True).start()
