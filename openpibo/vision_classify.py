@@ -1,123 +1,185 @@
 """
 영상처리, 인공지능 비전 기술을 사용합니다.
-이 모듈은 AI-Core 서버와 통신하여 동작합니다.
+
+Class:
+:obj:`~openpibo.vision_classify.TeachableMachine`
+:obj:`~openpibo.vision_classify.CustomClassifier`
 """
-import requests
-import base64
-import numpy as np
 import cv2
-import json
+import os
+import numpy as np
+import tensorflow as tf
+import logging
 
-# =================================================================
-# API 통신 헬퍼 함수
-# =================================================================
-def _api_call(endpoint: str, img_in: np.ndarray = None, params: dict = None):
-    """
-    AI-Core 서버와 통신을 전담하는 내부 헬퍼 함수입니다.
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # TensorFlow C++ 로그 제거
+os.environ['LIBCAMERA_LOG_LEVELS'] = '3'
+tf.get_logger().setLevel(logging.ERROR)   # Python 기반 TensorFlow 로그 제거
+tf.autograph.set_verbosity(0)             # AutoGraph 관련 메시지 비활성화
 
-    :param str endpoint: 호출할 API의 엔드포인트 (예: "tm/predict")
-    :param numpy.ndarray img_in: 서버로 전송할 이미지
-    :param dict params: API에 전달할 추가 파라미터
-    :return: 서버로부터 받은 데이터 (이미지 또는 JSON 데이터)
-    """
-    SERVER_URL = "http://127.0.0.1:50050"  # AI-Core 서버 주소
+# ✅ 추가: TensorFlow 내부 디버그 메시지 완전 차단
+logging.getLogger("tensorflow").setLevel(logging.ERROR)
 
-    payload = {"params": params or {}}
-    if img_in is not None:
-        # 이미지를 PNG로 압축 후 Base64로 인코딩하여 payload에 추가
-        _, buffer = cv2.imencode('.png', img_in)
-        img_b64 = base64.b64encode(buffer).decode('utf-8')
-        payload["image"] = img_b64
-
-    try:
-        # API 서버에 POST 요청
-        response = requests.post(f"{SERVER_URL}/{endpoint}", json=payload)
-        response.raise_for_status()  # 200번대 응답이 아니면 에러 발생
-        res_json = response.json()
-    except requests.exceptions.RequestException as e:
-        raise ConnectionError(f"AI-Core 서버({SERVER_URL}) 연결에 실패했습니다: {e}")
-
-    # 이미지 외의 데이터(JSON) 반환
-    return res_json.get("data", res_json)
-
-# =================================================================
-# TeachableMachine 클래스 (API 클라이언트 버전)
-# =================================================================
 class TeachableMachine:
   """
-  Teachable Machine 모델을 사용하여 이미지를 분류합니다. (API-backed)
-  이 클래스의 인스턴스는 내부적으로 AI-Core 서버와 통신하여 동작합니다.
+Functions:
+:meth:`~openpibo.vision_classify.TeachableMachine.load`
+:meth:`~openpibo.vision_classify.TeachableMachine.predict`
+
+  파이보의 카메라 Teachable Machine 기능을 사용합니다.
+
+  * ``이미지 프로젝트`` 의 ``표준 이미지 모델`` 을 사용합니다.
+  * ``Teachable Machine`` 에서 학습한 모델을 적용하여 추론할 수 있습니다.
+  * 학습한 모델은 ``Tensorflow Lite`` 형태로 다운로드 해주세요.
+
+  example::
+
+    from openpibo.vision_classify import TeachableMachine
+
+    tm = TeachableMachine()
+    # 아래의 모든 예제 이전에 위 코드를 먼저 사용합니다.
   """
-  def __init__(self):
-    """
-    TeachableMachine 클래스를 초기화합니다.
-    실제 모델 로딩은 서버에서 이루어지므로, 이 메서드는 비어있습니다.
-    """
-    pass
 
   def load(self, model_path, label_path):
     """
-    서버에 Tflite 모델을 로드하도록 요청합니다. (서버 API 호출)
+    (내부 함수) Tflite 모델로 불러옵니다. (부동소수점/양자화) 모두 가능
 
-    :param str model_path: 서버의 파일 시스템에 있는 모델 파일 경로
-    :param str label_path: 서버의 파일 시스템에 있는 라벨 파일 경로
+    example::
+
+      tm.load_tflite('model_unquant.tflite', 'labels.txt')
+
+    :param str model_path: Teachable Machine의 모델파일
+    :param str label_path: Teachable Machine의 라벨파일
     """
-    params = {"model_path": model_path, "label_path": label_path}
-    result = _api_call("tm/load", params=params)
-    if result.get("status") == "error":
-        raise Exception(f"Failed to load Teachable Machine model on server: {result.get('message')}")
+
+    with open(label_path, 'r') as f:
+      c = f.readlines()
+      class_names = [item.split(maxsplit=1)[1].strip('\n') for item in c]
+
+    # Load TFLite model and allocate tensors
+    self.interpreter = tf.lite.Interpreter(model_path=model_path)
+    self.interpreter.allocate_tensors()
+
+    # Get input and output tensors.
+    self.input_details = self.interpreter.get_input_details()
+    self.output_details = self.interpreter.get_output_details()
+
+    # check the type of the input tensor
+    self.floating_model = self.input_details[0]['dtype'] == np.float32
+
+    self.height = self.input_details[0]['shape'][1]
+    self.width = self.input_details[0]['shape'][2]
+
+    self.class_names = class_names
 
   def predict(self, img):
     """
-    Tflite 모델로 추론합니다. (서버 API 호출)
+    Tflite 모델로 추론합니다.
 
-    :param numpy.ndarray img: 분석할 이미지 객체
-    :returns: (가장 높은 확률을 가진 클래스 명, 전체 클래스에 대한 확률 리스트)
+    example::
+
+      cm = Camera()
+      img = cm.read()
+      tm.predict(img)
+
+    :param numpy.ndarray img: 이미지 객체
+
+    :returns: 가장 높은 확률을 가진 클래스 명, 결과(raw 데이터)
     """
-    result = _api_call("tm/predict", img_in=img)
-    if "name" in result and "predictions" in result:
-        # 서버는 dict를 반환하므로, 기존 규격에 맞게 튜플로 변환
-        return result['name'], result['predictions']
-    else:
-        raise Exception(f"Failed to predict with Teachable Machine model: {result.get('message', 'Unknown error')}")
 
-# =================================================================
-# CustomClassifier 클래스 (API 클라이언트 버전)
-# =================================================================
+    try:
+      img = cv2.cvtColor(cv2.resize(img, (self.width, self.height)), cv2.COLOR_BGR2RGB)
+      image = Image.fromarray(img)
+
+      # Add a batch dimension
+      input_data = np.expand_dims(image, axis=0)
+
+      if self.floating_model:
+        input_data = (np.float32(input_data) - 127.5) / 127.5
+
+      # feed data to input tensor and run the interpreter
+      self.interpreter.set_tensor(self.input_details[0]['index'], input_data)
+      self.interpreter.invoke()
+
+      # Obtain results and map them to the classes
+      preds = self.interpreter.get_tensor(self.output_details[0]['index'])
+      preds = np.squeeze(preds)
+      return self.class_names[np.argmax(preds)], preds
+    except Exception as ex:
+      raise Exception('Teachable Machine Model did not load properly.')
+
+
 class CustomClassifier:
   """
-  사용자 정의 Keras 모델을 사용하여 이미지를 분류합니다. (API-backed)
-  이 클래스의 인스턴스는 내부적으로 AI-Core 서버와 통신하여 동작합니다.
+Functions:
+:meth:`~openpibo.vision_classify.CustomClassifier.load`
+:meth:`~openpibo.vision_classify.CustomClassifier.predict`
+
+  파이보의 카메라 Classifier 기능을 사용합니다.
+
+  * ``이미지 프로젝트`` 의 ``표준 이미지 모델`` 을 사용합니다.
+  * ``Custom tools`` 에서 학습한 모델을 적용하여 추론할 수 있습니다.
+
+  example::
+
+    from openpibo.vision_classify import CustomClassifier
+
+    cf = CustomClassifier()
+    # 아래의 모든 예제 이전에 위 코드를 먼저 사용합니다.
   """
-  def __init__(self):
-    """
-    CustomClassifier 클래스를 초기화합니다.
-    실제 모델 로딩은 서버에서 이루어지므로, 이 메서드는 비어있습니다.
-    """
-    pass
 
   def load(self, model_path, label_path):
     """
-    서버에 Keras 모델을 로드하도록 요청합니다. (서버 API 호출)
+    keras 모델로 불러옵니다.
 
-    :param str model_path: 서버의 파일 시스템에 있는 모델 파일 경로
-    :param str label_path: 서버의 파일 시스템에 있는 라벨 파일 경로
+    example::
+
+      cf.load('model.keras', 'labels.txt')
+
+    :param str model_path: Classifier의 모델파일
+    :param str label_path: Classifier의 라벨파일
     """
-    params = {"model_path": model_path, "label_path": label_path}
-    result = _api_call("cf/load", params=params)
-    if result.get("status") == "error":
-        raise Exception(f"Failed to load Custom Classifier model on server: {result.get('message')}")
+    # ✅ 모델 로드
+    self.model = tf.keras.models.load_model(model_path)
+
+    # ✅ 레이블 로드
+    with open(label_path, "r", encoding="utf-8") as f:
+      self.class_names = [line.strip() for line in f.readlines()]
+
+    base_model = tf.keras.applications.MobileNetV2(input_shape=(224, 224, 3), include_top=False, pooling="avg")
+    self.feature_extractor = tf.keras.Model(inputs=base_model.input, outputs=base_model.output)
+
+    # print(f"✅ 모델 로드 완료: {model_path}")
+    # print(f"✅ 레이블 로드 완료: {self.class_names}")
 
   def predict(self, img):
     """
-    Keras 모델로 추론합니다. (서버 API 호출)
+    keras 모델로 추론합니다.
 
-    :param numpy.ndarray img: 분석할 이미지 객체
-    :returns: (가장 높은 확률을 가진 클래스 명, 전체 클래스에 대한 확률 리스트)
+    example::
+
+      cm = Camera()
+      img = cm.read()
+      cf.predict(img)
+
+    :param numpy.ndarray img: 이미지 객체
+
+    :returns: 가장 높은 확률을 가진 클래스 명, 결과(raw 데이터)
     """
-    result = _api_call("cf/predict", img_in=img)
-    if "name" in result and "predictions" in result:
-        # 서버는 dict를 반환하므로, 기존 규격에 맞게 튜플로 변환
-        return result['name'], result['predictions']
-    else:
-        raise Exception(f"Failed to predict with Custom Classifier model: {result.get('message', 'Unknown error')}")
+    try:
+      # ✅ 이미지 전처리 (224x224 크기로 조정 후 정규화)
+      img = cv2.resize(img, (224, 224))  # 크기 조정
+      img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)  # RGB 변환
+      img = img.astype("float32") / 255.0  # 정규화
+      img = np.expand_dims(img, axis=0)  # 배치 차원 추가
+
+      features = self.feature_extractor.predict(img,  verbose=None)  # (1, 1280) 벡터 추출
+
+      # ✅ 예측 수행
+      preds = self.model.predict(features, verbose=None)  
+      pred_index = np.argmax(preds)  # 가장 높은 확률을 가진 클래스 인덱스
+      confidence = preds[0][pred_index]  # 확률 값
+      name = self.class_names[pred_index]  # 클래스 이름
+
+      return name, preds[0]  # (예측 클래스명, raw 결과)
+    except Exception as ex:
+      raise Exception('Classifier Model did not load properly.')

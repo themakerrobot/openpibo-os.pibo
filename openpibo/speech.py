@@ -9,44 +9,25 @@ Class:
 
 import csv
 import random
-#import io
 import json
 import os
-#from konlpy.tag import Mecab
 import requests
 from . import napi_host, sapi_host
 from .modules.speech.mtranslate import translate
-from .modules.speech.mtts import OnDeviceTTS
+
+import numpy as np
+import onnxruntime as ort
+import soundfile as sf
+from .modules.speech.mtts import (
+    load_text_to_speech,
+    load_voice_style,
+    TextToSpeech,
+    AVAILABLE_LANGS,
+)
 import openpibo_models
 #current_path = os.path.dirname(os.path.realpath(__file__))
 
-# =================================================================
-# API 통신 헬퍼 함수 (음성 합성 전용)
-# =================================================================
-def _api_call(endpoint: str, params: dict = None):
-    """
-    AI-Core 서버와 통신을 전담하는 내부 헬퍼 함수입니다.
-
-    :param str endpoint: 호출할 API의 엔드포인트 (예: "speech/tts")
-    :param dict params: API에 전달할 추가 파라미터
-    :return: 서버로부터 받은 데이터 (JSON)
-    """
-    SERVER_URL = "http://127.0.0.1:50050"  # AI-Core 서버 주소
-
-    # 음성 합성은 이미지를 사용하지 않으므로, params만 payload로 구성합니다.
-    payload = {"params": params or {}}
-
-    try:
-        # API 서버에 POST 요청
-        response = requests.post(f"{SERVER_URL}/{endpoint}", json=payload)
-        response.raise_for_status()  # 200번대 응답이 아니면 에러 발생
-        res_json = response.json()
-    except requests.exceptions.RequestException as e:
-        raise ConnectionError(f"AI-Core 서버({SERVER_URL}) 연결에 실패했습니다: {e}")
-
-    # JSON 데이터 반환
-    return res_json.get("data", res_json)
-
+os.environ["ORT_LOGGING_LEVEL"] = "3"
 
 def speech_api(mode, type, params={}, json_data={}):
   """
@@ -156,7 +137,7 @@ Functions:
     else:
       os.system(f'arecord -D plug:dmic_sv -c2 -r 16000 -f S32_LE -d {timeout} -t wav -q stream.raw;sox stream.raw -q -c 1 -b 16 {filename};rm stream.raw')
 
-    res = requests.post(self.SAPI_HOST + '/stt', files={'file':open(filename, 'rb')})
+    res = requests.post("https://o-vapi.circul.us/stt" + '/stt', files={'uploadFile':open(filename, 'rb')})
 
     if res.status_code != 200:
       raise Exception(f'response error: {res}')
@@ -166,50 +147,92 @@ Functions:
 
     return res.json()['data']
 
-# =================================================================
-# SpeechOnDevice 클래스 (API 클라이언트 버전)
-# =================================================================
+DEFAULT_MODEL_DIR = "/home/pi/.model"
+
 class SpeechOnDevice:
   """
-  TTS (Text to Speech) 기능을 제공합니다. (API-backed)
-  이 클래스의 인스턴스는 내부적으로 AI-Core 서버와 통신하여 음성을 생성합니다.
+Functions:
+:meth:`~openpibo.speech.SpeechOnDevice.tts`
+
+  * TTS (Text to Speech)
+
+  example::
+
+    from openpibo.speech import SpeechOnDevice
+
+    speech_od = SpeechOnDevice()
+    # 아래의 모든 예제 이전에 위 코드를 먼저 사용합니다.
   """
 
-  def __init__(self):
+  def __init__(
+    self,
+    onnx_dir: str = f"{DEFAULT_MODEL_DIR}/tts/assets/onnx",
+    voice_dir: str = f"{DEFAULT_MODEL_DIR}/tts/assets/voice_styles",
+    total_step: int = 5,
+    speed: float = 1.05,
+  ):
     """
-    SpeechOnDevice 클래스를 초기화합니다.
-    실제 TTS 엔진은 서버에서 관리되므로, 이 메서드는 비어있습니다.
+    :param str onnx_dir: ONNX 모델 디렉토리 경로
+    :param str voice_dir: 보이스 스타일 JSON 디렉토리 경로
+    :param int total_step: 디노이징 스텝 수 (높을수록 품질↑, 속도↓)
+    :param float speed: 말하기 속도 (높을수록 빠름)
     """
-    pass
-  
-  def tts(self, text, filename="tts.mp3", voice=2, lang="ko"):
+    self.onnx_dir = onnx_dir
+    self.voice_dir = voice_dir
+    self.total_step = total_step
+    self.speed = speed
+    self._model: TextToSpeech = load_text_to_speech(onnx_dir, use_gpu=False)
+
+  def tts(
+    self,
+    text: str,
+    filename: str = "tts.wav",
+    voice: str = "m1",
+    lang: str = "na",
+  ) -> str:
     """
-    서버에 TTS(Text to Speech)를 요청하여 음성 파일을 생성합니다.
-    음성 파일은 서버(로봇)의 파일 시스템에 저장됩니다.
+    TTS(Text to Speech) — 텍스트를 음성 파일로 변환합니다.
+
+      example::
+
+        tts.tts(text='안녕하세요! 만나서 반가워요!', filename='/home/pi/tts.wav', voice='m1', lang='na')
 
     :param str text: 변환할 문장
-    :param str filename: 서버에 저장될 음성 파일의 경로 (mp3)
-    :param int voice: 목소리 번호 (0-5)
-    :param str lang: 사용할 언어 (ko)
+    :param str filename: 저장할 음성 파일 경로 (.wav)
+    :param str voice: 목소리 종류 (m1~m5/f1~f5)
+    :param str lang: 언어 코드 ('na'=자동/기타, 'ko', 'en', 'ja' ...)
+    :returns str: 저장된 파일 경로
     """
 
     if not isinstance(text, str):
       raise TypeError(f'"{text}" must be str type')
+    if voice not in ("m1", "m2", "m3", "m4", "m5", "f1", "f2", "f3", "f4", "f5"):
+      raise ValueError(f"voice must be m1~m5/f1~f5, got {voice}")
+    if lang not in AVAILABLE_LANGS:
+      raise ValueError(f"Unsupported lang: {lang}")
 
-    params = {
-        "text": text,
-        "filename": filename,
-        "voice": voice,
-        "lang": lang
-    }
-    
-    result = _api_call("speech/tts", params=params)
-    
-    if result.get("status") == "error":
-        raise RuntimeError(f"AI-Core 서버에서 TTS 파일 생성에 실패했습니다: {result.get('message')}")
-    
-    # 성공 시 특별한 반환값 없음 (기존과 동일)
-    return
+    voice_path = os.path.join(self.voice_dir, f"{voice.upper()}.json")
+    if not os.path.exists(voice_path):
+      raise FileNotFoundError(f"Voice style not found: {voice_path}")
+
+    style = load_voice_style([voice_path])
+    wav, duration = self._model(
+      text=text,
+      lang=lang,
+      style=style,
+      total_step=self.total_step,
+      speed=self.speed,
+    )
+
+    out_dir = os.path.dirname(filename)
+    if out_dir and not os.path.exists(out_dir):
+      os.makedirs(out_dir)
+
+    # wav 저장
+    w = wav[0, : int(self._model.sample_rate * duration[0].item())]
+    sf.write(filename, w, self._model.sample_rate)
+    return filename
+
 
 class Dialog:
   """
@@ -230,7 +253,7 @@ Functions:
 
   * 형태소 및 명사 분석
   * 챗봇 기능
-  * 한역 번역 / 대화 (Deep Learning) 
+  * 한역 번역 / 대화 (Deep Learning)
   * 자연어 분석 기능 (Deep Learning)
 
   example::
@@ -292,7 +315,7 @@ Functions:
       # ['아버지가', '방에', '들어가셨다.']
 
     :param str string: 분석할 문장
-    
+
     :param int n: N-gram에 사용할 n 값 default:2
 
     :returns: 문장에서 추출한 N-gram 값
@@ -313,9 +336,9 @@ Functions:
       # 0.6923076923076923
 
     :param str string: 비교할 문장A
-    
+
     :param str string: 비교할 문장B
-    
+
     :param int n: N-gram에 사용할 n 값 default:2
 
     :returns: N-gram 방식으로 비교한 유사도
@@ -345,7 +368,7 @@ Functions:
       dialog.get_dialog('나랑 같이 놀자')
 
     :param str string: 질문하는 문장
-    
+
     :param int n: N-gram에 사용할 n 값 default:2
 
     :returns: 답변하는 문장 (한글)
@@ -460,10 +483,10 @@ Functions:
   def call_llm(self, prompt=None, system_prompt=None, temperature=0.8, max_tokens=100):
     """
     LLM 서버(OpenAI 호환 Chat Completions API)를 호출합니다.
-    
+
     예시:
         dialog.call_llm(prompt="안녕하세요", system_prompt="너는 내 스마트한 비서야")
-    
+
     :param str prompt: 사용자의 입력 메시지.
     :param str system_prompt: 시스템 프롬프트. (없으면 기본값 유지)
     :return: 생성된 텍스트 또는 API 응답 전체 JSON.
