@@ -7,7 +7,7 @@ from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
 
-from threading import Timer
+from threading import Timer, Thread
 from collections import Counter
 import json,time,os,shutil
 import wifi
@@ -103,6 +103,61 @@ def wifi_update():
   _.daemon = True
   _.start()
 
+## foot servo watchdog
+# 발 서보(0, 6번) 과열 방지: 마지막 모터 명령 후 FOOT_HOLD_SEC 동안 새 명령이 없고
+# 0/6번이 0이 아니면 FOOT_STEP씩 FOOT_STEP_MS 간격으로 0까지 되돌린다.
+# .motor_pos 및 servo write 단위: 각도 x10 (-800 ~ 800)
+FOOT_POS_FILE = "/home/pi/.motor_pos"
+FOOT_CH = (0, 6)
+FOOT_HOLD_SEC = 10.0
+FOOT_STEP = 50
+FOOT_STEP_MS = 100
+FOOT_POLL = 0.5
+
+def foot_read_pos():
+  try:
+    with open(FOOT_POS_FILE) as f:
+      v = [int(x) for x in f.read().strip().split(",")]
+    return v if len(v) == 10 else None
+  except Exception:
+    return None
+
+def foot_mtime():
+  try:
+    return os.stat(FOOT_POS_FILE).st_mtime
+  except Exception:
+    return 0
+
+def foot_ramp_to_zero(n, cur):
+  step = -FOOT_STEP if cur > 0 else FOOT_STEP
+  p = cur
+  while p != 0:
+    p = 0 if abs(p) <= FOOT_STEP else p + step
+    os.system(f"servo write {n} {p}")
+    time.sleep(FOOT_STEP_MS / 1000)
+    now = foot_read_pos()
+    if now is None or now[n] != p:   # 외부 명령 개입 시 중단
+      return
+  print(f'foot {n}: {cur} -> 0')
+
+def foot_watchdog():
+  last_seen = foot_mtime()
+  while True:
+    time.sleep(FOOT_POLL)
+    m = foot_mtime()
+    pos = foot_read_pos()
+    if pos is None:
+      continue
+    if m != last_seen:
+      last_seen = m
+      continue
+    if time.time() - m < FOOT_HOLD_SEC:
+      continue
+    for n in FOOT_CH:
+      if pos[n] != 0:
+        foot_ramp_to_zero(n, pos[n])
+    last_seen = foot_mtime()
+
 ## boot
 def boot():
   try:
@@ -136,6 +191,7 @@ def boot():
   _ = Timer(10, wifi_update)
   _.daemon = True
   _.start()
+  Thread(target=foot_watchdog, daemon=True).start()
 
 if __name__ == '__main__':
   parser = argparse.ArgumentParser()
