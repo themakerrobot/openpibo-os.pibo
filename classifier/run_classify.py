@@ -6,6 +6,8 @@ import argparse
 import cv2
 import base64
 import asyncio
+import signal
+import time
 import threading # 이제 threading.Timer는 사용하지 않습니다.
 
 from openpibo.vision_camera import Camera
@@ -34,7 +36,9 @@ async def lifespan(app: FastAPI):
     vision_en = False
     camera = None
     vision_task = None
+    watchdog = asyncio.create_task(idle_watchdog())
     yield
+    watchdog.cancel()
     # 앱 종료 시 정리 (카메라가 켜져있으면 끄기)
     if camera:
         camera.release()
@@ -56,6 +60,39 @@ app.add_middleware(
 templates = Jinja2Templates(directory="templates")
 # SocketManager 변수명을 socketio -> sio로 변경하여 app.sio와 통일
 sio = SocketManager(app=app, mount_location='/socket.io')
+
+# 접속이 모두 끊기면 스스로 종료한다.
+# IDE 의 /classifier?enable=off 나 브라우저 beforeunload 에 의존하지 않는다 —
+# 탭 크래시·Wi-Fi 끊김·기기 절전에서는 그 신호가 오지 않지만 소켓은 반드시 끊긴다.
+# 소켓이 한 번도 붙지 않은 동안에는 종료하지 않는다(페이지를 보고 있는데 죽는 것 방지).
+IDLE_TIMEOUT = 60
+clients = set()
+seen_client = False
+last_empty = time.monotonic()
+
+@sio.on('connect')
+async def on_connect(sid, *args):
+    global seen_client
+    seen_client = True
+    clients.add(sid)
+
+@sio.on('disconnect')
+async def on_disconnect(sid, *args):
+    global last_empty
+    clients.discard(sid)
+    if not clients:
+        last_empty = time.monotonic()
+
+async def idle_watchdog():
+    global last_empty
+    while True:
+        await asyncio.sleep(5)
+        if clients or not seen_client:
+            last_empty = time.monotonic()
+        elif time.monotonic() - last_empty > IDLE_TIMEOUT:
+            print(f"no client for {IDLE_TIMEOUT}s, shutting down")
+            os.kill(os.getpid(), signal.SIGTERM)
+            return
 
 # ---------------------------------
 # 카메라 이미지를 Base64로 변환

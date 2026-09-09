@@ -941,21 +941,8 @@ menus_ds.each((idx) => {
   element.addEventListener("click", () => handleMenu(name.split('_ds')[0]));
 });
 
-window.addEventListener('beforeunload', (evt) => {
-  fetch(`http://${location.hostname}/tools?enable=off`)
-  .then(response => {
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    return response.text();
-  })
-  .then(data => {
-  //   //console.log('데이터 수신 성공:', data);
-  })
-  .catch(error => {
-  //   console.error('데이터 요청 중 에러 발생:', error);
-  })
-});
+// 서비스 종료는 서버가 소켓 접속 유무로 판단한다 (run_tools.py idle_watchdog).
+// beforeunload 의 fetch 는 언로드 중 취소되고, 탭 두 개 중 하나만 닫아도 서비스를 죽였다.
 
 const setLanguage = (lang) => {
   const elements = document.querySelectorAll('[data-key]');
