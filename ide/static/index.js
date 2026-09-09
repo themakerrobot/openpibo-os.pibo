@@ -397,7 +397,7 @@ socket.on("update", async (data) => {
   }
 
   if ("dialog" in data) {
-    await alert_popup(data["dialog"]);
+    await alert_popup(t(data["dialog"], data["detail"]));
   }
 
   if ("exit" in data) {
@@ -837,7 +837,7 @@ async function uploadFiles(fileList) {
         await alert_popup(translations['file_ok'][lang]);
       } else {
         const detail = (xhr.responseJSON && (xhr.responseJSON.error || xhr.responseJSON.result)) || "";
-        await alert_popup(`${translations['file_error'][lang]}\n >> ${detail}`);
+        await alert_popup(`${translations['file_error'][lang]}\n >> ${t(detail)}`);
       }
     });
 }

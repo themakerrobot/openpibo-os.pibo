@@ -2,6 +2,8 @@ const blang = (navigator.language || navigator.userLanguage).includes('ko')?'ko'
 let lang = localStorage.getItem("language")?localStorage.getItem("language"):blang;
 
 const translations = {
+  sec:       { ko: " 초", en: " s" },
+  recording: { ko: "녹음 중", en: "Recording" },
   confirm: {
     ko: "확인",
     en: "Confirm"
@@ -801,4 +803,11 @@ const translations = {
     ko: "내보내기",
     en: "Export"
   },
+};
+
+// 키 → 현재 언어 문자열. 모르는 키(일반 문자열)는 그대로 반환.
+const t = (key, ...args) => {
+  const v = (translations[key] || {})[lang];
+  if (v === undefined) return key;
+  return typeof v === 'function' ? v(...args) : v;
 };
