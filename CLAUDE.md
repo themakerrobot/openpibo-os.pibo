@@ -74,6 +74,15 @@ ssh pi@<IP> 'cd /home/pi/openpibo-os && git fetch origin --tags \
 
 기기를 `git checkout main` 상태로 두지 말 것 — 서비스가 작업본을 직접 실행한다.
 
+기기 작업본 구조:
+
+- `/home/pi/openpibo-os` 는 심볼릭 링크(root 소유) → `/home/pi/.openpibo-os.pibo` (실제 클론, pi 소유)
+- systemd 유닛(`ide.service`, `booting.service`)은 링크 경로를 쓴다. 링크는 건드리지 말 것
+- 클론이 **shallow(`grafted`)** 라서 `git fetch origin --tags` 로는 새 태그를 못 받는다.
+  태그를 콕 집어 받을 것: `git fetch --depth=1 origin tag <태그>`
+- 재클론이 더 깨끗하면 `git clone --depth 1 --branch <태그> <url>` 후
+  `sudo chown -R pi:pi` 하고 링크 대상 자리에 넣는다
+
 ---
 
 ## merge 충돌 처리
@@ -111,6 +120,9 @@ git ls-tree -r HEAD system | grep -E "hotspot|booting|ph_setup"   # 100755 확�
 
 정적 파일(`*.js`)을 고쳤으면 `templates/index.html`의 `?ver=` 를 새 릴리스 번호로 올릴 것.
 안 올리면 브라우저 캐시 때문에 기기에서 반영이 안 된다.
+
+`ide/static/customblock.js`, `customblock_callback.js`, `customblock_toolbox.js` 는
+셋 중 하나만 고쳐도 **세 개 모두** 같은 번호로 올린다.
 
 ---
 
