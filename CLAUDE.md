@@ -18,8 +18,28 @@ Pibo 로봇 OS. Raspberry Pi(`pi` 유저, `/home/pi/openpibo-os`)에서 서비�
 ## 태그
 
 - 국내 `YYMMDDv1`, 필리핀 `YYMMDDv1-ph` (예: `260909v1`, `260909v1-ph`)
-- **기존 태그는 이동·삭제하지 않는다.** 새 릴리스는 항상 새 태그
-- 기기가 `git reset --hard <태그>`로 배포본을 받으므로, 태그는 반드시 원격에 push되어 있어야 한다
+- 같은 날 다시 릴리스하면 번호를 올린다 (`260909v2`, `260909v2-ph`)
+- **태그는 이동하지 않는다.** 내용이 바뀌면 언제나 새 태그
+- 삭제는 **같은 날 대체된 태그만** — `260909v2` 가 나왔으면 `260909v1` 은 지워도 된다.
+  배포 이력 태그(`260624v1`, `250709v*` 등)는 남긴다
+- 기기가 `git clone --branch <태그>` 로 배포본을 받으므로, 태그는 반드시 원격에 push되어 있어야 한다
+
+### 태그 지우기 전 확인
+
+`-ph` 태그의 커밋은 보통 **`ph` 브랜치에서만** 도달한다. 태그를 지운 뒤 `ph` 브랜치까지
+지우면 그 커밋들이 unreachable 이 되어 GC 로 사라진다. **`ph` 브랜치는 남겨둘 것.**
+
+```bash
+for t in <지울 태그들>; do
+  c=$(git rev-parse $t^{commit})
+  git merge-base --is-ancestor $c origin/main && echo "$t: main"
+  git merge-base --is-ancestor $c origin/ph   && echo "$t: ph"
+done
+git push origin :<태그> ...     # 원격 삭제
+git tag -d <태그> ...           # 로컬 삭제
+```
+
+현장 기기가 옛 태그로 돌고 있으면 롤백 경로가 없어지니, 배포된 기기 상태를 먼저 확인할 것.
 
 ---
 
@@ -63,25 +83,45 @@ git push origin YYMMDDv1-ph
 
 ### 3. 기기 검증
 
-```bash
-ssh pi@<IP> 'cd /home/pi/openpibo-os && git fetch origin --tags \
-  && git reset --hard YYMMDDv1-ph \
-  && head -n1 ide/static/ko2en.js \
-  && echo piBo_YYMMDDv1-ph > /home/pi/.OS_VERSION \
-  && sudo systemctl restart ide.service && sleep 3 \
-  && systemctl is-active ide.service booting.service'
-```
-
-기기를 `git checkout main` 상태로 두지 말 것 — 서비스가 작업본을 직접 실행한다.
-
 기기 작업본 구조:
 
 - `/home/pi/openpibo-os` 는 심볼릭 링크(root 소유) → `/home/pi/.openpibo-os.pibo` (실제 클론, pi 소유)
 - systemd 유닛(`ide.service`, `booting.service`)은 링크 경로를 쓴다. 링크는 건드리지 말 것
-- 클론이 **shallow(`grafted`)** 라서 `git fetch origin --tags` 로는 새 태그를 못 받는다.
-  태그를 콕 집어 받을 것: `git fetch --depth=1 origin tag <태그>`
-- 재클론이 더 깨끗하면 `git clone --depth 1 --branch <태그> <url>` 후
-  `sudo chown -R pi:pi` 하고 링크 대상 자리에 넣는다
+- 클론이 **shallow(`grafted`)** 다. `git fetch origin --tags` 로는 새 태그를 못 받으므로
+  태그를 콕 집어 받아야 한다: `git fetch --depth=1 origin tag <태그>`
+- 서비스가 작업본을 직접 실행한다. 기기를 `git checkout main` 상태로 두지 말 것
+
+재클론이 가장 확실하다 (shallow fetch 꼬임 없음):
+
+```bash
+sudo systemctl stop ide.service booting.service
+
+cd /home/pi
+rm -rf .openpibo-os.pibo
+git clone --depth 1 --branch YYMMDDv1-ph \
+  https://github.com/themakerrobot/openpibo-os.pibo.git .openpibo-os.pibo
+sudo chown -R pi:pi /home/pi/.openpibo-os.pibo
+
+echo piBo_YYMMDDv1-ph > /home/pi/.OS_VERSION
+sudo systemctl start ide.service booting.service
+sleep 3
+systemctl is-active ide.service booting.service
+```
+
+지우기 전에 `git status --short --ignored` 로 살릴 파일(녹음 `.wav`, 이미지 등)이 없는지 볼 것.
+사용자 데이터는 보통 `/home/pi/openpibo-files` 라 별개다.
+
+검증:
+
+```bash
+cd /home/pi/openpibo-os
+git describe --tags                                      # YYMMDDv1-ph
+head -n1 ide/static/ko2en.js                             # const blang = 'en';
+ls -l system/hotspot.sh system/ph_setup.sh system/booting.py   # 전부 -rwxr-xr-x
+curl -s http://localhost/static/ko2en.js | head -n1
+```
+
+브라우저는 **Ctrl+Shift+R** 로 강력 새로고침. `?ver` 를 올렸어도 페이지 자체가 캐시돼 있다.
 
 ---
 
