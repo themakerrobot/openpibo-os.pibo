@@ -45,14 +45,30 @@ git tag -d <태그> ...           # 로컬 삭제
 
 ## PH 델타
 
-`ph`가 `main`과 다른 부분은 **아래 4개 파일뿐**이다. merge 후 반드시 유지되어야 한다.
+`ph`가 `main`과 다른 부분은 **아래 15개 파일뿐**이다. merge 후 반드시 유지되어야 한다.
 
 | 파일 | 내용 |
 |---|---|
 | `ide/static/ko2en.js`<br>`tools/static/ko2en.js`<br>`classifier/static/ko2en.js` | 1·2행이<br>`const blang = 'en';`<br>`let lang = localStorage.getItem("language") \|\| blang;` |
 | `system/ph_setup.sh` | 신규 파일, 100755. timezone Asia/Manila, wifi country PH, hotspot.sh chmod |
+| `examples/*.json` (10개) | 텍스트 리터럴·변수명 영문 |
+| `examples/collect.json` | **PH에는 없다.** `Weather.region_list` 가 한국 기상청 지역코드, `News` 가 JTBC RSS라 필리핀에선 동작 불가 |
 
-검증: `git diff --stat <국내태그> <PH태그>` 결과가 위 4개 파일뿐이고 **모드 차이 0줄**이어야 한다.
+검증: `git diff --stat <국내태그> <PH태그>` 결과가 위 15개 항목이고 **모드 차이 0줄**이어야 한다.
+
+### 예제 주의사항
+
+- `examples/` 는 `restore`(공장초기화) 때만 `/home/pi/examples/` 로 복사된다
+  (`ide/run_ide.py:369`). 리포만 고쳐서는 기존 기기에 반영되지 않는다 — 수동 복사하거나
+  이미지를 다시 만들 것
+- **TTS 블록의 언어 제약**: `speech_tts_play`(voice: main/boy/girl/…)와 `speech_otts_play` 는
+  `lang` 인자를 넘기지 않는다. 전자는 `speech.py` 의 기본값 `lang="ko"` 로 떨어지므로
+  영어 문장을 넣으면 한국어 발음으로 읽는다. 후자는 온디바이스 모델이라 기본값이
+  `lang="na"`(자동)여서 영어도 처리된다. `lang` 을 받는 건 `speech_gtts_play`(네트워크 필요)와
+  `speech_translate` 뿐. → PH 예제에서 `speech_tts_play` 는 쓰지 않는다
+- `speech_translate` 지원 언어: `ko en es fr de zh-CN ja ru ar hi la ms`. **Tagalog(`tl`) 없음**
+- 텍스트 블록 기본값 `가나다` 는 `customblock.js`(수정 금지 파일)에 있다. 예제 안의 값을 바꿔도
+  새로 끌어다 놓는 블록은 계속 `가나다` 로 뜬다
 
 ---
 
