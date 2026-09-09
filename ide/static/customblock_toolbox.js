@@ -838,7 +838,6 @@ let toolbox = (lang) => {
           {
             "kind": "block",
             "type": "audio_record",
-            "disabled":"true",
             "inputs":{
               "filename":{
                 "shadow": {
