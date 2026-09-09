@@ -141,6 +141,24 @@ curl -s http://localhost/static/ko2en.js | head -n1
 
 ---
 
+## 도구 서비스 수명
+
+`tools.service`(50000), `classify.service`(50010), `llama-server.service`(50020) 는
+**셋 중 하나만** 돈다. IDE가 하나를 켤 때 나머지를 stop 한다 (`ide/run_ide.py` 의
+`/tools` `/classifier` `/llm` 핸들러). 부팅 시엔 안 뜬다.
+
+**종료는 서버가 판단한다.** `run_tools.py` / `run_classify.py` 의 `idle_watchdog` 이
+socket.io 접속을 세다가 마지막 클라이언트가 끊기고 `IDLE_TIMEOUT`(60초)이 지나면
+자기 자신에게 SIGTERM 을 보낸다. 유닛이 `Restart=no` 라야 동작한다.
+
+- 브라우저 `beforeunload` 로 `enable=off` 를 보내던 방식은 **쓰지 않는다.** 언로드 중
+  `fetch` 는 취소되고, 탭 두 개 중 하나만 닫아도 서비스가 죽었다
+- 소켓이 한 번도 붙지 않은 동안에는 종료하지 않는다. socket.io 연결이 실패해도
+  페이지를 보는 도중에 서비스가 죽지 않게 하기 위함이다
+- 수동 종료: `sudo systemctl stop tools.service`
+
+---
+
 ## merge 충돌 처리
 
 `main` → `ph` merge에서 나는 충돌은 사실상 `ko2en.js`의 1·2행뿐이다.

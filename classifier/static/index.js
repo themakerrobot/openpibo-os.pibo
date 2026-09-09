@@ -574,9 +574,4 @@ async function exportConvertedModelAsZipAndConvert() {
     }
 }
 
-window.addEventListener('beforeunload', () => {
-    fetch(`http://${location.hostname}/classifier?enable=off`)
-        .then(response => { if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`); return response.text(); })
-        .then(() => { })
-        .catch(() => { });
-});
+// 서비스 종료는 서버가 소켓 접속 유무로 판단한다 (run_classify.py idle_watchdog).
