@@ -474,7 +474,7 @@ const getMotions = (socket) => {
         $("#motor_table > tbody").append(
           $("<tr>")
             .append(
-              $("<td>").append(data[i].seq / 1000 + " 초"),
+              $("<td>").append(data[i].seq / 1000 + t("sec")),
               $("<td>").append(data[i].d[0]),
               $("<td>").append(data[i].d[1]),
               $("<td>").append(data[i].d[2]),
@@ -500,7 +500,7 @@ const getMotions = (socket) => {
               lst.each((idx) => {
                 if (idx == 0) {
                   $("#m_time_val").val(
-                    Number(lst.eq(idx).text().split(" 초")[0])
+                    parseFloat(lst.eq(idx).text())
                   );
                   return;
                 } else {
@@ -514,9 +514,9 @@ const getMotions = (socket) => {
               socket.emit("set_motors", { pos_lst: pos_lst });
             })
             .dblclick(async function () {
-              let t = $(this).text().split(" 초")[0];
-              if (await confirm_popup(translations["confirm_motion_delete"][lang](t))) {
-                socket.emit("delete_frame", Number(t) * 1000);
+              let tv = $(this).text().split(" ")[0];
+              if (await confirm_popup(translations["confirm_motion_delete"][lang](tv))) {
+                socket.emit("delete_frame", Number(tv) * 1000);
                 $(this).remove();
               }
             })
@@ -857,7 +857,7 @@ const getSpeech = (socket) => {
       return;
     }
 
-    $("#mic_status").html("<i class='fa-solid fa-fade'>녹음 중</i>");
+    $("#mic_status").html(`<i class='fa-solid fa-fade'>${t("recording")}</i>`);
     socket.emit("mic", {
       time: val,
       volume: Number($("#volume").val()),
