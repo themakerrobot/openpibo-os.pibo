@@ -45,16 +45,24 @@ git tag -d <태그> ...           # 로컬 삭제
 
 ## PH 델타
 
-`ph`가 `main`과 다른 부분은 **아래 15개 파일뿐**이다. merge 후 반드시 유지되어야 한다.
+**상세는 `ph` 브랜치의 `PH_DELTA.md`** 에 있다 (이유·검증·충돌 처리·배포 후 확인까지).
+여기 표는 요약이고, 내용이 갈리면 `PH_DELTA.md` 가 기준이다.
+
+`ph`가 `main`과 다른 부분은 **아래 17개 파일뿐**이다. merge 후 반드시 유지되어야 한다.
 
 | 파일 | 내용 |
 |---|---|
 | `ide/static/ko2en.js`<br>`tools/static/ko2en.js`<br>`classifier/static/ko2en.js` | 1·2행이<br>`const blang = 'en';`<br>`let lang = localStorage.getItem("language") \|\| blang;` |
 | `system/ph_setup.sh` | 신규 파일, 100755. timezone Asia/Manila, wifi country PH, hotspot.sh chmod |
-| `examples/*.json` (10개) | 텍스트 리터럴·변수명 영문 |
+| `examples/*.json` (10개) | 텍스트 리터럴·변수명 영문. `speech_tts.json` 은 `speech_tts_play` 제거 + translate/gtts 대상 `es` |
 | `examples/collect.json` | **PH에는 없다.** `Weather.region_list` 가 한국 기상청 지역코드, `News` 가 JTBC RSS라 필리핀에선 동작 불가 |
+| `ide/static/customblock_toolbox.js` | **Collect 카테고리 통째로**(wikipedia/weather/news) + **대화 블록 3개**(`speech_get_dialog` `speech_load_dialog` `speech_reset_dialog`) 미노출. 블록 정의(`customblock.js`)와 코드생성기(`customblock_callback.js`)는 `main` 과 동일 |
+| `PH_DELTA.md` | **PH 전용 문서.** main 으로 가져오지 않는다 |
 
-검증: `git diff --stat <국내태그> <PH태그>` 결과가 위 15개 항목이고 **모드 차이 0줄**이어야 한다.
+검증: `git diff --name-status <국내태그> <PH태그>` 결과가 위 17개 항목이고 **모드 차이 0줄**이어야 한다.
+
+`ide/templates/index.html` 은 일부러 델타에 넣지 않았다. `?ver` 를 올릴 때마다 바뀌는 파일이라
+델타로 두면 릴리스마다 충돌한다. PH 전용 파일의 `?ver` 도 `main` 에서 올린다.
 
 ### 예제 주의사항
 
