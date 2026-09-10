@@ -764,23 +764,6 @@ tbody {
   width: 100%;
 }
 
-#s_record_tb thead td:nth-child(n + 2) {
-  width: 100px;
-}
-#s_record_tb tbody td:first-child {
-  min-width: 100px;
-}
-#s_record_tb tbody td:nth-child(n + 2) {
-  background: white;
-}
-
-#s_record_tb {
-  width: 100%;
-  flex: 1;
-  text-align: center;
-  border-spacing: 1px;
-}
-
 .eye-color-group {
   display: flex;
   justify-content: space-around;
