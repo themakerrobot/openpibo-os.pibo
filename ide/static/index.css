@@ -360,7 +360,10 @@ main div.wrapper.ide {
 }
 
 .fm-table-wrap table {
-  width: 300px;
+  /* 컨테이너 안쪽(318px)에서 스크롤바 폭(6px)만 남기고 채운다.
+     300px 로 고정하면 20px 가 그냥 비고, 100% 로 두면 오버레이 스크롤바가
+     휴지통 아이콘 위에 겹친다. */
+  width: calc(100% - 8px);
 }
 
 .fm-table-wrap tbody {
