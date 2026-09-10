@@ -147,15 +147,35 @@ curl -s http://localhost/static/ko2en.js | head -n1
 **셋 중 하나만** 돈다. IDE가 하나를 켤 때 나머지를 stop 한다 (`ide/run_ide.py` 의
 `/tools` `/classifier` `/llm` 핸들러). 부팅 시엔 안 뜬다.
 
-**종료는 서버가 판단한다.** `run_tools.py` / `run_classify.py` 의 `idle_watchdog` 이
-socket.io 접속을 세다가 마지막 클라이언트가 끊기고 `IDLE_TIMEOUT`(60초)이 지나면
-자기 자신에게 SIGTERM 을 보낸다. 유닛이 `Restart=no` 라야 동작한다.
+**자동 종료는 없다.** 탭을 닫아도 서비스는 계속 돈다. 아래 경로로 정리된다.
 
-- 브라우저 `beforeunload` 로 `enable=off` 를 보내던 방식은 **쓰지 않는다.** 언로드 중
-  `fetch` 는 취소되고, 탭 두 개 중 하나만 닫아도 서비스가 죽었다
-- 소켓이 한 번도 붙지 않은 동안에는 종료하지 않는다. socket.io 연결이 실패해도
-  페이지를 보는 도중에 서비스가 죽지 않게 하기 위함이다
-- 수동 종료: `sudo systemctl stop tools.service`
+- IDE에서 **코드 실행** — `run_ide.py` 의 `execute` / `executeb` 가 3개 서비스를 전부 stop 한다
+  (`subprocess.Popen(['systemctl','stop',...])` ×3). 수업 중에는 이게 계속 일어나므로
+  실사용에서 문제가 안 된다
+- **다른 도구로 전환** — `Conflicts` 를 손으로 구현한 부분이 나머지를 stop 한다
+- 재부팅
+- 수동: `sudo systemctl stop tools.service`
+
+### 손대기 전에 알아야 할 것
+
+`tools/static/index.js` 의 `beforeunload` → `fetch('/tools?enable=off')` 는 **작동한 적이 없다.**
+브라우저가 언로드 중 `fetch` 를 취소한다. 260624v1 시점부터 그랬다.
+`run_ide.py` 의 `enable=off` 분기는 그래서 사실상 죽은 경로다.
+
+고치려다 실패한 방법 두 가지 — 다시 시도하기 전에 읽을 것:
+
+1. **소켓 유휴 타임아웃** (`idle_watchdog`, 260909v5에서 넣었다 뺌) — 마지막 socket.io 접속이
+   끊기고 N초 뒤 SIGTERM. 탭 닫기는 잡지만 **학생이 잠깐 자리를 비운 것과 구분이 안 된다.**
+   태블릿 절전·앱 전환도 소켓을 끊으므로, 돌아왔을 때 서비스가 죽어 있다. 원래 버그보다 나쁘다
+2. **`pagehide` + `keepalive`/`sendBeacon`** — `e.persisted` 로 bfcache를 걸러내야 하는데,
+   소켓이 열린 페이지의 bfcache 적격 여부가 브라우저·버전마다 다르다. 실측 없이는 못 쓴다.
+   새로고침도 `persisted=false` 로 뜨므로 종료 지연을 충분히(30초+) 줘야 로딩 중 종료를 피한다
+
+`@app.sio.on('connect')` / `('disconnect')` 는 `fastapi_socketio` 에서 정상 동작한다(검증함).
+`ide/run_ide.py` 의 `@app.sio.on('connection')` 은 Node.js 이벤트 이름이라 **한 번도 안 불린다.**
+
+제대로 된 해결은 접속 수를 아는 tools/classifier 자신이 종료를 판단하는 구조인데,
+IDE 셸(네비게이터) 작업과 함께 다루는 것이 맞다.
 
 ---
 

@@ -6,7 +6,7 @@ from fastapi.templating import Jinja2Templates
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
-import time,os,json,shutil,logging,asyncio,signal
+import time,os,json,shutil,logging
 from urllib import parse
 import argparse
 from threading import Timer
@@ -25,9 +25,7 @@ async def lifespan(app: FastAPI):
   t = Timer(0, init_pibo)
   t.daemon = True
   t.start()
-  watchdog = asyncio.create_task(idle_watchdog())
   yield
-  watchdog.cancel()
 
 try:
   app = FastAPI(lifespan=lifespan)
@@ -38,39 +36,6 @@ try:
   socketio = SocketManager(app=app, cors_allowed_origins=[], mount_location="/socket.io", socketio_path="")
 except Exception as ex:
   logging.error(f'Server Error:{ex}')
-
-# 접속이 모두 끊기면 스스로 종료한다.
-# IDE 의 /tools?enable=off 나 브라우저 beforeunload 에 의존하지 않는다 —
-# 탭 크래시·Wi-Fi 끊김·기기 절전에서는 그 신호가 오지 않지만 소켓은 반드시 끊긴다.
-# 소켓이 한 번도 붙지 않은 동안에는 종료하지 않는다(페이지를 보고 있는데 죽는 것 방지).
-IDLE_TIMEOUT = 60
-clients = set()
-seen_client = False
-last_empty = time.monotonic()
-
-@app.sio.on('connect')
-async def on_connect(sid, *args):
-  global seen_client
-  seen_client = True
-  clients.add(sid)
-
-@app.sio.on('disconnect')
-async def on_disconnect(sid, *args):
-  global last_empty
-  clients.discard(sid)
-  if not clients:
-    last_empty = time.monotonic()
-
-async def idle_watchdog():
-  global last_empty
-  while True:
-    await asyncio.sleep(5)
-    if clients or not seen_client:
-      last_empty = time.monotonic()
-    elif time.monotonic() - last_empty > IDLE_TIMEOUT:
-      logging.error(f'no client for {IDLE_TIMEOUT}s, shutting down')
-      os.kill(os.getpid(), signal.SIGTERM)
-      return
 
 # REST API
 @app.get('/', response_class=HTMLResponse)
