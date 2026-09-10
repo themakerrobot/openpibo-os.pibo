@@ -48,6 +48,7 @@ class Pibo:
     self.mot = Motion()
     self.aud = Audio()
     self.speech = Speech()
+    self.speech_od = None   # 온디바이스 TTS. 모델이 무거워 처음 쓸 때 올린다.
     self.cam = Camera()
     self.fac = Face()
     self.det = Detect()
@@ -204,12 +205,21 @@ class Pibo:
     print("TTS", d)
     voice_type = d['voice_type']
     volume = d['volume']
-    filename = "/home/pi/myaudio/tts.mp3"
 
     try:
       if voice_type == "espeak":
+        filename = "/home/pi/myaudio/tts.wav"
         os.system(f'espeak "{d["text"]}" -w {filename}')
+      elif voice_type in ("m1", "f1"):
+        # 온디바이스 TTS(SpeechOnDevice). ONNX 모델 로딩이 무거워 처음 호출될 때만 올린다.
+        # lang='na' 는 자동 판별이라 한국어·영어 양쪽 배포판에서 그대로 쓸 수 있다.
+        filename = "/home/pi/myaudio/tts.wav"
+        if self.speech_od is None:
+          from openpibo.speech import SpeechOnDevice
+          self.speech_od = SpeechOnDevice()
+        self.speech_od.tts(text=d['text'], filename=filename, voice=voice_type, lang='na')
       else:
+        filename = "/home/pi/myaudio/tts.mp3"
         lang = "en" if "e_" in voice_type else "ko"
         self.speech.tts(text=d['text'], filename=filename, voice=voice_type, lang=lang)
       self.aud.play(filename=filename, volume=volume)
