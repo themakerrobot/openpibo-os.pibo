@@ -112,7 +112,7 @@ git push origin YYMMDDv1-ph
 ```bash
 sudo systemctl stop ide.service booting.service
 
-sudo rm -rf /home/pi/.openpibo-os.pibo      # root 소유 파일이 섞여 있어 sudo 필요. 절대경로로 쓸 것
+sudo rm -rf /home/pi/.openpibo-os.pibo      # sudo 필수. 절대경로로 쓸 것 (아래 참고)
 cd /home/pi
 git clone --depth 1 --branch YYMMDDv1-ph \
   https://github.com/themakerrobot/openpibo-os.pibo.git .openpibo-os.pibo
@@ -126,6 +126,13 @@ systemctl is-active ide.service booting.service
 
 지우기 전에 `git status --short --ignored` 로 살릴 파일(녹음 `.wav`, 이미지 등)이 없는지 볼 것.
 사용자 데이터는 보통 `/home/pi/openpibo-files` 라 별개다.
+
+**`sudo` 없이는 삭제가 실패한다.** 디렉토리는 `pi` 소유지만, 서비스가 root로 실행되므로
+`__pycache__` 가 root 소유로 생긴다. 클론 직후 `chown -R pi:pi` 를 해도 서비스가 뜨면 다시 생기니
+매번 `sudo rm -rf` 가 필요하다. (유닛에 `Environment=PYTHONDONTWRITEBYTECODE=1` 를 주면
+아예 안 생기지만, 유닛 파일은 리포 밖이라 이미지 작업이다.)
+
+`cd` 를 `rm` 앞에 두지 말 것 — `cd` 가 실패한 상태에서 상대경로 `rm -rf` 가 돌면 엉뚱한 곳을 지운다.
 
 검증:
 
