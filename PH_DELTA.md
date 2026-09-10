@@ -58,19 +58,63 @@ AP 모드 IP 는 `192.168.34.1` 고정이라(`system/hotspot.sh`) 기기가 달�
 ```bash
 sudo timedatectl set-timezone Asia/Manila
 sudo raspi-config nonint do_wifi_country PH
+sudo rm -f /etc/modprobe.d/brcmfmac.conf     # country=US 잔재 제거 (아래 참고)
 sudo chmod +x /home/pi/openpibo-os/system/hotspot.sh
 ```
 
 적용 여부 확인:
 
 ```bash
-timedatectl | grep -i "time zone"          # Asia/Manila
-sudo raspi-config nonint get_wifi_country  # PH
+timedatectl | grep -i "time zone"            # Asia/Manila
+sudo raspi-config nonint get_wifi_country    # PH
+ls /etc/modprobe.d/brcmfmac.conf             # 없어야 한다
+dmesg | grep -i "unknown parameter"          # 아무것도 안 나와야 한다
 ```
 
 한국 값이 나오면 `sudo bash /home/pi/openpibo-os/system/ph_setup.sh && sudo reboot`.
 
-WiFi 국가코드는 AP 채널 규제에 걸린다. 틀리면 핫스팟이 특정 채널에서 안 뜬다.
+### `brcmfmac.conf` 를 지우는 이유
+
+베이스 이미지에 `options brcmfmac country=US` 가 들어있다. 현재 드라이버
+(BCM4345/6 = CYW43455, 펌웨어 `7.45.265`)는 이 파라미터를 지원하지 않아
+`brcmfmac: unknown parameter 'country' ignored` 로 무시하므로 **지금은 무해하다.**
+
+문제는 드라이버·펌웨어를 올렸을 때다. 지원하는 버전이 되면 기기가 US 도메인이 된다.
+
+| | 2.4GHz 최대 EIRP |
+|---|---|
+| PH | **20 dBm** |
+| US | 30 dBm |
+
+10 dB, 즉 **10배 초과 송신**이 된다. 조용히 규제 위반 상태가 되므로 미리 지운다.
+
+### 규제 도메인이 실제로 설정되는 경로
+
+`raspi-config nonint do_wifi_country PH` 는 `/boot/firmware/cmdline.txt` 에
+`cfg80211.ieee80211_regdom=PH` 를 넣는다. 이게 `iw reg get` 의 `global` 을 PH 로 만든다.
+
+`iw reg get` 의 `phy#0` 는 `country 99: DFS-UNSET` 으로 남는데 정상이다.
+`brcmfmac` 이 wiphy 에 자체 world 도메인을 씌우기 때문이고
+(`self-managed` 는 아니다), 실제 국가는 펌웨어 `ccode` 에서 와야 하는데
+`brcmf_c_process_txcap_blob: no txcap_blob available` 로 그 데이터가 없다.
+
+**2.4GHz 에서는 실질 차이가 없다.** PH 와 `country 99` 둘 다 2402–2482 MHz,
+최대 EIRP 20 dBm 이고, `hotspot.sh` 가 채널 1/6/11 만 쓰므로 어느 쪽으로 해석해도 안전하다.
+
+**5GHz 를 쓰게 되면 반드시 다시 봐야 한다.** PH 는 5250–5330, 5490–5730 에 DFS 의무가
+있는데 `country 99` 테이블에는 그 표기가 없다. 현재 `hotspot.sh` 가 `band bg`(2.4GHz 전용)라
+해당 없다.
+
+### `iw dev ap0 info` 의 txpower 는 믿지 말 것
+
+`txpower 31.00 dBm` 으로 나오는데 **실측값도 규제값도 아니다.** 근거:
+
+- `iw phy0 info` 에 txpower 항목이 아예 없다 — 드라이버가 조회를 지원하지 않는다
+- `brcmf_c_process_txcap_blob: no txcap_blob available` — 국가별 출력 제한 테이블이 없다
+- 규제 테이블은 PH·phy#0 양쪽 모두 2.4GHz **20 dBm** 상한이다
+
+인증 서류에는 규제 한도(20 dBm EIRP)와 CYW43455 데이터시트 값을 쓸 것.
+`(6, 20)` 의 `6 dBi` 도 규제 허용 상한이지 Pi 4B 내장 안테나의 실제 게인이 아니다.
 
 ---
 
