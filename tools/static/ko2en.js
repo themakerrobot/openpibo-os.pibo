@@ -477,25 +477,13 @@ const translations = {
     ko: "기본음성",
     en: "Espeak"
   },
-  main: {
-    ko: "파이보(ko)",
-    en: "Pibo(ko)"
-  },
   man: {
-    ko: "남성(ko)",
-    en: "Man(ko)"
+    ko: "남성",
+    en: "Man"
   },
   woman: {
-    ko: "여성(ko)",
-    en: "Woman(ko)"
-  },
-  boy: {
-    ko: "소년(ko)",
-    en: "Boy(ko)"
-  },
-  girl: {
-    ko: "소녀(ko)",
-    en: "Girl(ko)"
+    ko: "여성",
+    en: "Woman"
   },
   e_gtts: {
     ko: "구글음성(en)",
