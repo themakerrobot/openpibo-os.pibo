@@ -115,21 +115,47 @@ git push origin YYMMDDv1-ph
   태그를 콕 집어 받아야 한다: `git fetch --depth=1 origin tag <태그>`
 - 서비스가 작업본을 직접 실행한다. 기기를 `git checkout main` 상태로 두지 말 것
 
-재클론이 가장 확실하다 (shallow fetch 꼬임 없음):
+재클론이 가장 확실하다 (shallow fetch 꼬임 없음).
+
+> **⚠️ AP 모드에서는 인터넷이 없다.** `booting.py` 는 유선·무선 IP가 없을 때만 AP를 켜므로,
+> AP로 접속했다는 건 업링크가 끊겨 있다는 뜻이다. 이 상태에서 `git clone` 은 반드시 실패한다.
+> **기존 작업본을 먼저 지우면 기기가 통째로 죽는다** — 링크가 깨져 `ide.service` ·
+> `booting.service` 가 못 뜨고, AP를 올리는 게 `booting.py` 라 접속 수단까지 사라진다.
+> (LED·인사 동작도 `booting.service` 라 "전원이 안 켜진 것"처럼 보인다. 리눅스는 살아있다.)
+> 복구는 랜선을 꽂고 `ssh pi@<유선IP>` 로 들어가 다시 클론하는 것뿐이다.
+
+**받아서 확인한 뒤에 교체한다. 지우는 건 마지막이다.**
 
 ```bash
-sudo systemctl stop ide.service booting.service
+# 0) 인터넷 확인 — 실패하면 여기서 멈춘다
+ping -c2 -W3 github.com || echo "!! 인터넷 없음 (AP 모드?). WiFi/유선 연결 후 다시 시작"
 
-sudo rm -rf /home/pi/.openpibo-os.pibo      # sudo 필수. 절대경로로 쓸 것 (아래 참고)
+# 1) 새 위치에 먼저 받는다. 실패해도 기존 작업본은 그대로다
 cd /home/pi
 git clone --depth 1 --branch YYMMDDv1-ph \
-  https://github.com/themakerrobot/openpibo-os.pibo.git .openpibo-os.pibo
+  https://github.com/themakerrobot/openpibo-os.pibo.git .openpibo-os.new
+
+# 2) 받은 게 맞는지 확인. 여기서 이상하면 중단하고 .openpibo-os.new 만 지우면 된다
+cd /home/pi/.openpibo-os.new
+git describe --tags
+head -n1 ide/static/ko2en.js
+ls -l system/hotspot.sh system/ph_setup.sh system/booting.py
+
+# 3) 교체
+sudo systemctl stop ide.service booting.service
+cd /home/pi
+sudo rm -rf /home/pi/.openpibo-os.old
+sudo mv /home/pi/.openpibo-os.pibo /home/pi/.openpibo-os.old
+mv /home/pi/.openpibo-os.new /home/pi/.openpibo-os.pibo
 sudo chown -R pi:pi /home/pi/.openpibo-os.pibo
 
 echo piBo_YYMMDDv1-ph > /home/pi/.OS_VERSION
 sudo systemctl start ide.service booting.service
 sleep 3
 systemctl is-active ide.service booting.service
+
+# 4) 정상 확인 후 백업 삭제
+sudo rm -rf /home/pi/.openpibo-os.old
 ```
 
 지우기 전에 `git status --short --ignored` 로 살릴 파일(녹음 `.wav`, 이미지 등)이 없는지 볼 것.
