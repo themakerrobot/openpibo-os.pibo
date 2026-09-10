@@ -147,35 +147,46 @@ curl -s http://localhost/static/ko2en.js | head -n1
 **셋 중 하나만** 돈다. IDE가 하나를 켤 때 나머지를 stop 한다 (`ide/run_ide.py` 의
 `/tools` `/classifier` `/llm` 핸들러). 부팅 시엔 안 뜬다.
 
-**자동 종료는 없다.** 탭을 닫아도 서비스는 계속 돈다. 아래 경로로 정리된다.
+**종료는 탭이 닫힐 때 브라우저가 알린다.** 각 페이지의 `beforeunload` 가
+`/tools?enable=off` · `/classifier?enable=off` 를 부른다. 이 fetch에는
+**`{ keepalive: true }` 가 반드시 있어야 한다.**
+
+```js
+fetch(`http://${location.hostname}/tools?enable=off`, { method: 'GET', keepalive: true })
+```
+
+`keepalive` 없이 그냥 `fetch(url)` 로 두면 브라우저가 언로드 도중 요청을 **취소**한다.
+260624v1부터 260909v5까지 이 옵션이 없어서 tools·classifier는 탭을 닫아도 안 꺼졌다.
+llama.cpp 웹 UI에는 `keepalive: true` 를 넣어 빌드했기 때문에 llm만 정상 동작했고,
+그 차이가 원인을 특정하는 근거가 됐다.
+
+이 밖의 정리 경로:
 
 - IDE에서 **코드 실행** — `run_ide.py` 의 `execute` / `executeb` 가 3개 서비스를 전부 stop 한다
-  (`subprocess.Popen(['systemctl','stop',...])` ×3). 수업 중에는 이게 계속 일어나므로
-  실사용에서 문제가 안 된다
-- **다른 도구로 전환** — `Conflicts` 를 손으로 구현한 부분이 나머지를 stop 한다
-- 재부팅
-- 수동: `sudo systemctl stop tools.service`
+  (`subprocess.Popen(['systemctl','stop',...])` ×3). 수업 중에는 이게 계속 일어나므로,
+  `enable=off` 가 죽어 있던 동안에도 실사용에서 티가 안 났다
+- **다른 도구로 전환** — 켜는 쪽 핸들러가 나머지를 stop 한다
+- 재부팅 / `sudo systemctl stop tools.service`
 
 ### 손대기 전에 알아야 할 것
 
-`tools/static/index.js` 의 `beforeunload` → `fetch('/tools?enable=off')` 는 **작동한 적이 없다.**
-브라우저가 언로드 중 `fetch` 를 취소한다. 260624v1 시점부터 그랬다.
-`run_ide.py` 의 `enable=off` 분기는 그래서 사실상 죽은 경로다.
+`beforeunload` 는 탭 닫기·이동·새로고침에만 뜨고 **백그라운드 전환에는 안 뜬다.**
+그래서 학생이 잠깐 자리를 비워도 서비스가 살아있다. 이게 이 방식의 핵심 장점이다.
 
-고치려다 실패한 방법 두 가지 — 다시 시도하기 전에 읽을 것:
+시도했다 되돌린 방법 — 다시 하지 말 것:
 
-1. **소켓 유휴 타임아웃** (`idle_watchdog`, 260909v5에서 넣었다 뺌) — 마지막 socket.io 접속이
-   끊기고 N초 뒤 SIGTERM. 탭 닫기는 잡지만 **학생이 잠깐 자리를 비운 것과 구분이 안 된다.**
-   태블릿 절전·앱 전환도 소켓을 끊으므로, 돌아왔을 때 서비스가 죽어 있다. 원래 버그보다 나쁘다
-2. **`pagehide` + `keepalive`/`sendBeacon`** — `e.persisted` 로 bfcache를 걸러내야 하는데,
-   소켓이 열린 페이지의 bfcache 적격 여부가 브라우저·버전마다 다르다. 실측 없이는 못 쓴다.
-   새로고침도 `persisted=false` 로 뜨므로 종료 지연을 충분히(30초+) 줘야 로딩 중 종료를 피한다
+1. **소켓 유휴 타임아웃** (`idle_watchdog`, 260909v5에 넣었다 260909v6에서 제거) —
+   마지막 socket.io 접속이 끊기고 N초 뒤 SIGTERM. 태블릿 절전·앱 전환도 소켓을 끊으므로
+   **자리 비움과 탭 닫기를 구분하지 못한다.** 돌아왔을 때 서비스가 죽어 있어 원래 버그보다 나쁘다
+2. **`pagehide` 로 교체** — `beforeunload` 와 달리 백그라운드 전환에서도 뜬다.
+   `e.persisted` 로 걸러야 하는데 소켓이 열린 페이지의 bfcache 적격 여부가 브라우저마다 달라
+   신뢰할 수 없다
 
-`@app.sio.on('connect')` / `('disconnect')` 는 `fastapi_socketio` 에서 정상 동작한다(검증함).
+남은 문제: **탭 두 개 중 하나만 닫아도 서비스가 죽는다.** 접속 수를 아는 건 tools/classifier
+자신뿐이므로, 종료 판단을 그쪽으로 옮겨야 한다. IDE 셸(네비게이터) 작업과 함께 다룰 것.
+
+참고: `@app.sio.on('connect')` / `('disconnect')` 는 `fastapi_socketio` 에서 정상 동작한다(검증함).
 `ide/run_ide.py` 의 `@app.sio.on('connection')` 은 Node.js 이벤트 이름이라 **한 번도 안 불린다.**
-
-제대로 된 해결은 접속 수를 아는 tools/classifier 자신이 종료를 판단하는 구조인데,
-IDE 셸(네비게이터) 작업과 함께 다루는 것이 맞다.
 
 ---
 
