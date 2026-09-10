@@ -112,8 +112,8 @@ git push origin YYMMDDv1-ph
 ```bash
 sudo systemctl stop ide.service booting.service
 
+sudo rm -rf /home/pi/.openpibo-os.pibo      # root 소유 파일이 섞여 있어 sudo 필요. 절대경로로 쓸 것
 cd /home/pi
-rm -rf .openpibo-os.pibo
 git clone --depth 1 --branch YYMMDDv1-ph \
   https://github.com/themakerrobot/openpibo-os.pibo.git .openpibo-os.pibo
 sudo chown -R pi:pi /home/pi/.openpibo-os.pibo
