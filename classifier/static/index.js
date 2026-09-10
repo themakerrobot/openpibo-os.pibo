@@ -574,4 +574,8 @@ async function exportConvertedModelAsZipAndConvert() {
     }
 }
 
-// 서비스 종료는 서버가 소켓 접속 유무로 판단한다 (run_classify.py idle_watchdog).
+// keepalive 가 없으면 언로드 중 브라우저가 요청을 취소한다. 이 한 옵션이 전부다.
+window.addEventListener('beforeunload', () => {
+    fetch(`http://${location.hostname}/classifier?enable=off`, { method: 'GET', keepalive: true })
+        .catch(() => {});
+});

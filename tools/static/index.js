@@ -941,8 +941,11 @@ menus_ds.each((idx) => {
   element.addEventListener("click", () => handleMenu(name.split('_ds')[0]));
 });
 
-// 서비스 종료는 서버가 소켓 접속 유무로 판단한다 (run_tools.py idle_watchdog).
-// beforeunload 의 fetch 는 언로드 중 취소되고, 탭 두 개 중 하나만 닫아도 서비스를 죽였다.
+// keepalive 가 없으면 언로드 중 브라우저가 요청을 취소한다. 이 한 옵션이 전부다.
+window.addEventListener('beforeunload', () => {
+  fetch(`http://${location.hostname}/tools?enable=off`, { method: 'GET', keepalive: true })
+    .catch(() => {});
+});
 
 const setLanguage = (lang) => {
   const elements = document.querySelectorAll('[data-key]');
