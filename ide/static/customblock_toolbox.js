@@ -864,42 +864,6 @@ let toolbox = (lang) => {
           "icon": "customIcon fa-solid fa-music"
         }
       },
-      { // Collect
-        "kind": "category",
-        "name": translations['collect'][lang],
-        "contents": [
-          {
-            "kind": "block",
-            "type": "wikipedia_search",
-            "inputs":{
-              "topic":{
-                "shadow": {
-                  "type": "text",
-                  "fields": {
-                    "TEXT": translations['robot'][lang]
-                  }
-                }
-              }
-            }
-          },
-          {
-            "kind": "block",
-            "type": "weather_forecast",
-          },
-          {
-            "kind": "block",
-            "type": "weather_search",
-          },
-          {
-            "kind": "block",
-            "type": "news_search",
-          },
-        ],
-        "colour": color_type["collect"],
-        "cssConfig": {
-          "icon": "customIcon fa-solid fa-magnifying-glass-chart"
-        }
-      },
       { // Device
         "kind": "category",
         "name": translations['device'][lang],
@@ -1642,39 +1606,6 @@ let toolbox = (lang) => {
                 }
               }
             }
-          },
-          {
-            "kind": "block",
-            "type": "speech_get_dialog",
-            "inputs":{
-              "text":{
-                "shadow": {
-                  "type": "text",
-                  "fields": {
-                    "TEXT": translations['sample_text'][lang]
-                  }
-                }
-              }
-            }
-          },
-          {
-            "kind": "block",
-            "type": "speech_load_dialog",
-            "inputs":{
-              "filename":{
-                "shadow": {
-                  "type": "text",
-                  "fields": {
-                    "TEXT": "dialog"
-                    // "TEXT": translations["csv_filename"][lang]
-                  }
-                }
-              }
-            }
-          },
-          {
-            "kind": "block",
-            "type": "speech_reset_dialog",
           },
           {
             "kind": "block",
