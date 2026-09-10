@@ -43,7 +43,6 @@ class Pibo:
       pass
     self.vision_type = "camera"
     self.vision_sleep = True
-    self.chat_list = []
 
     self.mot = Motion()
     self.aud = Audio()
@@ -227,48 +226,6 @@ class Pibo:
       logging.error(f'[tts] Error: {ex}')
       pass
     return
-
-  ## chatbot
-  def load_csv(self, d):
-    with open(d, 'r', encoding='utf-8') as f:
-      items = csv.reader(f)
-      res = []
-      for item in items:
-        if len(item) == 2:
-          res.append(item)
-      
-      if len(res) == 0:
-          return False
-  
-    self.dialog.load(d)
-    return True
-
-  def reset_csv(self, d):
-    if d['lang'] == 'en':
-      self.dialog.load(openpibo_models.filepath('dialog_en.csv'))
-    else:
-      self.dialog.load(openpibo_models.filepath('dialog.csv'))
-
-  def question(self, d):
-    q = d['question']
-    voice_type = d['voice_type']
-    volume = d['volume']
-    n = d['n']
-    ans = self.dialog.get_dialog(q, n)
-    self.chat_list.append([str(datetime.datetime.now()).split('.')[0], q, ans])
-    #self.emit('answer', {'answer':ans, 'chat_list':list(reversed(self.chat_list))})
-    if len(self.chat_list) > 10:
-      self.chat_list.pop(0)
-
-    if d['voice_en'] == 'off':
-      return ans
-
-    try:
-      self.tts({'text':ans, 'voice_type':voice_type, 'volume':volume})
-    except Exception as ex:
-      logging.error(f'[question] Error: {ex}')
-      pass
-    return ans
 
   def translate(self, d):
     res = self.dialog.translate(d['text'], d['langtype'])

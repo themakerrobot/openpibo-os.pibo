@@ -703,107 +703,6 @@ const getSpeech = (socket) => {
     }
   });
 
-  $("#s_upload_csv").on("change", (e) => {
-    let formData = new FormData();
-    formData.append("data", $("#s_upload_csv")[0].files[0]);
-    $("#s_upload_csv").val("");
-    $.ajax({
-      url: `/upload_csv`,
-      type: "post",
-      data: formData,
-      contentType: false,
-      processData: false,
-    }).always(async (xhr, status) => {
-      if (status == "success") {
-        await alert_popup(translations["file_ok"][lang]);
-      } else {
-        await alert_popup(`${translations["file_error"][lang]}\n >> ${xhr.responseJSON["result"]}`);
-        $("#s_upload_csv").val("");
-      }
-    });
-  });
-
-  $("#s_reset_csv_bt").on("click", async function () {
-    socket.emit("reset_csv", {lang: lang});
-    $("#s_upload_csv").val("");
-    await alert_popup(translations["reset_ok"][lang]);
-  });
-
-  $("#s_question_val").on("keyup", function () {
-    $(this).val(
-      $(this)
-        .val()
-        // .replace(/[^ㄱ-ㅣ가-힣 | 0-9 |?|.|,|'|"|!]/g, "")
-    );
-  });
-
-  $("#s_question_val").on("keypress", async function (evt) {
-    if (evt.keyCode == 13) {
-      // enter
-      q = $("#s_question_val").val().trim();
-      if (q == "") {
-        await alert_popup(translations["text_empty"][lang]);
-        return;
-      }
-
-      $("#s_question_val").prop("disabled", true);
-
-      setTimeout(function () {
-        $("#s_question_val").val(".");
-      }, 200);
-      setTimeout(function () {
-        $("#s_question_val").val("..");
-      }, 400);
-      setTimeout(function () {
-        $("#s_question_val").val("...");
-      }, 600);
-
-      setTimeout(function () {
-        socket.emit("question", {
-          question: q.toLowerCase(),
-          n: lang=="ko"?2:4,
-          voice_en: $("input[name=s_voice_en]:checked").val(),
-          voice_type: $("select[name=s_voice_type]").val(),
-          volume: Number($("#volume").val()),
-        });
-        $("#s_question_val").prop("disabled", false);
-        $("#s_question_val").val(q);
-      }, 800);
-    }
-  });
-
-  $("#s_chat_bt").on("click", async function () {
-    q = $("#s_question_val").val().trim();
-
-    if (q == "") {
-      await alert_popup(translations["text_empty"][lang]);
-      return;
-    }
-
-    $("#s_question_val").prop("disabled", true);
-    setTimeout(function () {
-      $("#s_question_val").val(".");
-    }, 200);
-    setTimeout(function () {
-      $("#s_question_val").val("..");
-    }, 400);
-    setTimeout(function () {
-      $("#s_question_val").val("...");
-    }, 600);
-
-    setTimeout(function () {
-      socket.emit("question", {
-        question: q.toLowerCase(),
-        n: lang=="ko"?2:4,
-        voice_en: $("input[name=s_voice_en]:checked").val(),
-        voice_type: $("select[name=s_voice_type]").val(),
-        volume: Number($("#volume").val()),
-      });
-      $("#s_question_val").prop("disabled", false);
-      $("#s_question_val").val(q);
-    }, 800);
-  });
-
   $("#s_translate_bt").on("click", async () => {
     txt = $("#s_translate_val").val().trim();
     if (txt == "") {
@@ -870,36 +769,10 @@ const getSpeech = (socket) => {
 
 
 
-  socket.on("disp_speech", function (data) {
-    if ("answer" in data) {
-      $("#s_answer_val").val(data["answer"]);
-    }
-
-    if ("chat_list" in data) {
-      $("#s_record_tb > tbody").empty();
-      rec = data["chat_list"];
-
-      for (idx in rec) {
-        if (rec[idx].length == 0) continue;
-
-        $("#s_record_tb").append(
-          $("<tr>").append(
-            $("<td>").append(rec[idx][0]),
-            $("<td>").append(rec[idx][1]),
-            $("<td>").append(rec[idx][2])
-          )
-        );
-      }
-    }
-  });
 };
 
 const handleMenu = (name) => {
-  if (name === "speech") {
-    $("#s_question_val").val("");
-    $("#s_answer_val").val("");
-    socket.emit("disp_speech");
-  } else if (name === "vision") {
+  if (name === "vision") {
     $("#v_tilt_range").val($("#m5_range").val());
     $("#v_pan_range").val($("#m4_range").val());
     $("#v_location").text(`${$("#m4_range").val()}, ${$("#m5_range").val()}`);

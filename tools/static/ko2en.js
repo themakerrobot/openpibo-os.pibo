@@ -497,26 +497,6 @@ const translations = {
     ko: "음성합성",
     en: "TTS"
   },
-  talk: {
-    ko: "대화하기",
-    en: "Talk"
-  },
-  conversation_dataset: {
-    ko: "대화 데이터셋",
-    en: "Conversation dataset"
-  },
-  question: {
-    ko: "질문",
-    en: "Question"
-  },
-  answer: {
-    ko: "대답",
-    en: "Answer"
-  },
-  conversation_record: {
-    ko: "대화기록 (최근 대화 10개)",
-    en: "Conversation history (10 recent conversations)"
-  },
   
   // alert
   file_ok: {

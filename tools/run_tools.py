@@ -96,21 +96,6 @@ async def download_img():
   pibo.imwrite('/home/pi/capture.jpg')
   return FileResponse(path="/home/pi/capture.jpg", media_type="image/jpeg", filename="capture.jpg")
 
-@app.post('/upload_csv')
-async def upload_csv(data:UploadFile = File(...)):
-  data.filename = "mychat.csv"
-  filepath = f"/home/pi/{data.filename}"
-  with open(filepath, 'wb') as f:
-    content = await data.read()
-    f.write(content)
-
-  res = pibo.load_csv(filepath)
-  os.remove(filepath)
-  if res:
-    return JSONResponse(content={}, status_code=200)
-  else:
-    return JSONResponse(content={'result':'csv 파일 에러'}, status_code=500)
-
 ## socktio
 # vision
 @app.sio.on('disp_vision')
@@ -165,31 +150,12 @@ async def tts(sid, d=None):
   pibo.tts(d)
 
 # speech
-@app.sio.on('question')
-async def question(sid, d=None):
-  if pibo is None:
-    return
-  res = pibo.question(d)
-  await emit('disp_speech', {'answer':res, 'chat_list':list(reversed(pibo.chat_list))})
-
 @app.sio.on('translate')
 async def translate(sid, d=None):
   if pibo is None:
     return
   res = pibo.translate(d)
   await emit('disp_translate', res)
-
-@app.sio.on('disp_speech')
-async def disp_speech(sid, d=None):
-  if pibo is None:
-    return
-  await emit('disp_speech', {'chat_list':list(reversed(pibo.chat_list))})
-
-@app.sio.on('reset_csv')
-async def reset_csv(sid, d=None):
-  if pibo is None:
-    return
-  pibo.reset_csv(d)
 
 # motion
 @app.sio.on('disp_motion')
