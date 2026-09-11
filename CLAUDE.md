@@ -80,6 +80,14 @@ git tag -d <태그> ...           # 로컬 삭제
 
 ---
 
+## 마스터 이미지
+
+카드 뜨기·PiShrink·구운 뒤 검증은 **`IMAGE.md`** 에 있다.
+Raspberry Pi Imager 의 "OS 커스터마이즈" 는 쓰지 말 것 — `custom.toml` 이 남아
+첫 부팅에 `cmdline.txt` 를 다시 건드린다.
+
+---
+
 ## 릴리스 절차
 
 ### 1. main
