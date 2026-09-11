@@ -58,18 +58,25 @@ AP 모드 IP 는 `192.168.34.1` 고정이라(`system/hotspot.sh`) 기기가 달�
 ```bash
 sudo timedatectl set-timezone Asia/Manila
 sudo raspi-config nonint do_wifi_country PH
+# cmdline.txt 의 cfg80211.ieee80211_regdom 값을 PH 로 정규화 (아래 '멱등성' 참고)
 sudo rm -f /etc/modprobe.d/brcmfmac.conf     # country=US 잔재 제거 (아래 참고)
 sudo chmod +x /home/pi/openpibo-os/system/hotspot.sh
 ```
+
+**여러 번 돌려도 안전하다.** 검증 중에 재실행하는 일이 잦아서 멱등하게 만들어 뒀다.
 
 적용 여부 확인:
 
 ```bash
 timedatectl | grep -i "time zone"            # Asia/Manila
-sudo raspi-config nonint get_wifi_country    # PH
+cat /boot/firmware/cmdline.txt               # regdom=PH 가 한 번만, 파일은 한 줄
 ls /etc/modprobe.d/brcmfmac.conf             # 없어야 한다
 dmesg | grep -i "unknown parameter"          # 아무것도 안 나와야 한다
+iw reg get                                   # phy#0 가 20 dBm 인지 (아래 참고)
 ```
+
+`raspi-config nonint get_wifi_country` 는 **판정 기준으로 쓰지 말 것.** cmdline 값이
+깨져 있으면 오류 없이 빈 값을 돌려준다. `cat cmdline.txt` 로 직접 본다.
 
 한국 값이 나오면 `sudo bash /home/pi/openpibo-os/system/ph_setup.sh && sudo reboot`.
 
@@ -79,7 +86,8 @@ dmesg | grep -i "unknown parameter"          # 아무것도 안 나와야 한다
 (BCM4345/6 = CYW43455, 펌웨어 `7.45.265`)는 이 파라미터를 지원하지 않아
 `brcmfmac: unknown parameter 'country' ignored` 로 무시하므로 **지금은 무해하다.**
 
-문제는 드라이버·펌웨어를 올렸을 때다. 지원하는 버전이 되면 기기가 US 도메인이 된다.
+문제는 드라이버·펌웨어를 올렸을 때다. 지원하는 버전이 되면 이 값이 드라이버에 먹혀
+아래 `phy#0` 테이블 자체가 US 가 된다 — 즉 실제 송신 한도가 올라간다.
 
 | | 2.4GHz 최대 EIRP |
 |---|---|
@@ -88,18 +96,63 @@ dmesg | grep -i "unknown parameter"          # 아무것도 안 나와야 한다
 
 10 dB, 즉 **10배 초과 송신**이 된다. 조용히 규제 위반 상태가 되므로 미리 지운다.
 
-### 규제 도메인이 실제로 설정되는 경로
+### 규제 도메인 — 실측 결과 (260910v4-ph, 2026-09-11)
 
-`raspi-config nonint do_wifi_country PH` 는 `/boot/firmware/cmdline.txt` 에
-`cfg80211.ieee80211_regdom=PH` 를 넣는다. 이게 `iw reg get` 의 `global` 을 PH 로 만든다.
+**송신 한도를 정하는 건 `phy#0` 이고 전 대역 20 dBm 이다. `global` 은 보지 않는다.**
 
-`iw reg get` 의 `phy#0` 는 `country 99: DFS-UNSET` 으로 남는데 정상이다.
-`brcmfmac` 이 wiphy 에 자체 world 도메인을 씌우기 때문이고
-(`self-managed` 는 아니다), 실제 국가는 펌웨어 `ccode` 에서 와야 하는데
+```
+phy#0
+country 99: DFS-UNSET
+        (2402 - 2482 @ 40), (6, 20), (N/A)
+        (2474 - 2494 @ 20), (6, 20), (N/A)
+        (5140 - 5360 @ 160), (6, 20), (N/A)
+        (5460 - 5860 @ 160), (6, 20), (N/A)
+```
+
+`brcmfmac` 이 wiphy 에 자체 world 도메인(`country 99`)을 custom regulatory domain 으로
+씌우기 때문이다(`self-managed` 는 아니다). 실제 국가는 펌웨어 `ccode` 에서 와야 하는데
 `brcmf_c_process_txcap_blob: no txcap_blob available` 로 그 데이터가 없다.
+이 wiphy 는 `global` 도메인의 갱신을 따라가지 않는다.
 
-**2.4GHz 에서는 실질 차이가 없다.** PH 와 `country 99` 둘 다 2402–2482 MHz,
-최대 EIRP 20 dBm 이고, `hotspot.sh` 가 채널 1/6/11 만 쓰므로 어느 쪽으로 해석해도 안전하다.
+PH 2.4GHz 한도가 20 dBm 이고 `phy#0` 도 20 dBm 이므로 **`global` 이 무엇이든 규제상 안전하다.**
+`hotspot.sh` 가 채널 1/6/11 만 쓰는 것도 어느 도메인에서나 합법이다.
+
+#### `global` 은 PH 로 안 잡힌다 — 정상이다
+
+`cmdline.txt` 에 `cfg80211.ieee80211_regdom=PH` 가 제대로 들어가 있어도
+부팅 후 `iw reg get` 의 `global` 은 `country US: DFS-FCC` 로 나온다. `PH` 로 고치고
+재부팅해도 같다. 즉 **이 파라미터는 이 이미지에서 `global` 에 반영되지 않는다.**
+(이전 판 이 문서에 "cmdline 이 global 을 PH 로 만든다"고 적혀 있던 것은 오류다.)
+
+수동으로 넣으면 먹기는 한다. 다만 `PH` 라고 찍히지 않고 드라이버가 자기 world
+도메인으로 치환한다:
+
+```
+$ sudo iw reg set PH; iw reg get | head -3
+global
+country 98: DFS-FCC
+        (2402 - 2472 @ 40), (N/A, 20), (N/A)      ← US 의 30 dBm 에서 20 dBm 로
+```
+
+**표시값일 뿐이므로 굳이 맞출 필요는 없다.** 인증 서류나 현장 점검에서 `country US` 가
+문제가 된다면, 이미지 생성 때 `iw reg set PH` 를 돌리는 oneshot 유닛을 넣으면 된다.
+지금 배포본에는 넣지 않았다.
+
+#### 멱등성 — `=PHPH` 사고
+
+`raspi-config nonint do_wifi_country PH` 를 이미 값이 있는 상태에서 다시 돌리면
+값을 교체하지 못하고 덧붙여 `cfg80211.ieee80211_regdom=PHPH` 가 되는 것을 확인했다.
+유효한 2글자 코드가 아니고, `raspi-config nonint get_wifi_country` 가 조용히 빈 값을
+돌려준다. 어차피 `global` 에 반영되지도 않으니 실해는 없었지만,
+`ph_setup.sh` 가 매 실행마다 값을 `PH` 로 정규화하도록 고쳤다.
+
+기기에서 직접 고칠 때:
+
+```bash
+sudo sed -i 's/cfg80211\.ieee80211_regdom=[A-Za-z]*/cfg80211.ieee80211_regdom=PH/' \
+  /boot/firmware/cmdline.txt
+wc -l /boot/firmware/cmdline.txt     # 반드시 1
+```
 
 **5GHz 를 쓰게 되면 반드시 다시 봐야 한다.** PH 는 5250–5330, 5490–5730 에 DFS 의무가
 있는데 `country 99` 테이블에는 그 표기가 없다. 현재 `hotspot.sh` 가 `band bg`(2.4GHz 전용)라
@@ -243,7 +296,8 @@ head -n1 ide/static/ko2en.js                                   # const blang = '
 ls -l system/hotspot.sh system/ph_setup.sh system/booting.py   # 전부 -rwxr-xr-x
 ls /home/pi/examples/                                          # 10개, collect.json 없음
 timedatectl | grep -i "time zone"                              # Asia/Manila
-sudo raspi-config nonint get_wifi_country                      # PH
+cat /boot/firmware/cmdline.txt                                 # regdom=PH 한 번만
+iw reg get | grep -A1 "^phy#0"                                 # country 99, 20 dBm
 ```
 
 브라우저:
