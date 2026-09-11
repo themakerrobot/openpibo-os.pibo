@@ -107,9 +107,12 @@ case $1 in
     echo "Successfully connected to WPA-PSK network: SSID='$SSID'"
     ;;
 
-  wpa-enterpise)
+  # booting.py 는 'wpa-enterprise' 로 호출한다. 예전 라벨이 'wpa-enterpise'(r 누락)라
+  # case 에 안 걸려 usage 만 찍고 exit 1 했고, booting.py 가 반환값을 안 보고 바로
+  # 재부팅해서 "재부팅됐는데 안 붙는다" 로만 보였다. 옛 철자도 같이 받아 둔다.
+  wpa-enterprise|wpa-enterpise|wpa-e)
     if [ $# -ne 4 ]; then
-      echo "Usage: sudo $0 wpa-e <SSID> <IDENTITY> <PASSWORD>"
+      echo "Usage: sudo $0 wpa-enterprise <SSID> <IDENTITY> <PASSWORD>"
       exit 1
     fi
     SSID="$2"
@@ -133,7 +136,7 @@ case $1 in
     echo "Usage:"
     echo "  Open network:         sudo $0 open <SSID>"
     echo "  WPA-PSK network:      sudo $0 wpa-psk <SSID> <PSK>"
-    echo "  WPA-Enterprise:       sudo $0 wpa-e <SSID> <IDENTITY> <PASSWORD>"
+    echo "  WPA-Enterprise:       sudo $0 wpa-enterprise <SSID> <IDENTITY> <PASSWORD>"
     exit 1
     ;;
 esac
