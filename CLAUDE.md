@@ -54,9 +54,10 @@ git tag -d <태그> ...           # 로컬 삭제
 |---|---|
 | `ide/static/ko2en.js`<br>`tools/static/ko2en.js`<br>`classifier/static/ko2en.js` | 1·2행이<br>`const blang = 'en';`<br>`let lang = localStorage.getItem("language") \|\| blang;` |
 | `system/ph_setup.sh` | 신규 파일, 100755. timezone Asia/Manila, wifi country PH, hotspot.sh chmod |
-| `examples/*.json` (10개) | 텍스트 리터럴·변수명 영문. `speech_tts.json` 은 `speech_tts_play` 제거 + translate/gtts 대상 `es` |
+| `examples/*.json` (10개) | 텍스트 리터럴·변수명 영문 |
 | `examples/collect.json` | **PH에는 없다.** `Weather.region_list` 가 한국 기상청 지역코드, `News` 가 JTBC RSS라 필리핀에선 동작 불가 |
 | `ide/static/customblock_toolbox.js` | **Collect 카테고리 통째로**(wikipedia/weather/news) + **대화 블록 3개**(`speech_get_dialog` `speech_load_dialog` `speech_reset_dialog`) 미노출. 블록 정의(`customblock.js`)와 코드생성기(`customblock_callback.js`)는 `main` 과 동일 |
+| | ※ circul.us·gtts 블록은 260914v6 에서 **main 에서도 제거**돼 더 이상 델타가 아니다 |
 | `PH_DELTA.md` | **PH 전용 문서.** main 으로 가져오지 않는다 |
 
 검증: `git diff --name-status <국내태그> <PH태그>` 결과가 위 17개 항목이고 **모드 차이 0줄**이어야 한다.
@@ -69,14 +70,38 @@ git tag -d <태그> ...           # 로컬 삭제
 - `examples/` 는 `restore`(공장초기화) 때만 `/home/pi/examples/` 로 복사된다
   (`ide/run_ide.py:369`). 리포만 고쳐서는 기존 기기에 반영되지 않는다 — 수동 복사하거나
   이미지를 다시 만들 것
-- **TTS 블록의 언어 제약**: `speech_tts_play`(voice: main/boy/girl/…)와 `speech_otts_play` 는
-  `lang` 인자를 넘기지 않는다. 전자는 `speech.py` 의 기본값 `lang="ko"` 로 떨어지므로
-  영어 문장을 넣으면 한국어 발음으로 읽는다. 후자는 온디바이스 모델이라 기본값이
-  `lang="na"`(자동)여서 영어도 처리된다. `lang` 을 받는 건 `speech_gtts_play`(네트워크 필요)와
-  `speech_translate` 뿐. → PH 예제에서 `speech_tts_play` 는 쓰지 않는다
-- `speech_translate` 지원 언어: `ko en es fr de zh-CN ja ru ar hi la ms`. **Tagalog(`tl`) 없음**
+- **TTS 블록은 `speech_otts_play`(온디바이스)와 `speech_etts_play`(espeak) 둘뿐이다.**
+  전자는 `lang="na"`(자동 판별)라 한국어·영어 양쪽을 처리한다. 서버 TTS(`speech_tts*`)와
+  gtts(`speech_gtts*`), 번역(`speech_translate`)은 260914v6 에서 제거됐다
 - 텍스트 블록 기본값 `가나다` 는 `customblock.js`(수정 금지 파일)에 있다. 예제 안의 값을 바꿔도
   새로 끌어다 놓는 블록은 계속 `가나다` 로 뜬다
+
+---
+
+## 외부 의존
+
+**자사 서버(circul.us)를 쓰는 기능은 260914v6 에서 전부 제거했다.** 서버를 순차적으로
+내리는 중이므로 다시 넣지 말 것.
+
+| 제거된 것 | 쓰던 서버 |
+|---|---|
+| `Speech.stt`, `vision_api`(vision_detect/vision_face) | `o-vapi.circul.us` |
+| `Speech.tts` 의 서버 목소리(main/boy/girl/man1/woman1) | `oe-sapi.circul.us` |
+| `Dialog.get_dialog_dl`, `nlp_dl`, `speech_api` | `oe-napi.circul.us` |
+| `Dialog.translate` + `modules/speech/mtranslate.py` | Google translate_a |
+| `Speech.tts` 의 gtts/e_gtts 분기 | Google translate_tts |
+
+IDE 블록 8개(`speech_stt` `speech_tts` `speech_tts_play` `vision_call_ai_img(_ext)`
+`speech_gtts` `speech_gtts_play` `speech_translate`)와 Tools 의 번역 패널·gtts 목소리도
+같이 없앴다.
+
+**남아 있는 외부 통신**
+
+- `collect.py` — 위키백과 / 기상청 / JTBC RSS. 자사 서버가 아니고 **KR 전용**이다
+  (PH 툴박스에는 Collect 카테고리가 없다)
+- `Dialog.call_llm` — `localhost:50020` (llama-server). 외부 아님
+
+음성은 `SpeechOnDevice`(ONNX, `lang='na'` 자동 판별)와 espeak 로 기기 안에서 처리한다.
 
 ---
 
