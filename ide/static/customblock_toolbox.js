@@ -1401,51 +1401,6 @@ let toolbox = (lang) => {
         "contents": [
           {
             "kind": "block",
-            "type": "speech_gtts",
-            "inputs":{
-              "text":{
-                "shadow": {
-                  "type": "text",
-                  "fields": {
-                    "TEXT": translations['sample_text'][lang]
-                  }
-                }
-              },
-              "filename":{
-                "shadow": {
-                  "type": "text",
-                  "fields": {
-                    "TEXT": "tts"
-                    // "TEXT": translations['audio_filename'][lang]
-                  }
-                }
-              },
-            }
-          },
-          {
-            "kind": "block",
-            "type": "speech_gtts_play",
-            "inputs":{
-              "text":{
-                "shadow": {
-                  "type": "text",
-                  "fields": {
-                    "TEXT": translations['sample_text'][lang]
-                  }
-                }
-              },
-              "volume": {
-                "shadow": {
-                  "type": "math_number",
-                  "fields": {
-                    "NUM": "80"
-                  }
-                }
-              }
-            }
-          },
-          {
-            "kind": "block",
             "type": "speech_otts",
             "inputs":{
               "text":{
@@ -1529,20 +1484,6 @@ let toolbox = (lang) => {
                   "type": "math_number",
                   "fields": {
                     "NUM": "80"
-                  }
-                }
-              }
-            }
-          },
-          {
-            "kind": "block",
-            "type": "speech_translate",
-            "inputs":{
-              "text":{
-                "shadow": {
-                  "type": "text",
-                  "fields": {
-                    "TEXT": translations['sample_text'][lang]
                   }
                 }
               }

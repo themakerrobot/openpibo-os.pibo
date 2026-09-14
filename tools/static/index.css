@@ -764,6 +764,55 @@ tbody {
   width: 100%;
 }
 
+/* 번역을 걷어내고 나면 Speech 탭 오른쪽 열에 녹음만 남는다. 한 줄에 두되
+   간격과 버튼 폭을 넉넉히 잡아 넓어진 열을 자연스럽게 쓰게 한다.
+   (버튼을 열 폭에 맞춰 늘리면 늘어난 티만 나고 보기 나쁘다.) */
+.record-row {
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.record-row button {
+  min-width: 130px;
+  padding: 8px 14px;
+}
+
+/* 녹음 중 표시. 막대는 '녹음이 돌고 있다'는 신호일 뿐 실제 마이크 레벨이 아니다.
+   녹음은 로봇에서 openpibo 의 Audio.record() 가 파일로 받는 구조라 브라우저에
+   오는 오디오 스트림이 없다. 레벨을 진짜로 보여주려면 서버가 값을 흘려줘야 한다.
+   대신 아래 진행 막대는 실제 남은 시간을 그린다. */
+.mic-wave {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  height: 40px;
+  margin: 4px 0 8px;
+}
+
+.mic-wave span {
+  flex: 1 1 0;
+  min-width: 3px;
+  height: 12%;
+  border-radius: 2px;
+  background: var(--dark-yellow, #e8c400);
+  transform-origin: center;
+  transition: height 90ms linear;
+}
+
+.mic-progress {
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(0, 0, 0, 0.12);
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.mic-progress > div {
+  height: 100%;
+  width: 0;
+  background: var(--dark-yellow, #e8c400);
+}
+
 .eye-color-group {
   display: flex;
   justify-content: space-around;

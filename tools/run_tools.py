@@ -150,13 +150,6 @@ async def tts(sid, d=None):
   pibo.tts(d)
 
 # speech
-@app.sio.on('translate')
-async def translate(sid, d=None):
-  if pibo is None:
-    return
-  res = pibo.translate(d)
-  await emit('disp_translate', res)
-
 # motion
 @app.sio.on('disp_motion')
 async def disp_motion(sid, d=None):

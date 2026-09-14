@@ -417,61 +417,9 @@ const translations = {
     ko: "말하기",
     en: "Speak"
   },
-  translate: {
-    ko: "번역하기",
-    en: "translate"
-  },
   voice_type: {
     ko: "음성종류",
     en: "Voice type"
-  },
-  language_type: {
-    ko: "언어종류",
-    en: "Language type"
-  },
-  s_lang_en : {
-    ko: "영어",
-    en: "English"
-  },
-  s_lang_ko : {
-    ko: "한국어",
-    en: "Korean"
-  },
-  s_lang_es : {
-    ko: "스페인어",
-    en: "Spanish"
-  },
-  s_lang_fr : {
-    ko: "프랑스어",
-    en: "French"
-  },
-  s_lang_de : {
-    ko: "독일어",
-    en: "German"
-  },
-  s_lang_zhcn : {
-    ko: "중국어",
-    en: "Chinese (Simplified)"
-  },
-  s_lang_ja : {
-    ko: "일본어",
-    en: "Japanese"
-  },
-  s_lang_ru : {
-    ko: "러시아어",
-    en: "Russian"
-  },
-  s_lang_ar : {
-    ko: "아랍어",
-    en: "Arabic"
-  },
-  s_lang_hi : {
-    ko: "힌디어",
-    en: "Hindi"
-  },
-  s_lang_la : {
-    ko: "라틴어",
-    en: "Latin"
   },
   espeak: {
     ko: "기본음성",
@@ -484,14 +432,6 @@ const translations = {
   woman: {
     ko: "여성",
     en: "Woman"
-  },
-  e_gtts: {
-    ko: "구글음성(en)",
-    en: "Google TTS(en)"
-  },
-  gtts: {
-    ko: "구글음성(ko)",
-    en: "Google TTS(ko)"
   },
   tts: {
     ko: "음성합성",
