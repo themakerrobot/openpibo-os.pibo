@@ -395,6 +395,11 @@ async function fetchSystemInfo() {
     document.getElementById('info-os').textContent       = d.os_version;
     document.getElementById('info-board').textContent    = d.board;
     document.getElementById('info-memory').textContent   = d.memory;
+    /* Chrome and Firefox take the "Save as PDF" filename from document.title,
+       so the report lands as <serial>.pdf. Strip anything a filesystem would
+       choke on -- get_serial() returns "N/A" when /proc/cpuinfo cannot be read. */
+    const safe = String(d.serial || '').replace(/[^A-Za-z0-9_.-]/g, '_');
+    if (safe) document.title = safe;
   } catch (e) {
     ['serial','firmware','os','board','memory'].forEach(k => {
       document.getElementById(`info-${k}`).textContent = 'Read failed';
