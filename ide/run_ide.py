@@ -215,6 +215,7 @@ async def classifier(enable: str):
   if enable == "on":
     subprocess.Popen(['systemctl', 'stop', 'classify.service'])
     subprocess.Popen(['systemctl', 'stop', 'llama-server.service'])
+    stop_hwtest()   # 검수 서버가 카메라·시리얼을 쥐고 있으면 tools 가 실패한다
     subprocess.Popen(['systemctl', 'start', 'tools.service'])
   elif enable == "off":
     subprocess.Popen(['systemctl', 'stop', 'tools.service'])
@@ -228,6 +229,7 @@ async def classifier(enable: str):
   if enable == "on":
     subprocess.Popen(['systemctl', 'stop', 'tools.service'])
     subprocess.Popen(['systemctl', 'stop', 'llama-server.service'])
+    stop_hwtest()   # 〃 (classifier 는 카메라를 직접 쓴다)
     subprocess.Popen(['systemctl', 'start', 'classify.service'])
   elif enable == "off":
     subprocess.Popen(['systemctl', 'stop', 'classify.service'])
@@ -241,6 +243,7 @@ async def classifier(enable: str):
   if enable == "on":
     subprocess.Popen(['systemctl', 'stop', 'tools.service'])
     subprocess.Popen(['systemctl', 'stop', 'classify.service'])
+    stop_hwtest()   # 〃
     subprocess.Popen(['systemctl', 'start', 'llama-server.service'])
   elif enable == "off":
     subprocess.Popen(['systemctl', 'stop', 'llama-server.service'])

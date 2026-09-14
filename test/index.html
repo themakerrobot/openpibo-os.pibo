@@ -293,9 +293,29 @@ window.addEventListener('beforeunload', () => {
 });
 
 /* Heartbeat. The watchdog counts from the last one it received.
-   A backgrounded tab is throttled to roughly one timer per minute, which is
-   still far inside the timeout. */
-setInterval(() => { fetch(`${API}/api/ping`).catch(() => {}); }, 30000);
+
+   The point of shutting down is that this process holds the camera, the
+   serial port and the audio device, so nothing else on the robot can use
+   them while it lives. So the page keeps the server alive only while an
+   inspector is actually looking at it.
+
+   document.hidden is exact and owes nothing to timers, unlike the interval
+   itself, which a browser throttles to about one tick per minute once the
+   tab goes to the background. Stop heartbeating after HIDDEN_LIMIT hidden
+   and the server is gone IDLE_TIMEOUT later; come back before that and
+   nothing was interrupted. */
+const HIDDEN_LIMIT = 180000;   // 3 minutes out of sight
+let hiddenSince = document.hidden ? Date.now() : null;
+
+document.addEventListener('visibilitychange', () => {
+  hiddenSince = document.hidden ? Date.now() : null;
+  if (!document.hidden) fetch(`${API}/api/ping`).catch(() => {});
+});
+
+setInterval(() => {
+  if (hiddenSince !== null && Date.now() - hiddenSince > HIDDEN_LIMIT) return;
+  fetch(`${API}/api/ping`).catch(() => {});
+}, 15000);
 
 const tests = [
   { id: 'oled',     name: 'OLED display',   crit: 'Shows "Oled Testing..." on the panel' },
