@@ -417,27 +417,6 @@ Blockly.Python.forBlock['speech_etts_play'] = function(block) {
 
   return `speech.tts(text=${text}, filename='/home/pi/tmp.mp3', voice='espeak')\naudio.play('/home/pi/tmp.mp3', ${volume})\n`;
 }
-Blockly.Python.forBlock['speech_get_dialog'] = function(block) {
-  Blockly.Python.definitions_['from_speech_import_Dialog'] = 'from openpibo.speech import Dialog';
-  Blockly.Python.definitions_['assign_dialog'] = 'dialog = Dialog()';
-
-  const text = Blockly.Python.valueToCode(block, 'text', Blockly.Python.ORDER_ATOMIC);
-  return [`dialog.get_dialog(${text})`, Blockly.Python.ORDER_ATOMIC];
-}
-Blockly.Python.forBlock['speech_load_dialog'] = function(block) {
-  Blockly.Python.definitions_['from_speech_import_Dialog'] = 'from openpibo.speech import Dialog';
-  Blockly.Python.definitions_['assign_dialog'] = 'dialog = Dialog()';
-
-  const dir = block.getFieldValue("dir");
-  const filename = Blockly.Python.valueToCode(block, 'filename', Blockly.Python.ORDER_ATOMIC);
-  return `dialog.load('${dir}'+${filename}+'.csv')\n`;
-}
-Blockly.Python.forBlock['speech_reset_dialog'] = function(block) {
-  Blockly.Python.definitions_['from_speech_import_Dialog'] = 'from openpibo.speech import Dialog';
-  Blockly.Python.definitions_['assign_dialog'] = 'dialog = Dialog()';
-
-  return `dialog.reset()\n`;
-}
 Blockly.Python.forBlock['speech_start_llm'] = function(block) {
   Blockly.Python.definitions_['from_speech_import_Dialog'] = 'from openpibo.speech import Dialog';
   Blockly.Python.definitions_['assign_dialog'] = 'dialog = Dialog()';
