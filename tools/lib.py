@@ -4,7 +4,6 @@ from openpibo.vision_face import Face
 from openpibo.vision_detect import Detect
 from openpibo.vision_classify import CustomClassifier
 from openpibo.audio import Audio
-from openpibo.speech import Speech, Dialog
 from openpibo.motion import Motion
 import asyncio
 import numpy as np
@@ -46,12 +45,10 @@ class Pibo:
 
     self.mot = Motion()
     self.aud = Audio()
-    self.speech = Speech()
     self.speech_od = None   # 온디바이스 TTS. 모델이 무거워 처음 쓸 때 올린다.
     self.cam = Camera()
     self.fac = Face()
     self.det = Detect()
-    self.dialog = Dialog()
 
     self.mot.set_motors(self.motion_d, movetime=1000)
     self.det.load_hand_gesture_model()
@@ -218,26 +215,15 @@ class Pibo:
           self.speech_od = SpeechOnDevice()
         self.speech_od.tts(text=d['text'], filename=filename, voice=voice_type, lang='na')
       else:
-        filename = "/home/pi/myaudio/tts.mp3"
-        lang = "en" if "e_" in voice_type else "ko"
-        self.speech.tts(text=d['text'], filename=filename, voice=voice_type, lang=lang)
+        # 드롭다운이 espeak / m1 / f1 뿐이라 여기 올 일은 없다.
+        # 서버 TTS(oe-sapi)는 제거됐다.
+        logging.error(f'[tts] unsupported voice_type: {voice_type}')
+        return
       self.aud.play(filename=filename, volume=volume)
     except Exception as ex:
       logging.error(f'[tts] Error: {ex}')
       pass
     return
-
-  def translate(self, d):
-    res = self.dialog.translate(d['text'], d['langtype'])
-    if d['voice_en'] == 'off':
-      return res
-
-    voice_type = "gtts"
-    volume = d['volume']
-    filename = "/home/pi/myaudio/tts.mp3"
-    self.speech.tts(text=res, filename=filename, voice=voice_type, lang=d['langtype'])
-    self.aud.play(filename=filename, volume=volume)
-    return res
 
   ## motion
   def make_raw(self):

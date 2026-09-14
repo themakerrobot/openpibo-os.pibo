@@ -12,8 +12,6 @@ import random
 import json
 import os
 import requests
-from . import napi_host, sapi_host
-from .modules.speech.mtranslate import translate
 
 import numpy as np
 import onnxruntime as ort
@@ -29,29 +27,12 @@ import openpibo_models
 
 os.environ["ORT_LOGGING_LEVEL"] = "3"
 
-def speech_api(mode, type, params={}, json_data={}):
-  """
-  인공지능 보이스 API를 호출합니다.
-
-  example::
-
-    from openpibo.speech import speech_api
-
-    res = speech_api(...)
-  """
-  if type == "GET":
-    return requests.get(f"{napi_host}/{mode}", params=params)
-  elif type == "POST":
-    return requests.post(f"{napi_host}/{mode}", params=params, json=json_data)
-
 class Speech:
   """
 Functions:
 :meth:`~openpibo.speech.Speech.tts`
-:meth:`~openpibo.speech.Speech.stt`
 
   * TTS (Text to Speech)
-  * STT (Speech to Text)
 
   example::
 
@@ -61,91 +42,37 @@ Functions:
     # 아래의 모든 예제 이전에 위 코드를 먼저 사용합니다.
   """
 
-  def __init__(self):
-    self.SAPI_HOST = sapi_host
-
-  def tts(self, text, filename="tts.mp3", voice="main", lang="ko"):
+  def tts(self, text, filename="tts.wav", voice="espeak", lang="ko"):
     """
     TTS(Text to Speech)
 
     Text(문자)를 Speech(말)로 변환하여 파일로 저장합니다.
 
+    espeak 로 기기 안에서 처리합니다. 서버를 쓰던 목소리(main/boy/girl/man1/
+    woman1)는 제거됐습니다. 자연스러운 음성이 필요하면
+    :obj:`~openpibo.speech.SpeechOnDevice` 를 쓰세요 — 온디바이스 ONNX 모델이고
+    ``lang='na'`` 로 언어를 자동 판별합니다.
+
     example::
 
-      speech.tts('안녕하세요! 만나서 반가워요!', 'main', 'ko', '/home/pi/tts.mp3')
+      speech.tts('안녕하세요! 만나서 반가워요!', '/home/pi/tts.wav')
 
-    :param str text: 변환할 문장구
+    :param str text: 변환할 문장
 
-    :param str voice: 목소리 타입(espeak | gtts | main | boy | girl | man1 | woman1)
+    :param str filename: 변환된 음성파일의 경로 (wav)
 
-    :param str lang: 사용할 언어(ko | en)
+    :param str voice: ``espeak`` 만 지원합니다
 
-    :param str filename: 변환된 음성파일의 경로 (mp3)
+    :param str lang: 사용하지 않습니다 (espeak 기본 음성)
     """
 
     if type(text) is not str:
       raise Exception(f'"{text}" must be str type')
 
-    if voice == "espeak":
-      os.system(f'espeak "{text}" -w {filename}')
-      return
-    elif voice in ["gtts", "e_gtts"]:
-      data = {
-        "client":"tw-ob",
-        "q":text,
-        "tl":lang
-      }
-      url = 'https://translate.google.com/translate_tts'
-    else:
-      data = {
-        "text":text,
-        "hash":"",
-        "voice":voice, # ['main', 'boy', 'girl', 'man1', 'woman1']
-        "lang":lang, # ['ko', 'en']
-        "type":"mp3"
-      }
-      url = self.SAPI_HOST + '/tts'
+    if voice != "espeak":
+      raise Exception(f'"{voice}" is not supported. use "espeak" or SpeechOnDevice')
 
-    res = requests.get(url, params=data)
-    if res.status_code != 200:
-      raise Exception(f'response error: {res}')
-
-    with open(filename, 'wb') as f:
-      f.write(res.content)
-
-  def stt(self, filename="stream.wav", timeout=5, verbose=True):
-    """
-    STT(Speech to Text)
-
-    목소리를 녹음한 후 파일로 저장하고, 그 파일의 Speech(말)를 Text(문자)로 변환합니다.
-
-    녹음 파일은 ``timeout`` 초 동안 녹음되며, ``filename`` 의 경로에 저장됩니다.
-
-    example::
-
-      speech.stt('/home/pi/stt.wav', 5)
-
-    :param str filename: 녹음한 파일이 저장 될 경로. ``wav`` 확장자를 사용합니다.
-
-    :param int timeout: 녹음 시간(s)
-
-    :returns: 인식된 문자열
-    """
-
-    if verbose == True:
-      os.system(f'arecord -D plug:dmic_sv -c2 -r 16000 -f S32_LE -d {timeout} -t wav -q -vv -V streo stream.raw;sox stream.raw -c 1 -b 16 {filename};rm stream.raw')
-    else:
-      os.system(f'arecord -D plug:dmic_sv -c2 -r 16000 -f S32_LE -d {timeout} -t wav -q stream.raw;sox stream.raw -q -c 1 -b 16 {filename};rm stream.raw')
-
-    res = requests.post("https://o-vapi.circul.us/stt" + '/stt', files={'uploadFile':open(filename, 'rb')})
-
-    if res.status_code != 200:
-      raise Exception(f'response error: {res}')
-
-    if res.json()['result'] == False:
-      raise Exception(f'result error: {res.json()}')
-
-    return res.json()['data']
+    os.system(f'espeak "{text}" -w {filename}')
 
 DEFAULT_MODEL_DIR = "/home/pi/.model"
 
@@ -242,9 +169,6 @@ Functions:
 :meth:`~openpibo.speech.Dialog.ngram`
 :meth:`~openpibo.speech.Dialog.diff_ngram`
 :meth:`~openpibo.speech.Dialog.get_dialog`
-:meth:`~openpibo.speech.Dialog.translate`
-:meth:`~openpibo.speech.Dialog.get_dialog_dl`
-:meth:`~openpibo.speech.Dialog.nlp_dl`
 :meth:`~openpibo.speech.Dialog.start_llm`
 :meth:`~openpibo.speech.Dialog.call_llm`
 :meth:`~openpibo.speech.Dialog.stop_llm`
@@ -253,8 +177,6 @@ Functions:
 
   * 형태소 및 명사 분석
   * 챗봇 기능
-  * 한역 번역 / 대화 (Deep Learning)
-  * 자연어 분석 기능 (Deep Learning)
 
   example::
 
@@ -267,7 +189,6 @@ Functions:
   def __init__(self):
     self.dialog_db = []
     #self.mecab = Mecab()
-    self.NAPI_HOST = napi_host
     self.load(openpibo_models.filepath("dialog.csv"))
 
   def load(self, filepath):
@@ -389,83 +310,6 @@ Functions:
         max_ans = [line]
 
     return random.choice(max_ans)[1]
-
-  def translate(self, string, target="en"):
-    """
-    문장을 번역합니다.
-
-    example::
-
-      dialog.translate('안녕하세요! 만나서 정말 반가워요!')
-      # "Hi! Nice to meet you!"
-
-    :param str string: 번역할 문장
-
-    :param str target: 번역될 언어(ko, en, ja, fr ...)
-
-    :returns: 번역 된 문장
-    """
-
-    if type(string) is not str or type(target) is not str:
-      raise Exception(f'"{string}, {target}" must be str type')
-
-    return translate(string, target)
-
-  def get_dialog_dl(self, string):
-    """
-    일상대화에 대한 답을 추출합니다.(Deep Learning)
-
-    example::
-
-      dialog.get_dialog_ml('나랑 같이 놀자')
-
-    :param str string: 질문하는 문장 (한글)
-
-    :returns: 답변하는 문장 (한글)
-    """
-    res = requests.get(self.NAPI_HOST + '/dialog', params={'input':string})
-
-    if res.status_code != 200:
-      raise Exception(f'response error: {res}')
-
-    if res.json()['result'] == False:
-      raise Exception(f'result error: {res.json()}')
-
-    ans, score = [], []
-    for item in res.json()['data']:
-      ans.append(item['answer'])
-      score.append(item['score'])
-
-    return ans[score.index(max(score))]
-
-  def nlp_dl(self, string, mode):
-    """
-    문장을 분석합니다.(Deep Learning)
-
-    문장을 지정한 모드로 분석합니다.
-
-    example::
-
-      dialog.nlp_ml('안녕하세요. 오늘 매우 즐거워요', 'ner')
-
-    :param str string: 분석할 문장
-
-    :param str mode: 분석 모드 `` (summary|vector|sentiment|emotion|ner|wellness|hate) ``
-
-    :returns: 분석 결과
-    """
-    #if type(mode) is not str or mode not in ('summary', 'vector', 'sentiment', 'emotion', 'ner', 'wellness', 'hate'):
-    #  raise Exception(f'"{mode}" must be (summary|vector|sentiment|emotion|ner|wellness|hate)')
-
-    res = requests.post(self.NAPI_HOST + '/' + mode, params={"sentence":string})
-
-    if res.status_code != 200:
-      raise Exception(f'response error: {res}')
-
-    if res.json()['result'] == False:
-      raise Exception(f'result error: {res.json()}')
-
-    return res.json()['data']
 
   def start_llm(self, port=50020):
     """

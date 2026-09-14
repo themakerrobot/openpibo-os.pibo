@@ -10,7 +10,7 @@
     <!-- <link rel="manifest" href="../static/manifest.json" /> -->
     <link rel="stylesheet" href="../static/all.min.css?ver=240110v1" type="text/css" />
     <link rel="stylesheet" href="../static/jquery.jsonview.min.css" />
-    <link rel="stylesheet" href="../static/index.css?ver=240110v3" />
+    <link rel="stylesheet" href="../static/index.css?ver=260914v1" />
     <link rel="stylesheet" href="../static/simulator.css?ver=240110v1" />
     <link rel="shortcut icon" href="../static/icon.png" type="image/x-icon" />
 
@@ -526,8 +526,6 @@
                   <option value="espeak" data-key="espeak"></option>
                   <option value="m1" data-key="man"></option>
                   <option value="f1" data-key="woman"></option>
-                  <option value="gtts" data-key="gtts"></option>
-                  <option value="e_gtts" data-key="e_gtts"></option>
                 </select>
               </div>
               <div class="speech-input-group">
@@ -542,42 +540,9 @@
 
             <section>
               <div>
-                <h3 class="mark" data-key="translate"></h3>
-              </div>
-              <div class="speech-input-group">
-                <span class="label" data-key="language_type"></span>:
-                <select name="s_lang_type">
-                  <option value="en" data-key="s_lang_en"></option>
-                  <option value="ko" data-key="s_lang_ko"></option>
-                  <option value="es" data-key="s_lang_es"></option>
-                  <option value="fr" data-key="s_lang_fr"></option>
-                  <option value="de" data-key="s_lang_de"></option>
-                  <option value="zh-CN" data-key="s_lang_zhcn"></option>
-                  <option value="ja" data-key="s_lang_ja"></option>
-                  <option value="ru" data-key="s_lang_ru"></option>
-                  <option value="ar" data-key="s_lang_ar"></option>
-                  <option value="hi" data-key="s_lang_hi"></option>
-                  <option value="la" data-key="s_lang_la"></option>        
-                </select>
-              </div>
-              <div class="speech-input-group">
-                <span class="label" data-key="text"></span>:
-                <input type="text" id="s_translate_val" />
-                <button id="s_translate_bt" style="width:120px">
-                  <i class="fa-solid fa-language"></i>
-                  <span data-key="execute"></span>
-                </button>
-              </div>
-              <div class="speech-input-group">
-                <span class="label" data-key="result"></span>:
-                <input type="text" id="s_translate_result_val" disabled/>
-              </div>
-
-
-              <div>
                 <h3 class="mark" data-key="record"></h3>
               </div>
-              <div class="speech-input-group">
+              <div class="speech-input-group record-row">
                 <input type="number" name="mic_time_val" id="mic_time_val" value="5" min="1" max="30" pattern="\d*" />
                 <span class="label" data-key="second"></span>
                 <button id="mic_bt">
@@ -591,14 +556,19 @@
                 <i class="fa-solid fa-ellipsis"></i>
                 <span class="label" id="mic_status"></span>
               </div>
-
-
+              <div id="mic_wave" class="mic-wave" hidden>
+                <span></span><span></span><span></span><span></span><span></span>
+                <span></span><span></span><span></span><span></span><span></span>
+                <span></span><span></span><span></span><span></span><span></span>
+                <span></span><span></span><span></span><span></span><span></span>
+              </div>
+              <div id="mic_progress" class="mic-progress" hidden><div></div></div>
             </section>
           </article>
         </div>
       </div>
     </main>
   </body>
-  <script src="../static/ko2en.js?ver=260910v1"></script>
-  <script src="../static/index.js?ver=260910v2"></script>
+  <script src="../static/ko2en.js?ver=260914v1"></script>
+  <script src="../static/index.js?ver=260914v1"></script>
 </html>

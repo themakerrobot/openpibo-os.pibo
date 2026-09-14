@@ -703,47 +703,57 @@ const getSpeech = (socket) => {
     }
   });
 
-  $("#s_translate_bt").on("click", async () => {
-    txt = $("#s_translate_val").val().trim();
-    if (txt == "") {
-      await alert_popup(translations["text_empty"][lang]);
-      return;
-    }
 
-    socket.emit("translate", {
-      langtype:$("select[name=s_lang_type]").val(),
-      voice_en: $("input[name=s_voice_en]:checked").val(),
-      volume: Number($("#volume").val()),
-      text: txt
-    });
-  });
-
-  $("#s_translate_val").on("keypress", async function (evt) {
-    if (evt.keyCode == 13) {
-      txt = $("#s_translate_val").val().trim();
-      if (txt == "") {
-        await alert_popup(translations["text_empty"][lang]);
-        return;
-      }
-  
-      socket.emit("translate", {
-        langtype:$("select[name=s_lang_type]").val(),
-        voice_en: $("input[name=s_voice_en]:checked").val(),
-        volume: Number($("#volume").val()),
-        text: txt
-      });
-    }
-  });
-
-  socket.on("disp_translate", (data) => {
-    $("#s_translate_result_val").val(data);
-  });
-
+  let micTimer = null;
 
   socket.on("mic", function (d) {
     //console.log('mic', d)
     $("#mic_status").text(d);
+    micIndicatorStop();
   });
+
+  /* 녹음 중 표시.
+     막대는 "녹음이 돌고 있다"는 신호일 뿐 실제 마이크 레벨이 아니다. 녹음은
+     로봇에서 Audio.record() 가 파일로 받아서 브라우저로 오는 오디오 스트림이
+     없다. 마이크가 죽었는지는 이걸로 판단하면 안 되고, 녹음 후 재생으로 봐야
+     한다. 아래 진행 막대는 실제 남은 시간을 그린다. */
+  function micIndicator(seconds) {
+    const wave = document.getElementById("mic_wave");
+    const bars = wave.querySelectorAll("span");
+    const prog = document.getElementById("mic_progress");
+    const fill = prog.firstElementChild;
+
+    micIndicatorStop();
+    wave.hidden = false;
+    prog.hidden = false;
+    fill.style.width = "0%";
+
+    const started = Date.now();
+    const total = seconds * 1000;
+
+    micTimer = setInterval(() => {
+      const passed = Date.now() - started;
+      fill.style.width = Math.min(100, (passed / total) * 100) + "%";
+      bars.forEach((b, i) => {
+        // 가운데가 높은 완만한 형태에 흔들림을 얹는다. 가만히 있는 것보다
+        // 녹음 중임이 분명해진다.
+        const center = 1 - Math.abs(i - (bars.length - 1) / 2) / bars.length;
+        b.style.height = Math.round((12 + center * 55 * (0.35 + Math.random())) ) + "%";
+      });
+      if (passed >= total) micIndicatorStop();
+    }, 100);
+  }
+
+  function micIndicatorStop() {
+    if (micTimer) {
+      clearInterval(micTimer);
+      micTimer = null;
+    }
+    const wave = document.getElementById("mic_wave");
+    const prog = document.getElementById("mic_progress");
+    if (wave) wave.hidden = true;
+    if (prog) prog.hidden = true;
+  }
 
   $("#mic_bt").on("click", async function () {
     let tmictime = "#mic_time_val";
@@ -757,6 +767,7 @@ const getSpeech = (socket) => {
     }
 
     $("#mic_status").html(`<i class='fa-solid fa-fade'>${t("recording")}</i>`);
+    micIndicator(val);
     socket.emit("mic", {
       time: val,
       volume: Number($("#volume").val()),
