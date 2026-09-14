@@ -145,11 +145,15 @@
     text-align: left;
     font-family: Consolas, "Courier New", monospace;
     font-size: 10.5px;
-    line-height: 1.45;
-    white-space: pre-wrap;
-    word-break: break-all;
-    overflow-y: auto;
-    max-height: 44mm;
+    /* The log never scrolls: the script keeps only the last LOG_ROWS lines in
+       the element, and the height is exactly that many rows. Scrolling an
+       overflow box leaves half a row showing at the top and bottom when the
+       report prints, and no amount of snapping scrollTop is reliable across
+       the screen-to-print relayout. */
+    line-height: 14px;
+    white-space: pre;
+    overflow: hidden;
+    height: 182px;       /* 12 rows: 14px x 12 + 12 padding + 2 border */
     color: var(--ink);
   }
 
@@ -183,7 +187,7 @@
     table, .box, .summary { page-break-inside: avoid; break-inside: avoid; }
     h2 { page-break-after: avoid; break-after: avoid; }
     .box { min-height: 38mm; }
-    #sensor-log { max-height: 38mm; overflow: hidden; }
+    #sensor-log { min-height: 182px; }   /* beat .box's min-height */
     .fill { border-bottom: 1px solid var(--ink); }
   }
 
@@ -497,8 +501,17 @@ async function runCamera(id) {
   }
 }
 
+/* Rows the log element can show. Keeping the element to exactly this many
+   lines is what removes the scrollbar and the half-row clipping on print. */
+const LOG_ROWS = 12;
+
 async function runSensors(id) {
   const log = document.getElementById('sensor-log');
+  const lines = [];
+  const push = line => {
+    lines.push(line);
+    log.textContent = lines.slice(-LOG_ROWS).join('\n');
+  };
   log.textContent = '';
   const es = new EventSource(`${API}/api/test/system`);
   let ok = true;
@@ -507,11 +520,20 @@ async function runSensors(id) {
     const finish = () => { if (es.readyState !== EventSource.CLOSED) es.close(); done(); };
     es.onmessage = ev => {
       const d = JSON.parse(ev.data);
-      if (d.error) { log.textContent += `Error: ${d.error}\n`; ok = false; finish(); return; }
-      log.textContent += `${String(d.count).padStart(2,'0')}  PIR ${d.pir} | TOUCH ${d.touch} | BUTTON ${d.button} | DC ${d.dc}\n`;
-      log.scrollTop = log.scrollHeight;
+      if (d.error) { push(`Error: ${d.error}`); ok = false; finish(); return; }
+      /* Keep an entry to one line -- the column is narrow and a wrapped line
+         gets clipped mid-row when the report prints. */
+      const v = x => (x === 'No signal' ? '-' : x);
+      push(`${String(d.count).padStart(2,'0')}  PIR ${v(d.pir)} | TCH ${v(d.touch)} | BTN ${v(d.button)} | DC ${v(d.dc)}`);
     };
-    es.onerror = () => { log.textContent += '\nStream closed.'; finish(); };
+    es.onerror = () => {
+      /* The stream ends on its own after 20 samples and EventSource then tries
+         to reconnect, so this fires on a normal finish too. Only say something
+         when nothing at all came through -- otherwise it prints as a stray
+         line in the report. */
+      if (!log.textContent.trim()) log.textContent = 'No sensor data received.';
+      finish();
+    };
     setTimeout(finish, 22000);
   });
 
