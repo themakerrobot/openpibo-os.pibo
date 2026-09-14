@@ -130,7 +130,9 @@ def get_memory():
 
 def get_board():
     try:
-        return os.popen('cat /proc/device-tree/model').read().strip()
+        # /proc/device-tree/* 는 NUL 종료 문자열이라 strip() 으로는 안 지워진다.
+        # 그대로 두면 보고서에 "Rev 1.4\x00" 이 네모 기호로 찍힌다.
+        return os.popen('cat /proc/device-tree/model').read().replace('\x00', '').strip()
     except Exception:
         return "N/A"
 
