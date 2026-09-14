@@ -51,19 +51,35 @@ AP 모드 IP 는 `192.168.34.1` 고정이라(`system/hotspot.sh`) 기기가 달�
 
 ---
 
-## 2. `system/ph_setup.sh` — 신규 파일 (100755)
+## 2. 국가 설정 — `system/setup_country.sh` (델타 아님, `main` 에 있다)
 
 이미지 생성 시 **1회 실행**하는 스크립트. 리포에 파일이 있다고 적용된 게 아니다.
 
 ```bash
-sudo timedatectl set-timezone Asia/Manila
+sudo bash /home/pi/openpibo-os/system/setup_country.sh PH
+sudo reboot
+```
+
+하는 일:
+
+```bash
+sudo timedatectl set-timezone Asia/Manila    # 국가코드로 결정. MY 는 Asia/Kuala_Lumpur
 sudo raspi-config nonint do_wifi_country PH
 # cmdline.txt 의 cfg80211.ieee80211_regdom 값을 PH 로 정규화 (아래 '멱등성' 참고)
 sudo rm -f /etc/modprobe.d/brcmfmac.conf     # country=US 잔재 제거 (아래 참고)
-sudo chmod +x /home/pi/openpibo-os/system/hotspot.sh
+# 실행비트 복구 (booting.py, hotspot.sh, setup_country.sh, setup_openpibo_src.sh, index.js)
 ```
 
 **여러 번 돌려도 안전하다.** 검증 중에 재실행하는 일이 잦아서 멱등하게 만들어 뒀다.
+
+> **260914v7 까지는 `system/ph_setup.sh` 였고, PH 델타의 17번째 파일이었다.**
+> 말레이시아도 영문으로 나가기로 하면서 국가코드만 다른 스크립트가 둘이 될 상황이라,
+> `main` 의 `setup_country.sh <국가코드>` 로 합치고 `ph` 에서는 지웠다. **델타 16개.**
+>
+> **`ph` 브랜치는 '필리핀'이 아니라 '영문 배포판'이다.** 말레이시아는 UI·예제가
+> 필리핀과 완전히 같으므로 **같은 `-ph` 태그를 쓰고**, 차이는 이 스크립트에 주는
+> 국가코드뿐이다. 국가별 브랜치를 새로 만들지 말 것 — 델타가 배로 늘고 릴리스마다
+> merge 대상이 하나 더 생긴다. 현지어 UI 가 필요해질 때만 별도 논의 대상이다.
 
 적용 여부 확인:
 
@@ -78,7 +94,7 @@ iw reg get                                   # phy#0 가 20 dBm 인지 (아래 �
 `raspi-config nonint get_wifi_country` 는 **판정 기준으로 쓰지 말 것.** cmdline 값이
 깨져 있으면 오류 없이 빈 값을 돌려준다. `cat cmdline.txt` 로 직접 본다.
 
-한국 값이 나오면 `sudo bash /home/pi/openpibo-os/system/ph_setup.sh && sudo reboot`.
+한국 값이 나오면 `sudo bash /home/pi/openpibo-os/system/setup_country.sh PH && sudo reboot`.
 
 ### `brcmfmac.conf` 를 지우는 이유
 
@@ -144,7 +160,7 @@ country 98: DFS-FCC
 값을 교체하지 못하고 덧붙여 `cfg80211.ieee80211_regdom=PHPH` 가 되는 것을 확인했다.
 유효한 2글자 코드가 아니고, `raspi-config nonint get_wifi_country` 가 조용히 빈 값을
 돌려준다. 어차피 `global` 에 반영되지도 않으니 실해는 없었지만,
-`ph_setup.sh` 가 매 실행마다 값을 `PH` 로 정규화하도록 고쳤다.
+`setup_country.sh` 가 매 실행마다 값을 국가코드로 정규화한다.
 
 기기에서 직접 고칠 때:
 
@@ -293,7 +309,7 @@ sudo chown -R pi:pi /home/pi/examples
 cd /home/pi/openpibo-os
 git describe --tags                                            # YYMMDDvN-ph
 head -n1 ide/static/ko2en.js                                   # const blang = 'en';
-ls -l system/hotspot.sh system/ph_setup.sh system/booting.py   # 전부 -rwxr-xr-x
+ls -l system/hotspot.sh system/setup_country.sh system/booting.py   # 전부 -rwxr-xr-x
 ls /home/pi/examples/                                          # 10개, collect.json 없음
 timedatectl | grep -i "time zone"                              # Asia/Manila
 cat /boot/firmware/cmdline.txt                                 # regdom=PH 한 번만
