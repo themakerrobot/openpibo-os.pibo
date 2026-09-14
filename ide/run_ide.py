@@ -404,6 +404,10 @@ async def handle_restore(sid):
         os.system("rm -rf /home/pi/mymodel/*")
         os.system("rm -rf /home/pi/myaudio/*")
         os.system("rm -rf /home/pi/examples/*")
+        # 녹화한 모션. tools 가 /home/pi/mymotion.json 에 쓰고
+        # custom_motion.json 은 import 할 때마다 덮어쓰는 임시 파일이다.
+        # 없으면 tools/lib.py 가 빈 dict 로 시작하므로 지워도 안전하다.
+        os.system("rm -f /home/pi/mymotion.json /home/pi/custom_motion.json")
         os.system("cp -rf /home/pi/openpibo-os/examples/* /home/pi/examples/")
         os.system("sudo /home/pi/openpibo-os/system/conwifi.sh wpa-psk 'pibo' '!pibo0314'")
         os.system('echo "#11:!" > /dev/ttyS0')

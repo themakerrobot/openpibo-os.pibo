@@ -296,7 +296,7 @@ llama.cpp 웹 UI에는 `keepalive: true` 를 넣어 빌드했기 때문에 llm�
 2. **tarball/zip으로 파일 덮어쓰기** — 압축물의 모드가 644면 리포의 755가 벗겨진다.
    덮어쓴 뒤 `git status`와 `git diff --cached --summary`로 `mode change` 확인
 3. **실행비트가 필요한 파일** — `system/booting.py`, `system/hotspot.sh`, `system/ph_setup.sh`,
-   `tools/static/index.js`. 전부 **100755**여야 한다
+   `system/setup_openpibo_src.sh`, `tools/static/index.js`. 전부 **100755**여야 한다
 
 ---
 
@@ -307,7 +307,7 @@ python3 -m py_compile ide/run_ide.py
 node --check ide/static/index.js ide/static/ko2en.js
 node --check tools/static/index.js tools/static/ko2en.js classifier/static/ko2en.js
 git diff --cached --summary          # 의도치 않은 mode change 없는지
-git ls-tree -r HEAD system | grep -E "hotspot|booting|ph_setup"   # 100755 확인
+git ls-tree -r HEAD system | grep -E "hotspot|booting|ph_setup|setup_openpibo"   # 100755 확인
 ```
 
 정적 파일(`*.js`)을 고쳤으면 `templates/index.html`의 `?ver=` 를 새 릴리스 번호로 올릴 것.

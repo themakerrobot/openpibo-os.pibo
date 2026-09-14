@@ -128,6 +128,15 @@ def get_memory():
     except Exception:
         return "N/A"
 
+def get_lib():
+    # 리포 소스를 그대로 쓰므로 배포 태그와 같이 움직여야 한다.
+    # 어긋나 있으면 출하 전에 이 칸에서 보인다.
+    try:
+        import openpibo
+        return f"openpibo-python {openpibo.__version__}"
+    except Exception:
+        return "N/A"
+
 def get_board():
     try:
         # /proc/device-tree/* 는 NUL 종료 문자열이라 strip() 으로는 안 지워진다.
@@ -273,6 +282,7 @@ async def get_system_info():
         "os_version": get_os(),
         "board": get_board(),
         "memory": get_memory(),
+        "library": get_lib(),
     }
 
 @app.post("/api/test/{test_name}")

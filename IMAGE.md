@@ -18,7 +18,31 @@ git describe --tags           # YYMMDDvN 또는 YYMMDDvN-ph
 cat /home/pi/.OS_VERSION      # piBo_YYMMDDvN(-ph)
 ```
 
-필리핀 배포본이면 `system/ph_setup.sh` 를 돌린다. 여러 번 돌려도 안전하다.
+### openpibo 를 리포 소스에서 임포트하도록 (이미지당 1회)
+
+```bash
+sudo bash /home/pi/openpibo-os/system/setup_openpibo_src.sh
+```
+
+`pip install` 한 `openpibo-python` 을 지우고 `site-packages` 에 `.pth` 로
+`/home/pi/openpibo-os` 를 등록한다. 이걸 해야 **배포 태그 하나가 로봇 코드와
+라이브러리를 함께 규정한다.** 안 하면 `git clone --branch <태그>` 로 받아도
+`openpibo/` 만 옛 버전이 돌고, 겉보기엔 정상이라 알아채기 어렵다.
+
+`.pth` 는 `site-packages` 에 있으므로 **리포가 아니라 이미지에 속한다.**
+pyenv 를 새로 만들면 이 단계가 통째로 빠지니, 처음부터 이미지를 만들 때는
+반드시 다시 실행할 것. 확인:
+
+```bash
+/home/pi/.pyenv/bin/python3 -c "import openpibo; print(openpibo.__version__, openpibo.__file__)"
+# /home/pi/openpibo-os/openpibo/__init__.py 가 나와야 한다
+```
+
+의존성(`openpibo_models` 등)은 계속 pip 설치본을 쓴다. 지우지 말 것.
+
+### 필리핀 배포본
+
+`system/ph_setup.sh` 를 돌린다. 여러 번 돌려도 안전하다.
 
 ```bash
 sudo bash /home/pi/openpibo-os/system/ph_setup.sh
@@ -32,7 +56,9 @@ sudo reboot
 ```bash
 # 기기별 상태
 sudo rm -f  /etc/NetworkManager/system-connections/*.nmconnection*   # WiFi 비번
-sudo rm -rf /home/pi/code/* /home/pi/myimage/* /home/pi/myaudio/* 2>/dev/null
+sudo rm -rf /home/pi/code/* /home/pi/myimage/* /home/pi/myaudio/* /home/pi/mymodel/* 2>/dev/null
+sudo rm -f  /home/pi/mymotion.json /home/pi/custom_motion.json       # 검수 중 녹화한 모션
+sudo rm -rf /home/pi/.npm /home/pi/openpibo-files/.git               # 용량 (수십~64MB)
 sudo rm -f  /home/pi/.bash_history /root/.bash_history
 
 # 로그
@@ -91,6 +117,8 @@ cd /home/pi/openpibo-os
 git describe --tags
 cat /home/pi/.OS_VERSION
 head -n1 ide/static/ko2en.js                                   # PH 는 const blang = 'en';
+/home/pi/.pyenv/bin/python3 -c "import openpibo; print(openpibo.__version__, openpibo.__file__)"
+                                                               # 경로가 /home/pi/openpibo-os/openpibo/ 여야 한다
 ls -l system/hotspot.sh system/ph_setup.sh system/booting.py tools/static/index.js
 ls /home/pi/examples/                                          # PH 는 10개, collect.json 없음
 

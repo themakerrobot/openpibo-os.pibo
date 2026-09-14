@@ -231,7 +231,8 @@
         <td class="key">Memory</td><td id="info-memory">Loading...</td>
       </tr>
       <tr>
-        <td class="key">OS Version</td><td colspan="3" id="info-os">Loading...</td>
+        <td class="key">OS Version</td><td id="info-os">Loading...</td>
+        <td class="key">Library</td><td id="info-library">Loading...</td>
       </tr>
     </tbody>
   </table>
@@ -415,13 +416,14 @@ async function fetchSystemInfo() {
     document.getElementById('info-os').textContent       = d.os_version;
     document.getElementById('info-board').textContent    = d.board;
     document.getElementById('info-memory').textContent   = d.memory;
+    document.getElementById('info-library').textContent  = d.library;
     /* Chrome and Firefox take the "Save as PDF" filename from document.title,
        so the report lands as <serial>.pdf. Strip anything a filesystem would
        choke on -- get_serial() returns "N/A" when /proc/cpuinfo cannot be read. */
     const safe = String(d.serial || '').replace(/[^A-Za-z0-9_.-]/g, '_');
     if (safe) document.title = safe;
   } catch (e) {
-    ['serial','firmware','os','board','memory'].forEach(k => {
+    ['serial','firmware','os','board','memory','library'].forEach(k => {
       document.getElementById(`info-${k}`).textContent = 'Read failed';
     });
   }
