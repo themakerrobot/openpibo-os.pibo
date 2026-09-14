@@ -273,6 +273,29 @@ classifier_bt.addEventListener("click", async function () {
   });
 });
 
+const hwtest_bt = document.getElementById("hwtest_bt")
+hwtest_bt.addEventListener("click", async function () {
+  if (!(await confirm_popup(t("confirm_hwtest")))) return;
+  const hwtest_bt_innerHTML = hwtest_bt.innerHTML;
+  hwtest_bt.innerHTML = "<i class='fa-solid fa-spinner fa-spin'></i>";
+  fetch(`http://${location.hostname}/hwtest?enable=on`)
+  .then(response => {
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return response.text();
+  })
+  .then(data => {
+    setTimeout(function() {
+      window.open(`http://${location.hostname}:8000`);
+      hwtest_bt.innerHTML = hwtest_bt_innerHTML;
+    }, 3000);
+  })
+  .catch(error => {
+    hwtest_bt.innerHTML = hwtest_bt_innerHTML;
+  });
+});
+
 document.getElementById("guide_bt").addEventListener("click", function () {
   window.open(`http://${location.hostname}:8080`);
 });

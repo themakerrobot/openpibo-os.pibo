@@ -102,6 +102,10 @@ const translations = {
     ko: "초기화하시겠습니까?\n초기화 후 종료합니다.",
     en: "Are you sure you want to reset?\nAfter reset, power off"
   },
+  confirm_hwtest: {
+    ko: "하드웨어 검수를 시작합니다.\n실행 중인 도구가 모두 종료되고, 검수 창을 닫으면 검수 서버도 꺼집니다.",
+    en: "Start the hardware inspection.\nRunning tools will be stopped, and closing the inspection tab shuts its server down."
+  },
   confirm_poweroff: {
     ko: "정말 종료하시겠습니까?",
     en: "Are you sure you want to quit?"
