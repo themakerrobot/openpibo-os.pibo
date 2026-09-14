@@ -273,11 +273,17 @@ classifier_bt.addEventListener("click", async function () {
   });
 });
 
-const hwtest_bt = document.getElementById("hwtest_bt")
+// 하드웨어 검수 페이지. 일반 사용자가 쓸 일이 없어 헤더에 아이콘을 두지 않고,
+// 푸터의 시리얼번호를 눌러야 열리게 해 뒀다. 켜기 전에 한 번 되묻는다.
+// 다른 도구 버튼과 달리 innerHTML 을 스피너로 바꾸지 않는다 — 이 자리에는
+// socket 의 'system' 이벤트가 10초마다 시리얼을 다시 써넣으므로 건드리면 안 된다.
+const hwtest_bt = document.getElementById("usedata_bt");
+let hwtest_busy = false;
 hwtest_bt.addEventListener("click", async function () {
+  if (hwtest_busy) return;
   if (!(await confirm_popup(t("confirm_hwtest")))) return;
-  const hwtest_bt_innerHTML = hwtest_bt.innerHTML;
-  hwtest_bt.innerHTML = "<i class='fa-solid fa-spinner fa-spin'></i>";
+  hwtest_busy = true;
+  hwtest_bt.style.opacity = "0.5";
   fetch(`http://${location.hostname}/hwtest?enable=on`)
   .then(response => {
     if (!response.ok) {
@@ -288,11 +294,13 @@ hwtest_bt.addEventListener("click", async function () {
   .then(data => {
     setTimeout(function() {
       window.open(`http://${location.hostname}:8000`);
-      hwtest_bt.innerHTML = hwtest_bt_innerHTML;
+      hwtest_bt.style.opacity = "";
+      hwtest_busy = false;
     }, 3000);
   })
   .catch(error => {
-    hwtest_bt.innerHTML = hwtest_bt_innerHTML;
+    hwtest_bt.style.opacity = "";
+    hwtest_busy = false;
   });
 });
 
