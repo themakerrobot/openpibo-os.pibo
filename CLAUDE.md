@@ -56,8 +56,7 @@ git tag -d <태그> ...           # 로컬 삭제
 | `system/ph_setup.sh` | 신규 파일, 100755. timezone Asia/Manila, wifi country PH, hotspot.sh chmod |
 | `examples/*.json` (10개) | 텍스트 리터럴·변수명 영문 |
 | `examples/collect.json` | **PH에는 없다.** `Weather.region_list` 가 한국 기상청 지역코드, `News` 가 JTBC RSS라 필리핀에선 동작 불가 |
-| `ide/static/customblock_toolbox.js` | **Collect 카테고리 통째로**(wikipedia/weather/news) + **대화 블록 3개**(`speech_get_dialog` `speech_load_dialog` `speech_reset_dialog`) 미노출. 블록 정의(`customblock.js`)와 코드생성기(`customblock_callback.js`)는 `main` 과 동일 |
-| | ※ circul.us·gtts 블록은 260914v6 에서 **main 에서도 제거**돼 더 이상 델타가 아니다 |
+| `ide/static/customblock_toolbox.js` | **Collect 카테고리 통째로**(wikipedia/weather/news) 미노출. 이것만 남았다 — circul.us·gtts 블록과 대화 블록 3개는 260914v6 에서 **main 에서도 제거**돼 더 이상 델타가 아니다 |
 | `PH_DELTA.md` | **PH 전용 문서.** main 으로 가져오지 않는다 |
 
 검증: `git diff --name-status <국내태그> <PH태그>` 결과가 위 17개 항목이고 **모드 차이 0줄**이어야 한다.
@@ -102,6 +101,12 @@ IDE 블록 8개(`speech_stt` `speech_tts` `speech_tts_play` `vision_call_ai_img(
 - `Dialog.call_llm` — `localhost:50020` (llama-server). 외부 아님
 
 음성은 `SpeechOnDevice`(ONNX, `lang='na'` 자동 판별)와 espeak 로 기기 안에서 처리한다.
+
+**n-gram 챗봇도 같이 걷어냈다.** `Dialog` 의 `load` `reset` `ngram` `diff_ngram`
+`get_dialog` 와 블록 3개(`speech_get_dialog` `speech_load_dialog` `speech_reset_dialog`).
+서버를 쓰진 않았지만 데이터(`openpibo_models` 의 `dialog.csv`)가 한글 전용이라 영문
+배포판에서 못 썼고, 국내에서도 LLM(`call_llm`)으로 대체된다. `Dialog` 에는 이제
+`start_llm` `call_llm` `stop_llm` 만 있고, 생성자가 CSV 를 읽지 않아 기동이 조금 빨라졌다.
 
 ---
 

@@ -7,8 +7,6 @@ Class:
 :obj:`~openpibo.speech.Dialog`
 """
 
-import csv
-import random
 import json
 import os
 import requests
@@ -22,7 +20,6 @@ from .modules.speech.mtts import (
     TextToSpeech,
     AVAILABLE_LANGS,
 )
-import openpibo_models
 #current_path = os.path.dirname(os.path.realpath(__file__))
 
 os.environ["ORT_LOGGING_LEVEL"] = "3"
@@ -164,19 +161,16 @@ Functions:
 class Dialog:
   """
 Functions:
-:meth:`~openpibo.speech.Dialog.load`
-:meth:`~openpibo.speech.Dialog.reset`
-:meth:`~openpibo.speech.Dialog.ngram`
-:meth:`~openpibo.speech.Dialog.diff_ngram`
-:meth:`~openpibo.speech.Dialog.get_dialog`
 :meth:`~openpibo.speech.Dialog.start_llm`
 :meth:`~openpibo.speech.Dialog.call_llm`
 :meth:`~openpibo.speech.Dialog.stop_llm`
 
-  파이보에서 대화와 관련된 자연어처리 기능을 하는 클래스입니다. 다음 기능을 수행할 수 있습니다.
+  파이보에서 대화 기능을 하는 클래스입니다. 기기 안에서 도는 LLM(llama-server)에
+  질문을 보내고 답을 받습니다.
 
-  * 형태소 및 명사 분석
-  * 챗봇 기능
+  n-gram 챗봇(``load`` ``reset`` ``ngram`` ``diff_ngram`` ``get_dialog``)은
+  260914v6 에서 제거했습니다. 데이터(``dialog.csv``)가 한글 전용이라 영문 배포판에서
+  쓸 수 없었고, 국내에서도 LLM 으로 대체됩니다.
 
   example::
 
@@ -187,129 +181,7 @@ Functions:
   """
 
   def __init__(self):
-    self.dialog_db = []
-    #self.mecab = Mecab()
-    self.load(openpibo_models.filepath("dialog.csv"))
-
-  def load(self, filepath):
-    """
-    대화 데이터를 로드합니다.
-
-    example::
-
-      dialog.load('/home/pi/dialog.csv')
-
-    :param str string: 대화 데이터 파일 경로(csv)
-
-    대화 데이터 파일 형식::
-
-      대화1,답변1
-      대화2,답변2
-      ...
-      대화n,답변n
-    """
-
-    self.dialog_path = filepath
-    with open(self.dialog_path, 'r', encoding='utf-8') as f:
-      self.dialog_db = [item for item in csv.reader(f)]
-
-  def reset(self):
-    """
-    대화 데이터를 초기화합니다.
-
-    example::
-
-      dialog.reset()
-
-    """
-
-    self.load(openpibo_models.filepath("dialog.csv"))
-
-  def ngram(self, string, n=2):
-
-    """
-    N-gram 값을 구합니다.
-
-    exmaple::
-
-      dialog.ngram('아버지가 방에 들어가셨다.')
-      # ['아버지가', '방에', '들어가셨다.']
-
-    :param str string: 분석할 문장
-
-    :param int n: N-gram에 사용할 n 값 default:2
-
-    :returns: 문장에서 추출한 N-gram 값
-
-      ``list`` 타입 입니다.
-    """
-
-    return [string[i:i+n] for i in range(len(string)-n+1)]
-
-  def diff_ngram(self, string_a, string_b, n=2):
-
-    """
-    N-gram 방식으로 두 문장을 비교하여 유사도를 구합니다.
-
-    exmaple::
-
-      dialog.diff_ngram('아버지가 방에 들어가셨다.' '어머니가 방에 들어가셨다.')
-      # 0.6923076923076923
-
-    :param str string: 비교할 문장A
-
-    :param str string: 비교할 문장B
-
-    :param int n: N-gram에 사용할 n 값 default:2
-
-    :returns: N-gram 방식으로 비교한 유사도
-
-      ``float`` 타입 입니다.
-    """
-
-    n = min(len(string_a), len(string_b), n)
-    a = self.ngram(string_a, n)
-    b = self.ngram(string_b, n)
-
-    cnt = 0
-    for i in a:
-      for j in b:
-        if i == j:
-          cnt += 1
-    return cnt / len(a)
-
-  def get_dialog(self, q, n=2):
-    """
-    일상대화에 대한 답을 추출합니다.
-
-    저장된 데이터로부터 사용자의 질문과 가장 유사한 질문을 선택해 그에 대한 답을 출력합니다.
-
-    example::
-
-      dialog.get_dialog('나랑 같이 놀자')
-
-    :param str string: 질문하는 문장
-
-    :param int n: N-gram에 사용할 n 값 default:2
-
-    :returns: 답변하는 문장 (한글)
-
-      ``string`` 타입 입니다.
-    """
-
-    max_acc = 0
-    max_ans = []
-    for line in self.dialog_db:
-      acc = self.diff_ngram(q, line[0], n)
-
-      if acc == max_acc:
-        max_ans.append(line)
-
-      if acc > max_acc:
-        max_acc = acc
-        max_ans = [line]
-
-    return random.choice(max_ans)[1]
+    pass
 
   def start_llm(self, port=50020):
     """
