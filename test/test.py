@@ -34,7 +34,11 @@ from openpibo.vision_camera import Camera
 # tools/classifier 에는 이런 유휴 타임아웃을 넣으면 안 된다(260909v5 에서 넣었다
 # v6 에서 제거). 거기서는 학생이 잠깐 자리를 비운 것과 탭을 닫은 것을 구분하지
 # 못해 돌아왔을 때 서비스가 죽어 있는 게 더 나쁘다. 검수 도구는 요구가 정반대다.
-IDLE_TIMEOUT = 300          # 초. heartbeat 가 이만큼 끊기면 종료한다
+# 2분. 페이지는 30초마다 heartbeat 를 보내는데, 백그라운드 탭은 브라우저가
+# 약 1분에 한 번으로 throttle 하므로 실제 최대 간격은 60초다. 여유가 2배라
+# 자리 비움에는 안 죽지만, 네트워크가 한 번 끊기면 종료될 수 있다.
+# 남아 있는 것보다 다시 켜는 쪽이 낫다는 판단이다.
+IDLE_TIMEOUT = 120          # 초. heartbeat 가 이만큼 끊기면 종료한다
 HEARTBEAT_CHECK = 10        # 초. 워치독이 확인하는 주기
 
 last_beat = time.time()
