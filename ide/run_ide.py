@@ -247,6 +247,41 @@ async def classifier(enable: str):
   await asyncio.sleep(2)
   return HTMLResponse(content="", status_code=200)
 
+# 하드웨어 검수 페이지(test/test.py, 8000번). systemd 유닛이 아니라 IDE 가 직접 띄운다.
+# 유닛 파일은 리포 밖이라 이미지 작업이 되므로, 리포 안에서 끝나게 이 방식을 썼다.
+HWTEST_DIR = '/home/pi/openpibo-os/test'
+HWTEST_PY = f'{HWTEST_DIR}/test.py'
+hwtest_proc = None
+
+def stop_hwtest():
+  """검수 서버를 내린다. 여러 번 불러도 안전하다."""
+  global hwtest_proc
+  if hwtest_proc is not None and hwtest_proc.poll() is None:
+    hwtest_proc.terminate()
+    try:
+      hwtest_proc.wait(timeout=5)
+    except subprocess.TimeoutExpired:
+      hwtest_proc.kill()
+  hwtest_proc = None
+  # 브라우저가 강제 종료돼 enable=off 를 못 받았거나 IDE 가 재시작돼 핸들을 잃은 경우까지 정리한다.
+  # 전체 경로로 띄우므로 cmdline 에 HWTEST_PY 가 그대로 들어간다.
+  subprocess.Popen(['pkill', '-f', HWTEST_PY])
+
+@app.get('/hwtest')
+async def hwtest(enable: str):
+  global hwtest_proc
+  if enable == "on":
+    # 검수 프로그램이 OLED·오디오·카메라·시리얼을 독점해야 한다
+    subprocess.Popen(['systemctl', 'stop', 'tools.service'])
+    subprocess.Popen(['systemctl', 'stop', 'classify.service'])
+    subprocess.Popen(['systemctl', 'stop', 'llama-server.service'])
+    if hwtest_proc is None or hwtest_proc.poll() is not None:
+      hwtest_proc = subprocess.Popen([f'{ENV_PATH}/python3', HWTEST_PY], cwd=HWTEST_DIR)
+    await asyncio.sleep(3)
+  elif enable == "off":
+    stop_hwtest()
+  return HTMLResponse(content="", status_code=200)
+
 @app.sio.on('reset_log')
 async def handle_reset_log(sid):
   global record
@@ -473,6 +508,7 @@ async def handle_execute(sid, d):
   subprocess.Popen(['systemctl', 'stop', 'tools.service'])
   subprocess.Popen(['systemctl', 'stop', 'classify.service'])
   subprocess.Popen(['systemctl', 'stop', 'llama-server.service'])
+  stop_hwtest()
   try:
     if is_protect(d['codepath']) or is_protect(os.path.dirname(d['codepath'])):
       await app.sio.emit('update', {'dialog': 'err_run_protected', 'exit': True})
@@ -497,6 +533,7 @@ async def handle_executeb(sid, d):
   subprocess.Popen(['systemctl', 'stop', 'tools.service'])
   subprocess.Popen(['systemctl', 'stop', 'classify.service'])
   subprocess.Popen(['systemctl', 'stop', 'llama-server.service'])
+  stop_hwtest()
   try:
     if ps and ps.returncode is None:
       ps.kill()
