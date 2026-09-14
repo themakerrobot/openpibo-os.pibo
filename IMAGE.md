@@ -40,14 +40,33 @@ pyenv 를 새로 만들면 이 단계가 통째로 빠지니, 처음부터 이�
 
 의존성(`openpibo_models` 등)은 계속 pip 설치본을 쓴다. 지우지 말 것.
 
-### 필리핀 배포본
+### 납품 국가 설정
 
-`system/ph_setup.sh` 를 돌린다. 여러 번 돌려도 안전하다.
+`system/setup_country.sh <국가코드>` 를 돌린다. 여러 번 돌려도 안전하다.
+timezone · wifi country · `cmdline.txt` 의 `cfg80211.ieee80211_regdom` ·
+`brcmfmac.conf` 잔재 제거 · 실행비트를 한 번에 맞춘다.
 
 ```bash
-sudo bash /home/pi/openpibo-os/system/ph_setup.sh
+sudo bash /home/pi/openpibo-os/system/setup_country.sh PH   # KR | PH | MY
 sudo reboot
 ```
+
+| 국가코드 | timezone | 배포 태그 |
+|---|---|---|
+| `KR` | `Asia/Seoul` | `YYMMDDvN` (`main`) |
+| `PH` | `Asia/Manila` | `YYMMDDvN-ph` (`ph`) |
+| `MY` | `Asia/Kuala_Lumpur` | `YYMMDDvN-ph` (`ph`) |
+
+**영문 배포판은 `ph` 브랜치 하나로 필리핀·말레이시아를 같이 쓴다.** UI·예제가
+영문으로 동일하고, 국가별 차이는 이 스크립트가 이미지 만들 때 넣는 값뿐이다.
+말레이시아용 브랜치를 따로 만들지 말 것.
+
+등록되지 않은 국가코드를 주면 스크립트가 usage 만 찍고 멈춘다. 추가할 때는
+`timedatectl list-timezones | grep -i <도시>` 로 실제 존재하는 timezone 인지
+확인한 뒤 스크립트의 `case` 에 넣는다 — 국가코드에서 timezone 을 추측하지 말 것.
+
+AP(핫스팟)는 국가 설정과 무관하다. `hotspot.sh` 가 2.4GHz 채널 1/6/11 중
+시리얼로 하나를 고르는데, 세 국가 모두 허용 범위 안이라 손댈 게 없다.
 
 ## 2. 뜨기 전 청소
 
@@ -119,7 +138,7 @@ cat /home/pi/.OS_VERSION
 head -n1 ide/static/ko2en.js                                   # PH 는 const blang = 'en';
 /home/pi/.pyenv/bin/python3 -c "import openpibo; print(openpibo.__version__, openpibo.__file__)"
                                                                # 경로가 /home/pi/openpibo-os/openpibo/ 여야 한다
-ls -l system/hotspot.sh system/ph_setup.sh system/booting.py tools/static/index.js
+ls -l system/hotspot.sh system/setup_country.sh system/booting.py tools/static/index.js
 ls /home/pi/examples/                                          # PH 는 10개, collect.json 없음
 
 echo "===== 서비스 ====="

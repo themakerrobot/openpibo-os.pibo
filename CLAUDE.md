@@ -48,18 +48,20 @@ git tag -d <태그> ...           # 로컬 삭제
 **상세는 `ph` 브랜치의 `PH_DELTA.md`** 에 있다 (이유·검증·충돌 처리·배포 후 확인까지).
 여기 표는 요약이고, 내용이 갈리면 `PH_DELTA.md` 가 기준이다.
 
-`ph`가 `main`과 다른 부분은 **아래 17개 파일뿐**이다. merge 후 반드시 유지되어야 한다.
+`ph`가 `main`과 다른 부분은 **아래 16개 파일뿐**이다. merge 후 반드시 유지되어야 한다.
 
 | 파일 | 내용 |
 |---|---|
 | `ide/static/ko2en.js`<br>`tools/static/ko2en.js`<br>`classifier/static/ko2en.js` | 1·2행이<br>`const blang = 'en';`<br>`let lang = localStorage.getItem("language") \|\| blang;` |
-| `system/ph_setup.sh` | 신규 파일, 100755. timezone Asia/Manila, wifi country PH, hotspot.sh chmod |
 | `examples/*.json` (10개) | 텍스트 리터럴·변수명 영문 |
 | `examples/collect.json` | **PH에는 없다.** `Weather.region_list` 가 한국 기상청 지역코드, `News` 가 JTBC RSS라 필리핀에선 동작 불가 |
 | `ide/static/customblock_toolbox.js` | **Collect 카테고리 통째로**(wikipedia/weather/news) 미노출. 이것만 남았다 — circul.us·gtts 블록과 대화 블록 3개는 260914v6 에서 **main 에서도 제거**돼 더 이상 델타가 아니다 |
 | `PH_DELTA.md` | **PH 전용 문서.** main 으로 가져오지 않는다 |
 
-검증: `git diff --name-status <국내태그> <PH태그>` 결과가 위 17개 항목이고 **모드 차이 0줄**이어야 한다.
+검증: `git diff --name-status <국내태그> <PH태그>` 결과가 위 16개 항목이고 **모드 차이 0줄**이어야 한다.
+
+※ `system/ph_setup.sh` 는 260914v7 까지 17번째 델타였다. `main` 의
+`system/setup_country.sh` 가 대신하면서 델타에서 빠졌다 (아래 '마스터 이미지' 참고).
 
 `ide/templates/index.html` 은 일부러 델타에 넣지 않았다. `?ver` 를 올릴 때마다 바뀌는 파일이라
 델타로 두면 릴리스마다 충돌한다. PH 전용 파일의 `?ver` 도 `main` 에서 올린다.
@@ -154,6 +156,28 @@ IDE 블록 8개(`speech_stt` `speech_tts` `speech_tts_play` `vision_call_ai_img(
 Raspberry Pi Imager 의 "OS 커스터마이즈" 는 쓰지 말 것 — `custom.toml` 이 남아
 첫 부팅에 `cmdline.txt` 를 다시 건드린다.
 
+### 납품 국가
+
+`sudo bash system/setup_country.sh {KR|PH|MY}` 를 이미지 만들 때 한 번 돌린다.
+timezone · wifi country · `cmdline.txt` 의 `cfg80211.ieee80211_regdom` ·
+`brcmfmac.conf` 잔재 · 실행비트를 한 번에 맞춘다. 멱등이라 재실행해도 안전하다.
+
+| 국가 | timezone | 브랜치·태그 |
+|---|---|---|
+| `KR` | `Asia/Seoul` | `main` / `YYMMDDvN` |
+| `PH` | `Asia/Manila` | `ph` / `YYMMDDvN-ph` |
+| `MY` | `Asia/Kuala_Lumpur` | `ph` / `YYMMDDvN-ph` |
+
+**`ph` 브랜치는 '필리핀'이 아니라 '영문 배포판'이다.** 말레이시아도 UI·예제가
+영문으로 같으므로 같은 태그를 쓰고, 국가 차이는 위 스크립트가 이미지에 넣는 값뿐이다.
+**국가별 브랜치를 새로 만들지 말 것** — 델타가 배로 늘고 merge 대상이 늘어난다.
+UI 를 현지어(말레이어 등)로 바꿔야 할 때만 별도 논의 대상이다
+(`ko2en.js` 189개 키 + Blockly 로케일).
+
+등록 안 된 국가코드는 스크립트가 usage 만 찍고 멈춘다. 추가할 때
+**국가코드에서 timezone 을 추측하지 말 것** — `timedatectl list-timezones` 로 확인하고
+`case` 에 넣는다.
+
 ---
 
 ## 릴리스 절차
@@ -215,7 +239,7 @@ git clone --depth 1 --branch YYMMDDv1-ph \
 cd /home/pi/.openpibo-os.new
 git describe --tags
 head -n1 ide/static/ko2en.js
-ls -l system/hotspot.sh system/ph_setup.sh system/booting.py
+ls -l system/hotspot.sh system/setup_country.sh system/booting.py
 
 # 3) 교체
 sudo systemctl stop ide.service booting.service
@@ -250,7 +274,7 @@ sudo rm -rf /home/pi/.openpibo-os.old
 cd /home/pi/openpibo-os
 git describe --tags                                      # YYMMDDv1-ph
 head -n1 ide/static/ko2en.js                             # const blang = 'en';
-ls -l system/hotspot.sh system/ph_setup.sh system/booting.py   # 전부 -rwxr-xr-x
+ls -l system/hotspot.sh system/setup_country.sh system/booting.py   # 전부 -rwxr-xr-x
 curl -s http://localhost/static/ko2en.js | head -n1
 ```
 
@@ -325,7 +349,7 @@ llama.cpp 웹 UI에는 `keepalive: true` 를 넣어 빌드했기 때문에 llm�
    chmod가 **취소된다**. 워크트리에 `chmod +x` 를 먼저 하고 `git add -A` 할 것
 2. **tarball/zip으로 파일 덮어쓰기** — 압축물의 모드가 644면 리포의 755가 벗겨진다.
    덮어쓴 뒤 `git status`와 `git diff --cached --summary`로 `mode change` 확인
-3. **실행비트가 필요한 파일** — `system/booting.py`, `system/hotspot.sh`, `system/ph_setup.sh`,
+3. **실행비트가 필요한 파일** — `system/booting.py`, `system/hotspot.sh`, `system/setup_country.sh`,
    `system/setup_openpibo_src.sh`, `tools/static/index.js`. 전부 **100755**여야 한다
 
 ---
@@ -337,7 +361,7 @@ python3 -m py_compile ide/run_ide.py
 node --check ide/static/index.js ide/static/ko2en.js
 node --check tools/static/index.js tools/static/ko2en.js classifier/static/ko2en.js
 git diff --cached --summary          # 의도치 않은 mode change 없는지
-git ls-tree -r HEAD system | grep -E "hotspot|booting|ph_setup|setup_openpibo"   # 100755 확인
+git ls-tree -r HEAD system | grep -E "hotspot|booting|setup_country|setup_openpibo"   # 100755 확인
 ```
 
 정적 파일(`*.js`)을 고쳤으면 `templates/index.html`의 `?ver=` 를 새 릴리스 번호로 올릴 것.
