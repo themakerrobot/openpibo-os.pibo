@@ -190,18 +190,25 @@ Raspberry Pi Imager 의 "OS 커스터마이즈" 는 쓰지 말 것 — `custom.t
 
 ### 납품 국가
 
-`sudo bash system/setup_country.sh {KR|PH|MY}` 를 이미지 만들 때 한 번 돌린다.
-timezone · wifi country · `cmdline.txt` 의 `cfg80211.ieee80211_regdom` ·
+`sudo bash system/setup_country.sh <국가코드> [--regdom=XX]` 를 이미지 만들 때 한 번
+돌린다. timezone · wifi country · `cmdline.txt` 의 `cfg80211.ieee80211_regdom` ·
 `brcmfmac.conf` 잔재 · 실행비트를 한 번에 맞춘다. 멱등이라 재실행해도 안전하다.
 
-| 국가 | timezone | 브랜치·태그 |
-|---|---|---|
-| `KR` | `Asia/Seoul` | `main` / `YYMMDDvN` |
-| `PH` | `Asia/Manila` | `ph` / `YYMMDDvN-ph` |
-| `MY` | `Asia/Kuala_Lumpur` | `ph` / `YYMMDDvN-ph` |
+| 국가 | 명령 | timezone | regdom | 브랜치·태그 |
+|---|---|---|---|---|
+| `KR` | `setup_country.sh KR` | `Asia/Seoul` | `KR` | `main` / `YYMMDDvN` |
+| `PH` | **`setup_country.sh PH --regdom=KR`** | `Asia/Manila` | **`KR`** | `ph` / `YYMMDDvN-ph` |
+| `MY` | `setup_country.sh MY` | `Asia/Kuala_Lumpur` | `MY` | `ph` / `YYMMDDvN-ph` |
 
-`MY` 는 `PH` 와 달리 5GHz 상위 채널(149~165)이 열려 있다. 현장 공유기 안내가
-필리핀과 다르니 '현장 네트워크' 표를 볼 것.
+**필리핀만 regdom 을 분리한다.** timezone 은 `Asia/Manila` 그대로다. `PH` 로 두면
+149~165 가 통째로 막히는데 그건 규제가 아니라 CLM blob 결함이라 ('현장 네트워크' 참고),
+실제로 못 쓰는 채널을 현장 공유기 제약으로 떠넘기지 않으려는 것이다.
+
+무선 관련 설정(wifi country, cmdline regdom)은 **전부 regdom 값으로 통일한다.**
+timezone 만 국가를 따른다. 둘을 섞어두면 부팅 후 한쪽이 다른 쪽을 덮어써서
+원인 추적이 불가능해진다.
+
+`MY` 는 `PH` 와 달리 blob 에 상위 채널이 살아 있어 분리가 필요 없다.
 
 **`ph` 브랜치는 '필리핀'이 아니라 '영문 배포판'이다.** 말레이시아도 UI·예제가
 영문으로 같으므로 같은 태그를 쓰고, 국가 차이는 위 스크립트가 이미지에 넣는 값뿐이다.

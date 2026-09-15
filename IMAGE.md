@@ -47,15 +47,25 @@ timezone · wifi country · `cmdline.txt` 의 `cfg80211.ieee80211_regdom` ·
 `brcmfmac.conf` 잔재 제거 · 실행비트를 한 번에 맞춘다.
 
 ```bash
-sudo bash /home/pi/openpibo-os/system/setup_country.sh PH   # KR | PH | MY
+sudo bash /home/pi/openpibo-os/system/setup_country.sh KR              # 국내
+sudo bash /home/pi/openpibo-os/system/setup_country.sh PH --regdom=KR  # 필리핀
+sudo bash /home/pi/openpibo-os/system/setup_country.sh MY              # 말레이시아
 sudo reboot
 ```
 
-| 국가코드 | timezone | 배포 태그 |
-|---|---|---|
-| `KR` | `Asia/Seoul` | `YYMMDDvN` (`main`) |
-| `PH` | `Asia/Manila` | `YYMMDDvN-ph` (`ph`) |
-| `MY` | `Asia/Kuala_Lumpur` | `YYMMDDvN-ph` (`ph`) |
+| 국가코드 | timezone | regdom | 배포 태그 |
+|---|---|---|---|
+| `KR` | `Asia/Seoul` | `KR` | `YYMMDDvN` (`main`) |
+| `PH` | `Asia/Manila` | **`KR` (`--regdom=KR`)** | `YYMMDDvN-ph` (`ph`) |
+| `MY` | `Asia/Kuala_Lumpur` | `MY` | `YYMMDDvN-ph` (`ph`) |
+
+**필리핀만 `--regdom=KR` 을 붙인다.** timezone 은 `Asia/Manila` 그대로고 무선 규제도메인만
+`KR` 로 간다. `PH` 로 두면 5GHz 상위 채널(149~165)이 통째로 막혀서 현장 공유기를
+36~48 로 묶어야 하는데, 이건 규제가 아니라 Raspberry Pi OS 가 까는 CLM blob 결함이다.
+배경과 실측은 `CLAUDE.md` '현장 네트워크' 참고.
+
+regdom 을 바꾸면 채널 36/40/44 출력이 17 → 20 dBm 으로 올라간다. 열리는 채널 자체는
+PH 허용 범위를 넘지 않는다.
 
 **영문 배포판은 `ph` 브랜치 하나로 필리핀·말레이시아를 같이 쓴다.** UI·예제가
 영문으로 동일하고, 국가별 차이는 이 스크립트가 이미지 만들 때 넣는 값뿐이다.
