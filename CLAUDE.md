@@ -140,6 +140,25 @@ sudo iw reg set PH
 
 **말레이시아는 제약이 없다.** 필리핀만 막힌다.
 
+### ⚠ regdom 은 공유기가 덮어쓴다 (실측)
+
+**붙은 AP 가 802.11d 로 방송하는 country IE 가 cmdline·`iw reg set` 을 이깁니다.**
+
+```
+접속 전:  country US          (iw reg set US)
+접속 후:  country KR: DFS-JP  ← 한국 공유기가 방송한 값으로 바뀜
+```
+
+`iw reg set` 은 USER 힌트인데도 country IE 가 덮어썼다. 즉 `cfg80211.ieee80211_regdom`
+에 뭘 박아도 **현장 공유기가 최종 결정권을 갖는다.**
+
+그래서 아래 `--regdom=KR` 우회는 **필리핀에서 보장되지 않는다.** 현지 공유기가 `PH` 를
+방송하면 기기가 PH 로 되돌아가고 149~165 가 disabled 가 된다. 붙어 있던 채널이 막히므로
+연결이 끊기거나 재접속을 반복할 수 있다.
+
+**미검증:** 필리핀 현장 공유기가 실제로 `PH` 를 방송하는지. FCC 사양 장비는 `US` 를
+쏘거나 IE 자체가 없는 경우도 많다. 확인 전에는 우회가 통한다고 가정하지 말 것.
+
 **PH 가 막히는 이유는 규제가 아니다.** 커널이 들고 있는 PH 규칙에는 그 대역이 있다:
 
 ```
@@ -200,7 +219,14 @@ Raspberry Pi Imager 의 "OS 커스터마이즈" 는 쓰지 말 것 — `custom.t
 | `PH` | **`setup_country.sh PH --regdom=KR`** | `Asia/Manila` | **`KR`** | `ph` / `YYMMDDvN-ph` |
 | `MY` | `setup_country.sh MY` | `Asia/Kuala_Lumpur` | `MY` | `ph` / `YYMMDDvN-ph` |
 
-**필리핀만 regdom 을 분리한다.** timezone 은 `Asia/Manila` 그대로다. `PH` 로 두면
+**필리핀만 regdom 을 분리한다.** timezone 은 `Asia/Manila` 그대로다.
+
+> **이 우회는 보장되지 않는다.** 붙은 공유기의 country IE 가 regdom 을 덮어쓴다(실측).
+> 현지 공유기가 `PH` 를 방송하면 되돌아간다. '현장 네트워크'의 경고 참고.
+> 현장 확인 전에는 `--regdom` 없이 `setup_country.sh PH` 로 두는 편이 안전하다 —
+> 채널은 적어도 예측 가능하다.
+
+`PH` 로 두면
 149~165 가 통째로 막히는데 그건 규제가 아니라 CLM blob 결함이라 ('현장 네트워크' 참고),
 실제로 못 쓰는 채널을 현장 공유기 제약으로 떠넘기지 않으려는 것이다.
 
