@@ -42,6 +42,17 @@ const cats = toolbox.contents
   .filter((c) => c.kind === 'category')
   .map((c) => ({ name: c.name, blocks: [...new Set(walk(c))] }));
 
+// ── 블록 타입 -> Blockly.Msg 키. 대개 대문자로 같지만 아닌 것들이 있다
+//    (wikipedia_search -> COLLECT_WIKIPEDIA). customblock.js 의 message0 에서 읽는다.
+const KEYMAP = {};
+if (fs.existsSync(p('customblock.js'))) {
+  const src = fs.readFileSync(p('customblock.js'), 'utf8');
+  for (const m of src.matchAll(
+        /type:\s*'([a-z_0-9]+)'[\s\S]{0,200}?message0:\s*'%\{BKY_([A-Z0-9_]+)\}'/g)) {
+    if (!(m[1] in KEYMAP)) KEYMAP[m[1]] = m[2];
+  }
+}
+
 // ── 기본 모션 이름: customblock.js 의 motion_set_motion_dropdown 옵션
 let motions = [];
 if (fs.existsSync(p('customblock.js'))) {
@@ -57,9 +68,13 @@ if (fs.existsSync(p('customblock.js'))) {
   }
 }
 
+fs.writeFileSync(p('keymap.json'), JSON.stringify(KEYMAP, null, 1));
 fs.writeFileSync(p('msg.json'), JSON.stringify(MSG, null, 1));
 fs.writeFileSync(p('cats.json'), JSON.stringify(cats, null, 1));
 fs.writeFileSync(p('motions.txt'), motions.join('\n') + '\n');
 
 const nBlocks = cats.reduce((a, c) => a + c.blocks.length, 0);
-console.log(`  Blockly.Msg ${Object.keys(MSG).length} / 카테고리 ${cats.length} / 블록 ${nBlocks} / 모션 ${motions.length}`);
+const miss = cats.flatMap((c) => c.blocks)
+  .filter((t) => !MSG[(KEYMAP[t] || t).toUpperCase()]);
+console.log(`  Blockly.Msg ${Object.keys(MSG).length} / 카테고리 ${cats.length} / 블록 ${nBlocks}`
+          + ` / 모션 ${motions.length} / 라벨없음 ${miss.length} (표준 Blockly)`);
