@@ -1,0 +1,249 @@
+/* ==========================================================================
+   Pibo UI Kit  —  openpibo-os.pibo / openpibo-os.pibrain 공용
+   --------------------------------------------------------------------------
+   빌드 없음. <link> 한 줄로 쓴다. 기존 노랑 분위기를 그대로 유지하되,
+   '노랑을 아껴 써서' 강조가 살아나게 한 것이 이 키트의 전부다.
+
+     <link rel="stylesheet" href="../static/pibo-ui.css?ver=YYMMDDvN">
+
+   원본은 design/pibo-ui.css 하나뿐이다. 각 앱의 static/ 으로는
+   design/sync.sh 가 복사한다. static/ 쪽을 직접 고치지 말 것.
+   ========================================================================== */
+
+:root {
+  /* ── 브랜드 색 ── 기존 값 그대로. 바꾸지 말 것 ───────────────────────── */
+  --yellow:        #f4de3d;
+  --dark-yellow:   #f4d85a;
+  --light-yellow:  rgb(248, 242, 172);
+  --teal:          #13bfd5;   /* tools 에 rgb(18,189,212) 로 1 만큼 어긋나 있었다 */
+  --dark-teal:     #11abbf;
+  --red:           #f16449;
+  --dark-red:      #d85a41;
+  --light-green:   #edf5e0;
+  --mid-gray:      #6c6c6c;
+
+  /* ── 의미 토큰 ── 컴포넌트는 위 브랜드 색을 직접 쓰지 않고 이걸 쓴다 ── */
+  --pb-bg:            #ffffff;
+  --pb-surface:       #f7f7f7;   /* 툴바·패널 바닥 */
+  --pb-surface-2:     #ededed;   /* 한 단계 더 눌린 면 */
+  --pb-border:        #cfcfcf;
+  --pb-border-strong: #9a9a9a;
+  --pb-text:          #1a1a1a;
+  --pb-text-dim:      var(--mid-gray);
+  --pb-text-on-dark:  #ffffff;
+
+  --pb-brand:         var(--yellow);        /* 헤더 = 정체성 */
+  --pb-brand-2:       var(--dark-yellow);
+  --pb-accent:        var(--yellow);        /* 주 동작 = 노랑. 화면에 하나만 */
+  --pb-accent-edge:   #c9ab00;
+  --pb-danger:        var(--red);
+  --pb-danger-edge:   var(--dark-red);
+  --pb-info:          var(--teal);
+  --pb-ok:            var(--light-green);
+  --pb-focus:         #0b63c4;               /* 흰 배경 대비 6.4:1 */
+
+  /* ── 치수 ── 태블릿 기준. 터치 타겟 44px 밑으로 내리지 말 것 ────────── */
+  --pb-tap:      44px;
+  --pb-radius:   10px;
+  --pb-radius-s:  7px;
+  --pb-gap:      10px;
+  --pb-pad:      14px;
+
+  /* ── 글자 ──
+     system-ui 를 맨 앞에 둔다. 기존 스택은 Helvetica 가 앞이라 라틴과 한글이
+     서로 다른 폰트로 렌더됐고, "맑은 고딕" 은 윈도우 전용이라 태블릿에서
+     빠졌다. 'Noto Sans Regular' 는 어디에도 로드돼 있지 않아 항상 폴백이었다. */
+  --pb-font: system-ui, -apple-system, "Segoe UI", Roboto,
+             "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", sans-serif;
+  --pb-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  --pb-fs-s:  13px;
+  --pb-fs:    15px;
+  --pb-fs-l:  17px;
+
+  --pb-shadow:   0 1px 2px rgba(0,0,0,.14);
+  --pb-shadow-2: 0 3px 10px rgba(0,0,0,.18);
+}
+
+/* ==========================================================================
+   기본
+   ========================================================================== */
+/* box-sizing 은 키트 컴포넌트에만 건다. `.pb *` 로 걸면 이 키트를 붙이는 것만으로
+   기존 레이아웃이 틀어질 수 있다. (이 리포의 세 앱은 이미 전역으로 border-box 를
+   쓰고 있어 무해하지만, PiBrain 쪽은 확인 전이다.) */
+.pb-header, .pb-header__brand, .pb-iconbar, .pb-iconbtn,
+.pb-toolbar, .pb-btn, .pb-seg, .pb-seg > button,
+.pb-field, .pb-panel, .pb-note, .pb-badge, .pb-term, .pb-statusbar {
+  box-sizing: border-box;
+}
+
+.pb {
+  font-family: var(--pb-font);
+  font-size: var(--pb-fs);
+  color: var(--pb-text);
+  -webkit-text-size-adjust: 100%;
+}
+
+/* 키보드 이동에만 링이 뜬다. 마우스 클릭에는 안 뜬다 */
+.pb :focus-visible {
+  outline: 3px solid var(--pb-focus);
+  outline-offset: 2px;
+  border-radius: var(--pb-radius-s);
+}
+
+/* ==========================================================================
+   헤더  —  노랑은 여기'만'. 브랜드 띠다
+   ========================================================================== */
+.pb-header {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: var(--pb-gap);
+  background: linear-gradient(var(--pb-brand), var(--pb-brand-2));
+  padding: 6px var(--pb-pad);
+  min-height: 46px;
+  border-bottom: 1px solid rgba(0,0,0,.18);
+}
+.pb-header__brand {
+  font-weight: 700; font-size: var(--pb-fs-l); letter-spacing: .3px;
+  display: flex; align-items: center; gap: 8px;
+}
+
+/* 헤더 안의 아이콘 버튼 — 아이콘만 두지 말고 글자 라벨을 같이 둔다.
+   태블릿에는 hover 가 없어서 title 툴팁이 뜨지 않는다. */
+.pb-iconbar { display: flex; align-items: center; gap: 4px; }
+.pb-iconbtn {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 2px;
+  min-width: 54px; height: var(--pb-tap);
+  border: 0; background: transparent; color: inherit;
+  border-radius: var(--pb-radius-s);
+  font: inherit; font-size: var(--pb-fs); text-decoration: none;
+  cursor: pointer;
+}
+.pb-iconbtn__label { font-size: 10px; font-weight: 700; letter-spacing: -.2px; }
+.pb-iconbtn:hover  { background: rgba(0,0,0,.09); }
+.pb-iconbtn:active { background: rgba(0,0,0,.16); }
+.pb-iconbtn--danger { color: #7a1d0c; }
+
+/* ==========================================================================
+   버튼  —  위계는 딱 네 단계. 더 만들지 말 것
+     accent  주 동작. 한 화면에 하나 (실행)
+     default 보통 동작 (저장·불러오기)
+     ghost   보조·토글 (글자크기·대비)
+     danger  되돌릴 수 없는 동작 (초기화·종료)
+   ========================================================================== */
+.pb-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+  height: var(--pb-tap); min-width: var(--pb-tap); padding: 0 16px;
+  border: 1px solid var(--pb-border); border-radius: var(--pb-radius);
+  background: var(--pb-bg); color: var(--pb-text);
+  font: 700 var(--pb-fs)/1 var(--pb-font);
+  cursor: pointer; white-space: nowrap;
+  box-shadow: var(--pb-shadow);
+}
+.pb-btn:hover:not(:disabled)  { background: #fafafa; border-color: var(--pb-border-strong); }
+.pb-btn:active:not(:disabled) { transform: translateY(1px); box-shadow: none; }
+
+.pb-btn--accent {
+  background: var(--pb-accent); border-color: var(--pb-accent-edge);
+  padding: 0 22px; font-size: var(--pb-fs-l);
+}
+.pb-btn--accent:hover:not(:disabled) { background: var(--dark-yellow); }
+
+.pb-btn--danger { background: var(--pb-danger); border-color: var(--pb-danger-edge); color:#fff; }
+.pb-btn--danger:hover:not(:disabled) { background: var(--dark-red); }
+
+.pb-btn--ghost {
+  background: transparent; border-color: transparent; box-shadow: none;
+  color: var(--pb-text-dim); font-weight: 600; padding: 0 12px;
+}
+.pb-btn--ghost:hover:not(:disabled) { background: var(--pb-surface-2); border-color: transparent; }
+.pb-btn--ghost[aria-pressed="true"] { background: var(--light-yellow); color: var(--pb-text); }
+
+.pb-btn:disabled { opacity: 1; background: var(--pb-bg); color: #b9b9b9;
+                   border-color: #e6e6e6; box-shadow: none; cursor: not-allowed; }
+
+/* ==========================================================================
+   툴바 / 구분선
+   ========================================================================== */
+.pb-toolbar {
+  display: flex; align-items: center; gap: var(--pb-gap); flex-wrap: wrap;
+  background: var(--pb-surface); border-bottom: 1px solid #e0e0e0;
+  padding: 8px var(--pb-pad);
+}
+.pb-div { width: 1px; height: 28px; background: #dcdcdc; margin: 0 4px; flex: none; }
+
+/* 세그먼트 토글 (블록 / 파이썬) */
+.pb-seg { display: inline-flex; height: calc(var(--pb-tap) + 2px);  /* 테두리 1px×2 만큼 키워
+                                                         안쪽 버튼이 정확히 44px 되게 한다 */
+          border: 1px solid var(--pb-border); border-radius: var(--pb-radius);
+          overflow: hidden; box-shadow: var(--pb-shadow); }
+.pb-seg > button {
+  border: 0; background: var(--pb-bg); color: var(--pb-text-dim);
+  font: 700 var(--pb-fs)/1 var(--pb-font); padding: 0 18px; cursor: pointer;
+}
+.pb-seg > button + button { border-left: 1px solid var(--pb-border); }
+.pb-seg > button[aria-selected="true"] { background: var(--pb-accent); color: var(--pb-text); }
+
+/* ==========================================================================
+   입력
+   ========================================================================== */
+.pb-field {
+  height: var(--pb-tap); padding: 0 12px;
+  border: 1px solid var(--pb-border); border-radius: var(--pb-radius);
+  background: var(--pb-bg); color: var(--pb-text);
+  font: var(--pb-fs)/1 var(--pb-font);
+}
+.pb-field:focus { border-color: var(--pb-focus); }
+.pb-label { display: block; font-size: var(--pb-fs-s); font-weight: 700;
+            color: var(--pb-text-dim); margin-bottom: 4px; }
+
+/* ==========================================================================
+   패널 · 배지 · 알림
+   ========================================================================== */
+.pb-panel { background: var(--pb-bg); border: 1px solid #e3e3e3;
+            border-radius: var(--pb-radius); padding: var(--pb-pad); }
+.pb-panel--sunken { background: var(--pb-surface); box-shadow: inset 0 1px 3px rgba(0,0,0,.06); }
+
+.pb-badge { display: inline-flex; align-items: center; gap: 5px;
+            height: 24px; padding: 0 9px; border-radius: 12px;
+            font: 700 var(--pb-fs-s)/1 var(--pb-font);
+            background: var(--pb-surface-2); color: var(--pb-text); }
+.pb-badge--on     { background: var(--pb-ok); }
+.pb-badge--off    { background: var(--pb-surface-2); color: var(--pb-text-dim); }
+.pb-badge--danger { background: var(--pb-danger); color: #fff; }
+
+/* 알림 — 색만으로 구분하지 않는다. 왼쪽 굵은 띠 + 아이콘 자리 */
+.pb-note { border-left: 4px solid var(--pb-border-strong);
+           background: var(--pb-surface); padding: 10px 14px;
+           border-radius: 0 var(--pb-radius-s) var(--pb-radius-s) 0; font-size: var(--pb-fs); }
+.pb-note--info   { border-left-color: var(--dark-teal); }
+.pb-note--warn   { border-left-color: var(--pb-accent-edge); background: #fdf8dd; }
+.pb-note--danger { border-left-color: var(--pb-danger-edge); background: #fdece8; }
+.pb-note b:first-child { display: block; margin-bottom: 2px; }
+
+/* 터미널 · 코드 */
+.pb-term { font: var(--pb-fs-s)/1.5 var(--pb-mono);
+           background: #1e1e1e; color: #e8e8e8;
+           border-radius: var(--pb-radius-s); padding: 10px 12px;
+           white-space: pre-wrap; overflow: auto; }
+
+/* 상태바 */
+.pb-statusbar { display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+                background: linear-gradient(var(--pb-brand-2), var(--pb-brand));
+                border-top: 1px solid rgba(0,0,0,.18);
+                padding: 4px var(--pb-pad); font-size: var(--pb-fs-s); font-weight: 600; }
+
+/* ==========================================================================
+   좁은 화면
+   ========================================================================== */
+@media (max-width: 720px) {
+  .pb-iconbtn { min-width: var(--pb-tap); }
+  .pb-iconbtn__label { display: none; }     /* 자리가 없으면 라벨만 접는다 */
+  .pb-btn { padding: 0 12px; }
+  .pb-btn--accent { padding: 0 16px; }
+}
+
+/* 동작 줄이기 설정을 존중한다 */
+@media (prefers-reduced-motion: reduce) {
+  .pb-btn:active:not(:disabled) { transform: none; }
+}

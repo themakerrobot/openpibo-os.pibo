@@ -1,0 +1,82 @@
+# Pibo UI Kit
+
+`openpibo-os.pibo` 와 `openpibo-os.pibrain` 의 IDE · Tools · Classifier 가 같이 쓰는
+스타일 한 벌. **빌드 없음. `<link>` 한 줄.**
+
+| 파일 | 내용 |
+|---|---|
+| `pibo-ui.css` | **원본은 이것 하나.** 토큰 + 컴포넌트 (11 KB, gzip 3.5 KB) |
+| `index.html` | 스타일 가이드. 컴포넌트를 실제로 렌더하면서 규칙도 같이 적어 둔 문서 |
+| `sync.sh` | 원본을 각 앱 `static/` 으로 복사 / 어긋남 확인 |
+
+스타일 가이드는 브라우저로 `design/index.html` 을 열면 된다. Font Awesome 을
+`../ide/static/all.min.css` 에서 끌어오므로 리포 안에서 열어야 아이콘이 나온다.
+
+## 왜 만들었나
+
+세 앱이 **이미 같은 CSS 변수 9개를 각자 선언**하고 있었다. 손으로 복사해 온 탓에
+`--teal` 이 ide·classifier 는 `#13bfd5`, tools 만 `rgb(18,189,212)` 로 1씩 어긋나 있었다.
+PiBrain 까지 더하면 사본이 여섯 벌이 된다. 그래서 한 파일로 합쳤다.
+
+**배색은 안 바꿨다.** 노랑·청록·빨강 값이 전부 기존 그대로다. 바뀐 건 위계다 —
+노랑을 헤더와 주 동작 버튼 하나에만 쓴다. 지금은 헤더도 버튼도 입력창도 전부 노랑이라
+강조할 것이 남아 있지 않다.
+
+## 쓰기
+
+```bash
+./design/sync.sh                        # 이 리포 (ide, tools, classifier)
+./design/sync.sh ~/openpibo-os.pibrain  # PiBrain 체크아웃에도
+./design/sync.sh --check                # 어긋난 사본 확인. 커밋 전 검증용
+```
+
+앱 쪽:
+
+```html
+<link rel="stylesheet" href="../static/pibo-ui.css?ver=YYMMDDvN">
+<body class="pb">
+```
+
+`class="pb"` 안에서만 적용된다. 기존 `index.css` 와 같이 둬도 충돌하지 않으므로
+**한 번에 다 갈아엎지 않아도 된다.** 화면 단위로 옮기면 된다.
+
+`static/pibo-ui.css` 는 사본이다. **직접 고치지 말 것** — 다음 `sync.sh` 에 덮인다.
+
+## PiBrain
+
+같은 파일을 그대로 복사한다. 화면 비율·OLED 차이는 **토큰만 덮어써서** 맞춘다.
+컴포넌트 CSS 는 건드리지 않는다.
+
+```css
+/* pibrain 쪽 index.css 맨 위 */
+:root { --pb-tap: 52px; --pb-fs: 16px; }
+```
+
+## 규칙 (자세한 건 `index.html`)
+
+- 버튼 위계는 **네 단계뿐** — accent / default / ghost / danger. 다섯 번째를 만들지 말 것
+- `--pb-accent`(노랑) 버튼은 **한 화면에 하나**
+- 누를 수 있는 건 **44px 이상**. `--pb-tap` 을 내리지 말 것
+- 아이콘만 있는 버튼에는 **글자 라벨**을 같이. 태블릿에는 hover 가 없어 `title` 툴팁이 안 뜬다
+- 되돌릴 수 없는 동작은 **결과를 문장으로** 말할 것
+- 상태를 **색으로만** 구분하지 말 것
+- 간격은 `gap` 으로. `&nbsp;&nbsp;` 로 주지 말 것
+
+## 알아둘 것
+
+- `box-sizing` 은 키트 컴포넌트에만 건다. `.pb *` 로 걸면 붙이는 것만으로 기존
+  레이아웃이 틀어진다. (이 리포의 세 앱은 이미 전역 `border-box` 라 무해하지만
+  PiBrain 은 확인 전이다)
+- 루트 `font-size` 를 건드리지 않는다. `index.css:18` 의 `html { font-size: 10px }` 은
+  브라우저 글자 크기 설정을 무력화한다. 키트는 `px` 을 쓴다
+- 폰트는 `system-ui` 우선이라 **내려받지 않는다.** 오프라인(`pibo` 망)에서도 된다
+
+## 검증
+
+```bash
+./design/sync.sh --check          # 사본 일치
+node -e "1"                        # (CSS 는 문법검사 도구가 따로 없다)
+```
+
+스타일 가이드를 열어 **Tab 으로 훑어** 포커스 링이 보이는지, 브라우저를 720px 아래로
+좁혀 아이콘 라벨이 접히는지 눈으로 확인한다.
