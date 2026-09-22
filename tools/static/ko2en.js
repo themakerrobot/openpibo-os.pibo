@@ -2,6 +2,8 @@ const blang = (navigator.language || navigator.userLanguage).includes('ko')?'ko'
 let lang = localStorage.getItem("language")?localStorage.getItem("language"):blang;
 
 const translations = {
+  nav_tools_title: { ko: "도구", en: "Tools" },
+  nav_fullscreen: { ko: "전체화면", en: "Full screen" },
   sec:       { ko: " 초", en: " s" },
   recording: { ko: "녹음 중", en: "Recording" },
   confirm: {

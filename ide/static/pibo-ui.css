@@ -98,8 +98,10 @@
   display: flex; align-items: center; justify-content: space-between;
   gap: var(--pb-gap);
   background: linear-gradient(var(--pb-brand), var(--pb-brand-2));
-  padding: 6px var(--pb-pad);
-  min-height: 46px;
+  /* 44px 아이콘 버튼 + 위아래 여백 4px. 이보다 낮추면 버튼이 헤더 밖으로 넘친다
+     (배경이 단색이라 눈에는 안 보이지만 잘린 상태가 된다) */
+  padding: 4px var(--pb-pad);
+  min-height: 54px;
   border-bottom: 1px solid rgba(0,0,0,.18);
 }
 .pb-header__brand {
@@ -109,7 +111,9 @@
 
 /* 헤더 안의 아이콘 버튼 — 아이콘만 두지 말고 글자 라벨을 같이 둔다.
    태블릿에는 hover 가 없어서 title 툴팁이 뜨지 않는다. */
-.pb-iconbar { display: flex; align-items: center; gap: 4px; }
+/* <nav> 이 아니라 <div> 를 쓸 것. tools/static/index.css:322 에 bare `nav { position: fixed }`
+   가 있어서 <nav class="pb-iconbar"> 로 쓰면 헤더 밖으로 튀어나간다. */
+.pb-iconbar { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
 .pb-iconbtn {
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   gap: 2px;
@@ -119,7 +123,11 @@
   font: inherit; font-size: var(--pb-fs); text-decoration: none;
   cursor: pointer;
 }
-.pb-iconbtn__label { font-size: 10px; font-weight: 700; letter-spacing: -.2px; }
+/* 아이콘 자리를 고정한다. JS 가 채우는 아이콘(전체화면 등)은 높이가 제각각이라
+   고정하지 않으면 그 버튼만 라벨이 아래로 밀린다. */
+.pb-iconbtn > :first-child { display: block; height: 18px; line-height: 18px; font-size: 16px; }
+.pb-iconbtn__label { display: block; height: 12px; line-height: 12px;
+                     font-size: 10px; font-weight: 700; letter-spacing: -.2px; }
 .pb-iconbtn:hover  { background: rgba(0,0,0,.09); }
 .pb-iconbtn:active { background: rgba(0,0,0,.16); }
 .pb-iconbtn--danger { color: #7a1d0c; }
@@ -194,6 +202,10 @@
   font: var(--pb-fs)/1 var(--pb-font);
 }
 .pb-field:focus { border-color: var(--pb-focus); }
+/* 헤더 안에 들어가는 작은 입력 (언어 선택 등). 헤더가 46px 이라 44px 는 꽉 낀다 */
+.pb-field--sm { height: 32px; padding: 0 8px; font-size: var(--pb-fs-s);
+                border-radius: var(--pb-radius-s); }
+
 .pb-label { display: block; font-size: var(--pb-fs-s); font-weight: 700;
             color: var(--pb-text-dim); margin-bottom: 4px; }
 

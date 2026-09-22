@@ -2,6 +2,13 @@ const blang = (navigator.language || navigator.userLanguage).includes('ko')?'ko'
 let lang = localStorage.getItem("language")?localStorage.getItem("language"):blang;
 
 const translations = {
+  nav_tools:      { ko: "도구",     en: "Tools" },
+  nav_llm:        { ko: "대화",     en: "Chat" },
+  nav_classifier: { ko: "분류기",   en: "Classifier" },
+  nav_guide:      { ko: "도움말",   en: "Guide" },
+  nav_fullscreen: { ko: "전체화면", en: "Full screen" },
+  nav_restore:    { ko: "초기화",   en: "Reset" },
+  nav_poweroff:   { ko: "전원",     en: "Power" },
   password: {
     ko: "비밀번호",
     en: "Password"

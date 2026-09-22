@@ -10,7 +10,8 @@
     <!-- <link rel="manifest" href="../static/manifest.json" /> -->
     <link rel="stylesheet" href="../static/all.min.css?ver=240110v1" type="text/css" />
     <link rel="stylesheet" href="../static/jquery.jsonview.min.css" />
-    <link rel="stylesheet" href="../static/index.css?ver=260914v1" />
+    <link rel="stylesheet" href="../static/index.css?ver=260922v1" />
+  <link rel="stylesheet" href="../static/pibo-ui.css?ver=260922v1" />
     <link rel="stylesheet" href="../static/simulator.css?ver=240110v1" />
     <link rel="shortcut icon" href="../static/icon.png" type="image/x-icon" />
 
@@ -18,26 +19,17 @@
     <script src="../static/jquery.jsonview.min.js"></script>
     <script src="../static/socket.io.min.js?ver=240110v1"></script>
   </head>
-  <body>
-    <header class="title">
-      <div style="float:left">
-        <h2>
-          <i class="fa-solid fa-microchip">Tools <span id="state"></span></i>&nbsp;
-          <span id="onoff_val"></span>
-          <span id="onoff_count"></span>
-        </h2>
-      </div>
-      <div style="float:right">
-        <h2 style="display: flex; align-items: center; justify-content: center;">
-          <a id="fullscreen_bt"><span id='fullscreen_txt'></span></a>&nbsp;&nbsp;
-          <select id="language">
-            <option value="ko">한국어</option>
-            <option value="en">English</option>
-          </select>&nbsp;
-          <a id="logo_bt">
-            <img src="../static/themaker.png" style="height:22px" />
-          </a>
-        </h2>
+  <body class="pb">
+    <header class="pb-header">
+      <span class="pb-header__brand"><i class="fa-solid fa-microchip"></i>&nbsp;<span data-key="nav_tools_title"></span>
+        <span id="state"></span> <span id="onoff_val"></span> <span id="onoff_count"></span></span>
+      <div class="pb-iconbar">
+        <a class="pb-iconbtn" id="fullscreen_bt" title="Full Screen"><span id="fullscreen_txt"></span><span class="pb-iconbtn__label" data-key="nav_fullscreen"></span></a>
+        <select class="pb-field pb-field--sm" id="language" aria-label="language">
+          <option value="ko">한국어</option>
+          <option value="en">English</option>
+        </select>
+        <a id="logo_bt"><img src="../static/themaker.png" style="height:22px" alt="" /></a>
       </div>
     </header>
 
@@ -78,7 +70,7 @@
           <li><button name="vision"></li>
           <li><button name="speech"></li>
         </ul>
-      </nav>
+      </div>
 
       <div class="content">
         <div class="wrapper">
@@ -569,6 +561,6 @@
       </div>
     </main>
   </body>
-  <script src="../static/ko2en.js?ver=260914v1"></script>
+  <script src="../static/ko2en.js?ver=260922v1"></script>
   <script src="../static/index.js?ver=260914v1"></script>
 </html>

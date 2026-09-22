@@ -9,6 +9,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <link rel="stylesheet" href="../static/all.min.css" type="text/css" />
   <link rel="stylesheet" href="../static/index.css?ver=240701v6" />
+  <link rel="stylesheet" href="../static/pibo-ui.css?ver=260922v1" />
   <link rel="shortcut icon" href="../static/icon.png?ver=240319v1" type="image/x-icon" />
   <style>
     header>div>h2>select {
@@ -25,30 +26,20 @@
   <script src="../static/socket.io.min.js"></script>
   <script src="../static/jszip.min.js"></script>
   <script src="../static/tf.min-3.11.0.js"></script>
-  <script src="../static/ko2en.js?ver=260903v1"></script>
+  <script src="../static/ko2en.js?ver=260922v1"></script>
 </head>
 
-<body>
+<body class="pb">
   <!-- 상단 바 -->
-  <header class="title">
-    <div style="float:left">
-      <h2>
-        <i class="fa-solid fa-glasses"></i> <span data-key="title">이미지 분류</span>
-      </h2>
-    </div>
-    <div style="float:right">
-      <h2 style="display: flex; align-items: center; justify-content: center;">
-        <a id="fullscreen_bt" title="Full Screen">
-          <span id='fullscreen_txt'></span>
-        </a>&nbsp;&nbsp;
-        <select id="language" aria-label="language">
-          <option value="ko">한국어</option>
-          <option value="en">English</option>
-        </select>&nbsp;&nbsp;
-        <a id='logo_bt'>
-          <img src="../static/themaker.png" style="height:22px" alt="" />
-        </a>
-      </h2>
+  <header class="pb-header">
+    <span class="pb-header__brand"><i class="fa-solid fa-glasses"></i>&nbsp;<span data-key="title">이미지 분류</span></span>
+    <div class="pb-iconbar">
+      <a class="pb-iconbtn" id="fullscreen_bt" title="Full Screen"><span id="fullscreen_txt"></span><span class="pb-iconbtn__label" data-key="nav_fullscreen"></span></a>
+      <select class="pb-field pb-field--sm" id="language" aria-label="language">
+        <option value="ko">한국어</option>
+        <option value="en">English</option>
+      </select>
+      <a id="logo_bt"><img src="../static/themaker.png" style="height:22px" alt="" /></a>
     </div>
   </header>
 
