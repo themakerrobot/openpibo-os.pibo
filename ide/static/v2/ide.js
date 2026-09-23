@@ -186,12 +186,16 @@
   });
 
   /* 8) 화면 밝기 ─────────────────────────────────────────────────────────── */
+  // 파이썬 편집기 색을 화면 밝기에 맞춘다: 어둡게 = cobalt, 기본·밝게 = duotone-light.
+  // [더보기] 의 편집기 테마 스위치로 따로 바꿀 수 있고, 밝기를 다시 고르면 거기에 맞춰진다
   var themeCheck = $id('theme_check');
-  window.addEventListener('pibo-theme', function (e) {
-    if (e.detail === 'dark' && themeCheck && !themeCheck.checked) {
-      themeCheck.checked = true; themeCheck.dispatchEvent(new Event('change', { bubbles: true }));
-    }
-  });
+  function syncEditor(theme) {
+    var dark = theme === 'dark';
+    if (!themeCheck || themeCheck.checked === dark) return;
+    themeCheck.checked = dark; themeCheck.dispatchEvent(new Event('change', { bubbles: true }));
+  }
+  syncEditor(document.documentElement.getAttribute('data-theme'));
+  window.addEventListener('pibo-theme', function (e) { syncEditor(e.detail); });
 
   /* 9) 툴박스 ────────────────────────────────────────────────────────────── */
   /* 분류 행: 왼쪽 색 막대 대신, 아이콘을 분류 색 타일 안에 넣는다. 선택된 행은 색으로 칠하지 않고
