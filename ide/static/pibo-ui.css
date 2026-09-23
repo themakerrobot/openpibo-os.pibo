@@ -222,6 +222,9 @@
 /* 헤더 안에 들어가는 작은 입력 (언어 선택 등). 헤더가 46px 이라 44px 는 꽉 낀다 */
 .pb-field--sm { height: 32px; padding: 0 8px; font-size: var(--pb-fs-s);
                 border-radius: var(--pb-radius-s); }
+/* 세 앱 모두 `select, input { font-size: 16px !important }` 를 전역으로 갖고 있어
+   헤더 언어 선택만 글자가 커졌다. 헤더 안에서는 키트 크기로 되돌린다 */
+.pb-header .pb-field--sm { font-size: var(--pb-fs-s) !important; }
 
 .pb-label { display: block; font-size: var(--pb-fs-s); font-weight: 700;
             color: var(--pb-text-dim); margin-bottom: 4px; }

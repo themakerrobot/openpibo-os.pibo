@@ -1131,3 +1131,21 @@ main > div.content > .wrapper.ide.pb-pane + .wrapper.ide.pb-pane {
    줄바꿈을 막으면 오른쪽 아이콘이 패널 밖으로 잘렸다(900~960px, 1200~1300px) */
 .pb-pane--grow > .editor-row:first-child,
 .pb-pane--grow > .editor-row:first-child > .editor-col { flex-wrap: wrap; row-gap: 6px; min-width: 0; }
+
+/* 파일 패널: 남는 높이는 파일 목록(#fm_row)만 먹는다. 이미지·오디오 줄은 제 크기로
+   아래에 붙는다(원래 모양). 위쪽 셸 규칙 `.pb-pane .editor-row:last-child{flex:1}` 은
+   가운데(블록)·터미널처럼 마지막 줄이 주인공인 패널용인데, 파일 패널은 마지막 줄이
+   오디오 플레이어라 플레이어 줄까지 늘어나 그 아래가 비었다(1080 높이에서 259px). */
+#browser_en .editor-row:last-child { flex: 0 0 auto; }
+
+/* 상태바: 왼쪽 묶음(버전·시리얼)은 왼쪽, 오른쪽 묶음(네트워크·온도·메모리·배터리)은
+   오른쪽. 원래 float:left / float:right 였는데 상태바가 flex 가 되면서 float 이
+   무시돼 전부 왼쪽으로 붙었다. */
+footer.pb-statusbar { justify-content: space-between; }
+
+/* 파이썬 에디터: 패널 높이를 꽉 채운다. 위 셸 규칙이 .CodeMirror 에 height:auto 를 주는데
+   CodeMirror 는 height:auto 를 '내용만큼 늘어나는 모드'로 받아서, 빈 파일이면 한 줄
+   높이로 쪼그라들었다. #codeDiv 는 행에서 stretch 로 높이를 받으니, 에디터를 그 안에
+   꽉 차게 박는다. (가운데 <form> 은 position 이 없어 기준이 #codeDiv 가 된다) */
+.pb-pane #codeDiv { position: relative; }
+.pb-pane #codeDiv .CodeMirror { position: absolute; top: 0; left: 0; bottom: 0; width: 100%; height: auto; }
