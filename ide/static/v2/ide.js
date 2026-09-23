@@ -186,16 +186,23 @@
   });
 
   /* 8) 화면 밝기 ─────────────────────────────────────────────────────────── */
-  // 파이썬 편집기 색을 화면 밝기에 맞춘다: 어둡게 = cobalt, 기본·밝게 = duotone-light.
-  // [더보기] 의 편집기 테마 스위치로 따로 바꿀 수 있고, 밝기를 다시 고르면 거기에 맞춰진다
+  // 파이썬 편집기: v2 전용 테마 pibo-light / pibo-dark (v2/ide.css). 화면 밝기를 따른다 —
+  // 어둡게 = pibo-dark, 기본·밝게 = pibo-light. [더보기] 의 편집기 테마 스위치로 따로 바꿀 수 있고,
+  // 밝기를 다시 고르면 거기에 맞춰진다. index.js 의 스위치 처리(cobalt/duotone-light)는 v1 용이라 떼어 낸다
   var themeCheck = $id('theme_check');
-  function syncEditor(theme) {
-    var dark = theme === 'dark';
-    if (!themeCheck || themeCheck.checked === dark) return;
-    themeCheck.checked = dark; themeCheck.dispatchEvent(new Event('change', { bubbles: true }));
+  function applyEditor() {
+    if (typeof codeEditor !== 'undefined') codeEditor.setOption('theme', themeCheck.checked ? 'pibo-dark' : 'pibo-light');
   }
-  syncEditor(document.documentElement.getAttribute('data-theme'));
-  window.addEventListener('pibo-theme', function (e) { syncEditor(e.detail); });
+  function syncEditor(theme) {
+    themeCheck.checked = theme === 'dark';
+    applyEditor();
+  }
+  if (themeCheck) {
+    if (window.jQuery) jQuery(themeCheck).off('change');
+    themeCheck.addEventListener('change', applyEditor);
+    syncEditor(document.documentElement.getAttribute('data-theme'));
+    window.addEventListener('pibo-theme', function (e) { syncEditor(e.detail); });
+  }
 
   /* 9) 툴박스 ────────────────────────────────────────────────────────────── */
   /* 분류 행: 왼쪽 색 막대 대신, 아이콘을 분류 색 타일 안에 넣는다. 선택된 행은 색으로 칠하지 않고

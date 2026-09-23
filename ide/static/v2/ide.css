@@ -420,15 +420,42 @@ body[data-running] #execute { background: var(--c-press); color: var(--c-ink-3);
 .v2-editor__stage > #codeDiv { position: absolute; inset: 0; width: auto !important; height: auto !important; }
 .v2-editor__stage #code_form { height: 100%; }
 .v2-editor__stage .CodeMirror { height: 100%; font-family: var(--mono); font-size: 14px; }
-/* 밝은 파이썬 편집기(duotone-light): 바탕을 작업판에 맞추고, 옅은 황토색(대비 2.1~2.7:1)을 진하게.
-   오래된 노트북 패널에서 주석·기호가 안 보였다. 대비는 #fdfdfe 기준 */
-.v2-app .cm-s-duotone-light.CodeMirror { background: var(--c-work); color: #7a5c1e; }                     /* 6.1:1 */
-.v2-app .cm-s-duotone-light .CodeMirror-gutters { background: var(--c-work); border-right: 1px solid var(--c-line); }
-.v2-app .cm-s-duotone-light .CodeMirror-linenumber { color: #8f887a; }                                    /* 3.5:1 */
-.v2-app .cm-s-duotone-light span.cm-property { color: #7a5c1e; }
-.v2-app .cm-s-duotone-light span.cm-comment,
-.v2-app .cm-s-duotone-light span.cm-bracket { color: #6f685a; }                                           /* 5.4:1 */
-.v2-app .cm-s-duotone-light .CodeMirror-cursor { border-left: 2px solid #1f2430; border-right: 0; opacity: 1; }
+/* 파이썬 편집기 테마 — v2 전용(ide.js 가 화면 밝기에 따라 고른다). 기존 cobalt·duotone-light 는 v1 용.
+   문법 요소를 색으로 나눈다: 키워드 · 함수 이름 · 내장 함수 · 속성 · 문자열 · 숫자 · 주석.
+   대비는 바탕(#fdfdfe / #20242b) 기준 모두 4.8:1 이상 — 오래된 노트북 패널 */
+.cm-s-pibo-light.CodeMirror { background: var(--c-work); color: #1f2430; }
+.cm-s-pibo-light .CodeMirror-gutters { background: var(--c-work); border-right: 1px solid var(--c-line); }
+.cm-s-pibo-light .CodeMirror-linenumber { color: #8a919c; }
+.cm-s-pibo-light .CodeMirror-cursor { border-left: 2px solid #1f2430; }
+.cm-s-pibo-light div.CodeMirror-selected, .cm-s-pibo-light .CodeMirror-focused div.CodeMirror-selected { background: #fff1c2; }
+.cm-s-pibo-light .CodeMirror-matchingbracket { color: #1f2430 !important; background: #fde58a; }
+.cm-s-pibo-light span.cm-keyword { color: #4450c8; font-weight: 600; }                        /* 6.4:1 */
+.cm-s-pibo-light span.cm-def { color: #0b6aa2; font-weight: 600; }                            /* 5.7:1 */
+.cm-s-pibo-light span.cm-builtin { color: #8a3fb5; }                                          /* 6.0:1 */
+.cm-s-pibo-light span.cm-property { color: #0e6e6e; }                                         /* 5.9:1 */
+.cm-s-pibo-light span.cm-string, .cm-s-pibo-light span.cm-string-2 { color: #1f7a45; }        /* 5.3:1 */
+.cm-s-pibo-light span.cm-number, .cm-s-pibo-light span.cm-meta { color: #b0520b; }            /* 5.1:1 */
+.cm-s-pibo-light span.cm-comment { color: #6b7280; font-style: italic; }                      /* 4.8:1 */
+.cm-s-pibo-light span.cm-operator, .cm-s-pibo-light span.cm-punctuation { color: #5b6270; }
+.cm-s-pibo-light span.cm-variable, .cm-s-pibo-light span.cm-variable-2 { color: #1f2430; }
+.cm-s-pibo-light span.cm-error { color: #d6393f; }
+
+.cm-s-pibo-dark.CodeMirror { background: var(--c-work); color: #e3e6eb; }
+.cm-s-pibo-dark .CodeMirror-gutters { background: var(--c-work); border-right: 1px solid var(--c-line); }
+.cm-s-pibo-dark .CodeMirror-linenumber { color: #7d8594; }
+.cm-s-pibo-dark .CodeMirror-cursor { border-left: 2px solid #f2c94c; }
+.cm-s-pibo-dark div.CodeMirror-selected, .cm-s-pibo-dark .CodeMirror-focused div.CodeMirror-selected { background: #4a4330; }
+.cm-s-pibo-dark .CodeMirror-matchingbracket { color: #fff !important; background: #5a5236; }
+.cm-s-pibo-dark span.cm-keyword { color: #a3acff; font-weight: 600; }                         /* 7.3:1 */
+.cm-s-pibo-dark span.cm-def { color: #7cc4f2; font-weight: 600; }                             /* 8.2:1 */
+.cm-s-pibo-dark span.cm-builtin { color: #d6a8f5; }                                           /* 8.0:1 */
+.cm-s-pibo-dark span.cm-property { color: #7dd3c8; }                                          /* 8.9:1 */
+.cm-s-pibo-dark span.cm-string, .cm-s-pibo-dark span.cm-string-2 { color: #92d6a2; }          /* 9.2:1 */
+.cm-s-pibo-dark span.cm-number, .cm-s-pibo-dark span.cm-meta { color: #f4b36b; }              /* 8.5:1 */
+.cm-s-pibo-dark span.cm-comment { color: #8f98a8; font-style: italic; }                       /* 5.4:1 */
+.cm-s-pibo-dark span.cm-operator, .cm-s-pibo-dark span.cm-punctuation { color: #aab1bd; }
+.cm-s-pibo-dark span.cm-variable, .cm-s-pibo-dark span.cm-variable-2 { color: #e3e6eb; }
+.cm-s-pibo-dark span.cm-error { color: #ff7a7f; }
 
 /* Blockly — 툴박스: 블록 찾기 + 색 타일 분류 (ide.js 가 분류 행을 그린다) */
 .v2-app .blocklyToolboxDiv {
