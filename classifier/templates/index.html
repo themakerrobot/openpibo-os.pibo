@@ -8,8 +8,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="mobile-web-app-capable" content="yes" />
   <link rel="stylesheet" href="../static/all.min.css" type="text/css" />
-  <link rel="stylesheet" href="../static/index.css?ver=240701v6" />
-  <link rel="stylesheet" href="../static/pibo-ui.css?ver=260923v2" />
+  <link rel="stylesheet" href="../static/index.css?ver=260923v3" />
+  <link rel="stylesheet" href="../static/pibo-ui.css?ver=260923v3" />
   <link rel="shortcut icon" href="../static/icon.png?ver=240319v1" type="image/x-icon" />
   <style>
     header>div>h2>select {
@@ -26,14 +26,16 @@
   <script src="../static/socket.io.min.js"></script>
   <script src="../static/jszip.min.js"></script>
   <script src="../static/tf.min-3.11.0.js"></script>
-  <script src="../static/ko2en.js?ver=260922v1"></script>
+  <script src="../static/ko2en.js?ver=260923v3"></script>
 </head>
 
-<body class="pb">
+<body class="pb pb-shell">
   <!-- 상단 바 -->
   <header class="pb-header">
     <span class="pb-header__brand"><i class="fa-solid fa-glasses"></i>&nbsp;<span data-key="title">이미지 분류</span></span>
     <div class="pb-iconbar">
+      <button type="button" class="pb-iconbtn pb-pane-toggle" data-toggle-pane="cls_pane" aria-pressed="false"><i class="fa-solid fa-list"></i><span class="pb-iconbtn__label" data-key="nav_classes"></span></button>
+      <button type="button" class="pb-iconbtn pb-pane-toggle" data-toggle-pane="pred_pane" aria-pressed="false"><i class="fa-solid fa-chart-line"></i><span class="pb-iconbtn__label" data-key="nav_results"></span></button>
       <a class="pb-iconbtn" id="fullscreen_bt" title="Full Screen"><span id="fullscreen_txt"></span><span class="pb-iconbtn__label" data-key="nav_fullscreen"></span></a>
       <select class="pb-field pb-field--sm" id="language" aria-label="language">
         <option value="ko">한국어</option>
@@ -74,9 +76,9 @@
       </div>
     </div>
 
-    <div class="container">
+    <div class="container pb-panes">
       <!-- 왼쪽 패널: 클래스 관리 -->
-      <div class="left-panel">
+      <div class="left-panel pb-pane pb-pane--fixed" id="cls_pane">
         <h2><i class="fas fa-th-list"></i> <span data-key="class_manage">클래스 관리</span></h2>
         <div id="class-management">
           <input type="text" id="class-name" data-key="class_name_ph" placeholder="클래스 이름" onkeydown="if(event.key==='Enter') addClass()">
@@ -88,7 +90,8 @@
       </div>
 
       <!-- 중앙 패널: 이미지 학습 -->
-      <div class="center-panel">
+      <div class="pb-resizer" data-pane="cls" data-target="cls_pane" data-side="left" data-min="240" role="separator" aria-orientation="vertical" aria-label="resize"></div>
+      <div class="center-panel pb-pane pb-pane--grow">
         <h2><i class="fas fa-camera"></i> <span data-key="image_train">이미지 학습</span></h2>
         <div class="button-group" id="camera-controls">
           <button id="enable-camera-btn" onclick="if(!cameraEnabled){toggleCamera();}"><i class="fas fa-video"></i> <span data-key="cam_on">카메라 켜기</span></button>
@@ -120,7 +123,8 @@
       </div>
 
       <!-- 오른쪽 패널: 결과 / 예측 -->
-      <div class="right-panel">
+      <div class="pb-resizer" data-pane="pred" data-target="pred_pane" data-side="right" data-min="240" role="separator" aria-orientation="vertical" aria-label="resize"></div>
+      <div class="right-panel pb-pane pb-pane--fixed" id="pred_pane">
         <h2><i class="fas fa-laptop"></i> <span data-key="result">결과 및 예측</span></h2>
         <div class="button-group" id="model-controls">
           <button onclick="document.getElementById('model-upload').click()"><i class="fa-solid fa-upload"></i> <span data-key="import_tfjs">불러오기(tfjs)</span></button>
@@ -142,6 +146,7 @@
       </div>
     </div>
   </main>
+  <script src="../static/pibo-ui.js?ver=260923v3"></script>
   <script src="../static/index.js?ver=260909v6"></script>
 </body>
 </html>

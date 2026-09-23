@@ -2,6 +2,8 @@ const blang = (navigator.language || navigator.userLanguage).includes('ko')?'ko'
 let lang = localStorage.getItem("language")?localStorage.getItem("language"):blang;
 
 const translations = {
+  nav_classes: { ko: "클래스", en: "Classes" },
+  nav_results: { ko: "결과", en: "Results" },
   nav_fullscreen: { ko: "전체화면", en: "Full screen" },
   title:            { ko: "이미지 분류",              en: "Image Classifier" },
   class_manage:     { ko: "클래스 관리",              en: "Classes" },

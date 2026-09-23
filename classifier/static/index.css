@@ -573,3 +573,53 @@ label.upload-button:hover {
     color: black;
     /* 호버 시 글자색 변경 필요 시 */
 }
+
+/* ==========================================================================
+   셸 레이아웃 (pibo-ui.css 의 .pb-shell / .pb-panes / .pb-pane)
+
+   .container 가 calc(100vh - 30px) 로 옛 헤더 높이(30px)를 가정하고 있었다.
+   헤더가 54px 이 되면서 24px 넘쳐 페이지가 스크롤됐다(768 -> 792).
+   세 패널도 33/34/33% 고정이라 820px 에서 각 270px — 버튼 설명이 3~4줄로 쪼개졌다.
+   ========================================================================== */
+.container.pb-panes {
+  width: auto;
+  height: auto;              /* 높이는 셸이 준다 */
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+:root { --pane-cls: 300px; --pane-pred: 320px; }
+.left-panel.pb-pane   { flex: 0 0 var(--pane-cls);  border-right: 0; }
+.center-panel.pb-pane { flex: 1 1 0%;               border-right: 0; min-width: 320px; }
+.right-panel.pb-pane  { flex: 0 0 var(--pane-pred); }
+.left-panel.pb-pane, .center-panel.pb-pane, .right-panel.pb-pane { overflow-y: auto; }
+/* 가운데는 원래 column + center 정렬이다. pb-pane 의 column 과 같다 */
+.center-panel.pb-pane { align-items: center; }
+/* 왼쪽·오른쪽은 원래 block 흐름이었다. pb-pane 이 flex 로 바꾸지 않게 되돌린다 */
+.left-panel.pb-pane, .right-panel.pb-pane { display: block; }
+
+/* 1100px 미만: 결과 패널 접음 / 760px 미만: 클래스 패널도 접음 */
+@media (max-width: 1099px) {
+  .right-panel.pb-pane { display: none; }
+  .pb-resizer[data-target="pred_pane"] { display: none; }
+}
+@media (max-width: 759px) {
+  .left-panel.pb-pane { display: none; }
+  .pb-resizer[data-target="cls_pane"] { display: none; }
+}
+.left-panel.pb-pane[data-force-show="1"], .right-panel.pb-pane[data-force-show="1"] { display: block !important; }
+.pb-pane[data-force-show="1"] + .pb-resizer,
+.pb-resizer + .pb-pane[data-force-show="1"] { display: block; }
+
+/* 접힘 토글은 그 패널이 접히는 폭에서만 */
+.pb-iconbtn.pb-pane-toggle { display: none; }
+@media (max-width: 1099px) { .pb-iconbtn.pb-pane-toggle[data-toggle-pane="pred_pane"] { display: flex; } }
+@media (max-width: 759px)  { .pb-iconbtn.pb-pane-toggle[data-toggle-pane="cls_pane"]  { display: flex; } }
+.pb-pane-toggle[aria-pressed="true"] { background: rgba(0,0,0,.14); }
+
+/* 한/영 전환 안정화 — 한글 글리프는 폴백 글꼴로 그려지는데 그 글꼴의 ascent 가 커서
+   같은 버튼이 한글일 때 3px 더 높았다(24 -> 27). line-height 를 숫자로 고정하면
+   줄 높이가 글꼴 메트릭이 아니라 font-size 로 정해져 두 언어가 같아진다. */
+.pb-shell main button,
+.pb-shell main label[for],
+.pb-shell main input[type="submit"] { line-height: 1.2; white-space: nowrap; }

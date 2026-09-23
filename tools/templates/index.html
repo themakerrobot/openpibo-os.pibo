@@ -10,8 +10,8 @@
     <!-- <link rel="manifest" href="../static/manifest.json" /> -->
     <link rel="stylesheet" href="../static/all.min.css?ver=240110v1" type="text/css" />
     <link rel="stylesheet" href="../static/jquery.jsonview.min.css" />
-    <link rel="stylesheet" href="../static/index.css?ver=260922v1" />
-  <link rel="stylesheet" href="../static/pibo-ui.css?ver=260923v2" />
+    <link rel="stylesheet" href="../static/index.css?ver=260923v3" />
+  <link rel="stylesheet" href="../static/pibo-ui.css?ver=260923v3" />
     <link rel="stylesheet" href="../static/simulator.css?ver=240110v1" />
     <link rel="shortcut icon" href="../static/icon.png" type="image/x-icon" />
 
@@ -19,7 +19,7 @@
     <script src="../static/jquery.jsonview.min.js"></script>
     <script src="../static/socket.io.min.js?ver=240110v1"></script>
   </head>
-  <body class="pb">
+  <body class="pb pb-shell">
     <header class="pb-header">
       <span class="pb-header__brand"><i class="fa-solid fa-microchip"></i>&nbsp;<span data-key="nav_tools_title"></span>
         <span id="state"></span> <span id="onoff_val"></span> <span id="onoff_count"></span></span>
@@ -70,9 +70,9 @@
           <li><button name="vision"></li>
           <li><button name="speech"></li>
         </ul>
-      </div>
+      </nav>
 
-      <div class="content">
+      <div class="content pb-pane pb-pane--grow">
         <div class="wrapper">
           <article id="article_motion" class="margin">
             <section class="pibo-section">
@@ -561,6 +561,7 @@
       </div>
     </main>
   </body>
-  <script src="../static/ko2en.js?ver=260922v1"></script>
+  <script src="../static/ko2en.js?ver=260923v3"></script>
+  <script src="../static/pibo-ui.js?ver=260923v3"></script>
   <script src="../static/index.js?ver=260914v1"></script>
 </html>

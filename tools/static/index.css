@@ -1161,3 +1161,39 @@ header > div > h2 > select {
   color: black;
   /* 호버 시 글자색 변경 필요 시 */
 }
+
+/* ==========================================================================
+   셸 레이아웃 (pibo-ui.css 의 .pb-shell / .pb-pane)
+
+   왼쪽 메뉴(nav)는 position:fixed 사이드바였고, 본문은 그 폭만큼
+   padding-left:35px 로 비켜 서 있었다. 셸에서는 nav 를 흐름 안의 레일로 두고
+   본문 패널만 스크롤한다. 페이지 자체는 스크롤하지 않는다.
+   ========================================================================== */
+main {
+  padding: 0;
+  min-height: 0;
+}
+main > nav {
+  position: static;
+  flex: 0 0 auto;
+  height: auto;
+  overflow-y: auto;
+  border-right: 1px solid #e7e7e7;
+}
+main > div.content.pb-pane {
+  flex: 1 1 0%;
+  min-width: 0;
+  min-height: 0;
+  width: auto;
+  overflow: auto;            /* 스크롤은 본문 패널 안에서만 */
+  padding-left: 12px;        /* fixed nav 를 비켜 서던 35px 는 이제 필요 없다 */
+  padding-bottom: 20px;
+  display: block;            /* 원래 flex row 였지만 자식이 .wrapper 하나뿐이다 */
+}
+
+/* 한/영 전환 안정화 — 한글 글리프는 폴백 글꼴로 그려지는데 그 글꼴의 ascent 가 커서
+   같은 버튼이 한글일 때 3px 더 높았다(24 -> 27). line-height 를 숫자로 고정하면
+   줄 높이가 글꼴 메트릭이 아니라 font-size 로 정해져 두 언어가 같아진다. */
+.pb-shell main button,
+.pb-shell main label[for],
+.pb-shell main input[type="submit"] { line-height: 1.2; white-space: nowrap; }
