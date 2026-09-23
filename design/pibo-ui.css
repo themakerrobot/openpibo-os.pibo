@@ -84,6 +84,18 @@
   -webkit-text-size-adjust: 100%;
 }
 
+/* 앱이 bare `button { ... }` 을 꾸며 둬도(IDE 는 노랑 배경·min-width 80px·그림자·
+   hover 시 filter:brightness·active 시 transform) 키트 버튼은 영향받지 않게 끊는다.
+   컴포넌트 규칙보다 앞에 둬서 각 컴포넌트의 min-width 등은 뒤에서 다시 잡힌다. */
+.pb-btn, .pb-iconbtn, .pb-seg > button {
+  min-width: 0; margin: 0; filter: none; transform: none;
+  transition: background-color .12s ease, border-color .12s ease;
+  -webkit-appearance: none; appearance: none;
+}
+.pb-btn:hover, .pb-iconbtn:hover, .pb-seg > button:hover,
+.pb-btn:active, .pb-iconbtn:active, .pb-seg > button:active { filter: none; }
+.pb-iconbtn:active, .pb-seg > button:active { transform: none; }
+
 /* 키보드 이동에만 링이 뜬다. 마우스 클릭에는 안 뜬다 */
 .pb :focus-visible {
   outline: 3px solid var(--pb-focus);
@@ -117,8 +129,8 @@
 .pb-iconbtn {
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   gap: 2px;
-  min-width: 54px; height: var(--pb-tap);
-  border: 0; background: transparent; color: inherit;
+  min-width: 54px; height: var(--pb-tap); padding: 0 4px;
+  border: 0; background: transparent; color: inherit; box-shadow: none;
   border-radius: var(--pb-radius-s);
   font: inherit; font-size: var(--pb-fs); text-decoration: none;
   cursor: pointer;
@@ -246,8 +258,71 @@
                 padding: 4px var(--pb-pad); font-size: var(--pb-fs-s); font-weight: 600; }
 
 /* ==========================================================================
+   셸 레이아웃  —  VS Code 식. 페이지는 스크롤하지 않고 패널 안에서만 스크롤한다.
+
+     <body class="pb pb-shell">
+       <header class="pb-header">...</header>
+       <main>  <div class="pb-panes"> ...pb-pane... </div>  </main>
+       <footer class="pb-statusbar">...</footer>
+
+   기존처럼 calc(100vh - 130px) 같은 숫자를 패널마다 손으로 맞추지 않는다.
+   그 방식은 헤더 높이가 바뀔 때마다 전부 틀어지고, 폭이 모자라면
+   flex-wrap 으로 패널이 아래로 떨어진다.
+   ========================================================================== */
+.pb-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;          /* dvh 라야 모바일 주소창에 안 잘린다 */
+  overflow: hidden;        /* 페이지 자체는 스크롤하지 않는다 */
+  margin: 0;
+}
+/* 높이가 흐르려면 사슬 전체에 min-height:0 이 필요하다. flex 자식의 기본
+   min-height 는 auto 라 내용만큼 부풀고, 그러면 overflow 가 안 먹는다. */
+.pb-shell > main { flex: 1 1 auto; min-height: 0; display: flex; }
+.pb-shell > header, .pb-shell > footer { flex: none; }
+
+.pb-panes {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  flex-wrap: nowrap;       /* 절대 줄바꿈하지 않는다 */
+}
+.pb-pane {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+}
+.pb-pane--fixed { flex: 0 0 auto; }   /* 폭은 인라인 style 이나 앱 CSS 에서 */
+.pb-pane--grow  { flex: 1 1 0%; }     /* 남는 폭을 먹는다. 0% 라야 내용이 폭을 못 밀어낸다 */
+
+/* 패널 경계. 드래그는 앱 JS 가 붙인다 */
+.pb-resizer {
+  flex: 0 0 8px;
+  cursor: col-resize;
+  background: linear-gradient(90deg, transparent 3px, var(--pb-border) 3px,
+                                      var(--pb-border) 5px, transparent 5px);
+  touch-action: none;
+}
+.pb-resizer:hover, .pb-resizer[data-dragging] {
+  background: linear-gradient(90deg, transparent 2px, var(--pb-focus) 2px,
+                                      var(--pb-focus) 6px, transparent 6px);
+}
+
+/* 접힌 패널 */
+.pb-pane[hidden] { display: none; }
+.pb-pane[hidden] + .pb-resizer,
+.pb-resizer:first-child { display: none; }
+
+/* ==========================================================================
    좁은 화면
    ========================================================================== */
+@media (max-width: 899px) {
+  .pb-iconbtn { min-width: 46px; }
+  .pb-header { padding-left: 8px; padding-right: 8px; }
+}
 @media (max-width: 720px) {
   .pb-iconbtn { min-width: var(--pb-tap); }
   .pb-iconbtn__label { display: none; }     /* 자리가 없으면 라벨만 접는다 */

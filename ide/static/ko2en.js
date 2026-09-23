@@ -2,6 +2,8 @@ const blang = (navigator.language || navigator.userLanguage).includes('ko')?'ko'
 let lang = localStorage.getItem("language")?localStorage.getItem("language"):blang;
 
 const translations = {
+  nav_files:      { ko: "파일",     en: "Files" },
+  nav_terminal:   { ko: "터미널",   en: "Terminal" },
   nav_tools:      { ko: "도구",     en: "Tools" },
   nav_llm:        { ko: "대화",     en: "Chat" },
   nav_classifier: { ko: "분류기",   en: "Classifier" },

@@ -10,8 +10,8 @@
   <meta name="mobile-web-app-capable" content="yes" />
 
   <link rel="stylesheet" href="../static/fontello.css" type="text/css" />
-  <link rel="stylesheet" href="../static/index.css?ver=260922v1" />
-  <link rel="stylesheet" href="../static/pibo-ui.css?ver=260922v1" />
+  <link rel="stylesheet" href="../static/index.css?ver=260923v1" />
+  <link rel="stylesheet" href="../static/pibo-ui.css?ver=260923v1" />
   <link rel="stylesheet" href="../static/all.min.css" type="text/css" />
   <link rel="stylesheet" href="../static/codemirror.css" />
   <link rel="stylesheet" href="../static/cobalt.css" />
@@ -19,7 +19,7 @@
   <link rel="stylesheet" href="../static/jquery.jsonview.min.css" />
   <link rel="shortcut icon" href="../static/icon.png?ver=240319v1" type="image/x-icon" />
 
-  <script src="../static/ko2en.js?ver=260922v1"></script>
+  <script src="../static/ko2en.js?ver=260923v1"></script>
   <script src="../static/blockly_compressed.js?ver=240319v1"></script>
   <script src="../static/blocks_compressed.js?ver=240319v1"></script>
   <script src="../static/python_compressed.js?ver=240319v1"></script>
@@ -36,10 +36,12 @@
   <script src="../static/socket.io.min.js?ver=240319v3"></script>
 </head>
 
-<body class="pb">
+<body class="pb pb-shell">
   <header class="pb-header">
     <span class="pb-header__brand"><i class="fa-solid fa-code"></i>&nbsp;IDE</span>
     <div class="pb-iconbar">
+      <button type="button" class="pb-iconbtn pb-pane-toggle" data-toggle-pane="browser_en" aria-pressed="false"><i class="fa-solid fa-folder-open"></i><span class="pb-iconbtn__label" data-key="nav_files"></span></button>
+      <button type="button" class="pb-iconbtn pb-pane-toggle" data-toggle-pane="result_en" aria-pressed="false"><i class="fa-solid fa-terminal"></i><span class="pb-iconbtn__label" data-key="nav_terminal"></span></button>
       <a class="pb-iconbtn" id="tools_bt" title="Tools"><i class="fa-solid fa-microchip"></i><span class="pb-iconbtn__label" data-key="nav_tools"></span></a>
       <a class="pb-iconbtn" id="llm_bt" title="Chat Bot"><i class="fa-solid fa-comment"></i><span class="pb-iconbtn__label" data-key="nav_llm"></span></a>
       <a class="pb-iconbtn" id="classifier_bt" title="Image Classifier"><i class="fa-solid fa-images"></i><span class="pb-iconbtn__label" data-key="nav_classifier"></span></a>
@@ -132,8 +134,8 @@
       </div>
     </div>
 
-    <div class="content">
-      <div class="wrapper ide" id="browser_en">
+    <div class="content pb-panes">
+      <div class="wrapper ide pb-pane pb-pane--fixed" id="browser_en">
         <div class="editor-row">
           <div class="editor-col">
             <!-- <i class="fa-solid fa-computer"></i>
@@ -189,7 +191,8 @@
         </div>
       </div>
 
-      <div class="wrapper ide">
+      <div class="pb-resizer" data-pane="files" data-target="browser_en" data-side="left" role="separator" aria-orientation="vertical" aria-label="resize"></div>
+      <div class="wrapper ide pb-pane pb-pane--grow">
         <div class="editor-row">
           <div class="editor-col">
             <!-- <i class="fa fa-solid fa-laptop-code"> </i> -->
@@ -243,7 +246,8 @@
         </div>
       </div>
 
-      <div class="wrapper ide" id="result_en">
+      <div class="pb-resizer" data-pane="term" data-target="result_en" data-side="right" role="separator" aria-orientation="vertical" aria-label="resize"></div>
+      <div class="wrapper ide pb-pane pb-pane--fixed" id="result_en">
         <div class="editor-row">
           <div class="editor-col">
             <!-- <i class="fa fa-solid fa-file-lines"><span> 결과</span></i> -->
@@ -273,7 +277,7 @@
       </div>
     </div>
   </main>
-  <footer>
+  <footer class="pb-statusbar">
     <div style="float:left;padding:0.7rem 0 0.7rem 0">
       <i class="fa-solid fa-robot fa-flip"></i>
       <span id="s_os_version"></span>,
@@ -292,6 +296,7 @@
       <span id="d_dc_val"></span>
     </div>
   </footer>
+  <script src="../static/pibo-ui.js?ver=260923v1"></script>
   <script src="../static/index.js?ver=260917v1"></script>
 </body>
 

@@ -947,3 +947,121 @@ textarea:focus-visible {
   outline-color: var(--teal);
   background-color: rgba(19, 191, 213, 0.06);
 }
+
+/* ==========================================================================
+   셸 레이아웃 (pibo-ui.css 의 .pb-shell / .pb-panes / .pb-pane 을 쓴다)
+
+   이 블록 위쪽의 calc(100vw - N) / calc(100vh - N) 규칙들을 무력화한다.
+   그 방식은 1130~1529px 구간에서 .result 가 calc(100vw - 35px) 를 요구해
+   (1366px 에서 1331px) 가운데 열과 합이 뷰포트를 넘고, .content 의
+   flex-wrap 때문에 터미널이 통째로 다음 줄로 떨어졌다. 교실 노트북 폭이다.
+
+   선택자가 길어 보이는 건 위쪽 규칙들의 명시도를 넘기기 위해서다.
+   ========================================================================== */
+
+/* 상태바는 셸의 마지막 칸이다. fixed 였을 때는 본문 위에 떠서 가렸다 */
+footer.pb-statusbar {
+  position: static;
+  height: auto;
+  box-shadow: 0 -3px 3px -3px #333;
+}
+
+main > div.content.pb-panes {
+  flex-wrap: nowrap;        /* 패널은 절대 다음 줄로 떨어지지 않는다 */
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: 0;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+}
+
+main div.wrapper.ide.pb-pane {
+  margin-top: 0;
+  align-items: stretch;     /* baseline 이면 자식이 세로로 안 늘어난다 */
+  gap: 0.2em;
+  padding: 6px 8px 0;
+  overflow: hidden;         /* 스크롤은 안쪽 패널이 맡는다 */
+}
+main > div.content > .wrapper.ide.pb-pane + .wrapper.ide.pb-pane {
+  margin-left: 0;
+  padding-left: 8px;
+  border-left: 0;           /* 경계는 .pb-resizer 가 그린다 */
+}
+
+/* 열 너비. --pane-* 를 JS 가 드래그로 바꾸고 localStorage 에 저장한다 */
+:root { --pane-files: 300px; --pane-term: 380px; }
+#browser_en.pb-pane { flex: 0 0 var(--pane-files); }
+#result_en.pb-pane  { flex: 0 0 var(--pane-term); }
+
+/* 높이를 뷰포트 계산에서 flex 로 바꾼다 */
+/* .editor-row 는 align-items:center 라 자식이 세로로 안 늘어난다. 마지막 행만 stretch */
+.pb-pane .editor-row:last-child { flex: 1 1 auto; min-height: 0; display: flex;
+                                  align-items: stretch; gap: 0; }
+.pb-pane .editor-row:last-child > .editor-col { flex: 1 1 auto; min-height: 0; display: flex;
+                                                flex-direction: column; min-width: 0;
+                                                align-items: stretch; }   /* 원래 center 라 textarea 가 기본폭(약 20자)으로 가운데 몰렸다 */
+
+/* 터미널 윗줄(초기화 · 입력칸 · Enter). 입력칸이 줄어들어야 Enter 가 안 잘린다.
+   행 자체는 세로축(패널의 column flex)에서 늘어나면 안 된다 — 늘리면 아래 터미널
+   높이를 뺏는다. 가로축(행 안의 editor-col)만 늘린다.
+   입력칸 #prompt 는 <i class="fa-keyboard"> 안에 들어 있다(마크업이 그렇다).
+   그래서 줄어들어야 하는 건 <i> 다. */
+#result_en .editor-row:first-child { flex: 0 0 auto; min-width: 0; }
+#result_en .editor-row:first-child > .editor-col { flex: 1 1 auto; min-width: 0; }
+#result_en .editor-row:first-child > .editor-col > button { flex: none; min-width: 0; }
+#result_en .editor-row:first-child > .editor-col > i.fa-keyboard {
+  flex: 1 1 auto; min-width: 0; display: flex; align-items: center; gap: 4px;
+}
+#result_en #prompt { width: 100%; min-width: 0; flex: 1 1 auto; }
+
+/* 좁은 폭에서는 헤더 로고를 뺀다. 아이콘 라벨이 더 중요하다 */
+@media (max-width: 899px) { #logo_bt { display: none; } }
+
+.pb-pane .blocklyDiv,
+.pb-pane #codeDiv,
+.pb-pane .CodeMirror,
+.pb-pane .result,
+.pb-pane .terminal {
+  width: 100%;              /* textarea 는 auto 면 cols 기본값으로 잡힌다 */
+  min-width: 0;
+  height: auto;
+  flex: 1 1 auto;
+  min-height: 0;
+  margin-bottom: 0;
+}
+.pb-pane .fm-table-wrap {
+  width: auto;
+  height: auto;
+  flex: 1 1 auto;
+  min-height: 80px;
+}
+.pb-pane #prompt { width: auto; flex: 1 1 auto; min-width: 0; }
+
+/* 이미지 칸·오디오는 파일 패널 아래에 고정 크기로 둔다 */
+.pb-pane .filebox { flex: 0 0 auto; }
+
+/* ── 좁은 화면 ────────────────────────────────────────────────────────────
+   1200px 미만: 파일 패널을 접는다 (헤더의 파일 버튼으로 토글)
+   900px 미만: 터미널도 접는다. 블록이 화면을 다 쓴다 */
+@media (max-width: 1199px) {
+  :root { --pane-term: 320px; }
+  #browser_en.pb-pane { display: none; }
+  .pb-resizer[data-target="browser_en"] { display: none; }
+}
+@media (max-width: 899px) {
+  #result_en.pb-pane { display: none; }
+  .pb-resizer[data-target="result_en"] { display: none; }
+}
+/* 토글로 강제로 편 경우는 미디어쿼리를 이긴다 */
+.pb-pane[data-force-show="1"] { display: flex !important; }
+.pb-pane[data-force-show="1"] + .pb-resizer,
+.pb-resizer + .pb-pane[data-force-show="1"] { display: block; }
+
+/* 패널 토글 버튼은 그 패널이 접히는 폭에서만 보인다. 넓을 땐 필요 없다.
+   pibo-ui.css 가 index.css 뒤에 로드되고 .pb-iconbtn{display:flex} 라서
+   같은 명시도로는 진다. .pb-iconbtn 을 붙여 명시도를 올린다. */
+.pb-iconbtn.pb-pane-toggle { display: none; }
+@media (max-width: 1199px) { .pb-iconbtn.pb-pane-toggle[data-toggle-pane="browser_en"] { display: flex; } }
+@media (max-width: 899px)  { .pb-iconbtn.pb-pane-toggle[data-toggle-pane="result_en"]  { display: flex; } }
+.pb-pane-toggle[aria-pressed="true"] { background: rgba(0,0,0,.14); }
