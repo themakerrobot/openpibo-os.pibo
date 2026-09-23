@@ -509,8 +509,20 @@ git ls-tree -r HEAD system | grep -E "hotspot|booting|setup_country|setup_openpi
 
 ### 번역을 안 타는 문자열
 
-`record`(실행 로그)는 `result.value = data["record"]` 로 터미널에 **그대로** 찍힌다.
+`record`(실행 로그)는 터미널에 **그대로** 찍힌다.
 여기에 넣는 문자열은 양쪽 배포판에 같은 모습으로 보이므로 언어중립으로 쓸 것 (예: `[exit]`).
+
+### 실행 로그 프로토콜 (260923v2)
+
+- 시작할 때 `{'record': 전체}` 한 번 → 클라이언트가 터미널을 **갈아끼운다**
+- 그 뒤로는 `{'record_add': 조각}` → **이어 붙인다**. 약 50ms(`LOG_FLUSH_SEC`) 단위로 묶어 보낸다
+- 실행 중에 새로 붙은 화면(`init`)에는 그 소켓에만 `record` 를 한 번 보낸다
+- 전에는 줄마다 전체를 다시 보냈다. 2000줄 출력(39KB)에 42MB·2000프레임이 나갔다 → 지금 43KB·5프레임
+- 기기에 붙는 외부 도구(fleet 등)는 `record`·`record_add` 둘 다 처리해야 한다
+
+`periodic_system_update`(10초 주기)의 `system.sh`·`requests` 는 `run_blocking()` 으로
+스레드에서 돈다. 코루틴 안에서 직접 부르면 그동안 IDE 전체(실행 출력·저장)가 멈춘다.
+`/device/#14:!`(어댑터) 는 `mcu_control.py` 가 `#15` 와 같이 10초마다 캐시한다.
 
 ---
 

@@ -13,6 +13,7 @@ from fastapi import FastAPI, Request, UploadFile, File, Form, Body, Depends
 from fastapi.responses import HTMLResponse, FileResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi_socketio import SocketManager
 from starlette.websockets import WebSocketDisconnect
 from fastapi.templating import Jinja2Templates
@@ -41,6 +42,9 @@ app.add_middleware(
   allow_methods=["*"],
   allow_headers=["*"],
 )
+# 정적 파일(blockly·codemirror·index.js 등)을 압축해서 보낸다. ?ver 를 올릴 때마다
+# 교실 전체가 다시 받으므로 전송량이 제일 크게 줄어드는 곳이다. 1KB 미만은 그대로 보낸다
+app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 codeExec = {
   'python': 'python3',
@@ -63,6 +67,21 @@ codeText = ''
 codePath = ''
 
 mutex = asyncio.Lock()
+
+# 실행 로그는 모아서 보낸다. 줄마다 보내면 print 루프가 소켓 프레임을 줄 수만큼 만든다
+LOG_FLUSH_SEC = 0.05
+
+async def run_blocking(fn, *args):
+  # 동기 호출(subprocess·requests)을 이벤트 루프 밖에서 돌린다.
+  # 루프 안에서 돌리면 그동안 IDE 전체(실행 출력·저장·파일 목록)가 멈춘다
+  return await asyncio.get_running_loop().run_in_executor(None, fn, *args)
+
+def get_system_info():
+  return subprocess.check_output(['/home/pi/openpibo-os/system/system.sh'], timeout=5).decode().strip().split(',')
+
+def get_device(pkt):
+  # booting.py(8080) 가 MCU 값을 캐시해서 돌려준다. 걸려도 2초 안에 포기한다
+  return requests.get(f'http://127.0.0.1:8080/device/{pkt}', timeout=2).json().split(':')[1]
 
 def is_protect(p):
   for protected_path in protectList:
@@ -186,19 +205,20 @@ async def show_file(data: UploadFile = File(...)):
     await socket_manager.emit('update', {'dialog': 'err_view', 'detail': str(err)})
   return JSONResponse(content={"message": "msg_view_done"}, status_code=200)
 
-@app.sio.on('connection')
-async def handle_connection(sid, *args, **kwargs):
-  pass  # Placeholder for any connection initialization
-
 @app.sio.on('init')
 async def handle_init(sid):
   global codeText, codePath
   try:
-    system_info = subprocess.check_output(['/home/pi/openpibo-os/system/system.sh']).decode().strip().split(',')
+    system_info = await run_blocking(get_system_info)
     await app.sio.emit('system', system_info)
   except Exception as err:
     print(err)
     await app.sio.emit('update', {'dialog': 'err_init_sysfile'})
+
+  # 실행 중에 새로 붙은 화면(새로고침 등)은 지금까지의 출력을 한 번 통째로 받는다.
+  # 이후로는 다른 화면과 똑같이 늘어난 부분(record_add)만 받는다
+  if ps and ps.returncode is None:
+    await app.sio.emit('update', {'record': record}, to=sid)
 
   try:
     with open(codePath, 'r') as f:
@@ -471,10 +491,15 @@ async def handle_save(sid, d):
     await app.sio.emit('update', {'dialog': 'err_save', 'detail': str(err)})
 
 async def execute(EXEC, codepath):
+  # 실행 로그 프로토콜
+  #   {'record': 전체}      — 시작할 때(그리고 실행 중에 붙은 화면에) 한 번. 터미널을 갈아끼운다
+  #   {'record_add': 조각}  — 그 뒤로는 늘어난 부분만. 터미널에 이어 붙인다
+  # 예전에는 줄마다 전체를 다시 보내서 2000줄이면 39KB 출력에 39MB가 나갔다
   global record, ps
   async with mutex:
     record = f'[{datetime.datetime.now()}]: \n\n'
     await app.sio.emit('update', {'record': record})
+    files_before = read_directory(PATH)
     if EXEC == 'python3':
       ps = await asyncio.create_subprocess_exec(
         f"{ENV_PATH}/{EXEC}", '-u', codepath,
@@ -491,24 +516,49 @@ async def execute(EXEC, codepath):
         stderr=asyncio.subprocess.PIPE,
         stdin=asyncio.subprocess.PIPE
       )
+    loop = asyncio.get_running_loop()
+    pending = []
+    last_flush = loop.time() - LOG_FLUSH_SEC   # 첫 줄은 기다리지 않고 바로 보낸다
+
+    async def flush():
+      nonlocal pending, last_flush
+      if pending:
+        chunk = ''.join(pending)
+        pending = []
+        await app.sio.emit('update', {'record_add': chunk})
+      last_flush = loop.time()
+
     while True:
-      line = await ps.stdout.readline()
+      try:
+        # 모아 둔 게 있으면 LOG_FLUSH_SEC 안에 다음 줄이 안 와도 보낸다.
+        # readline 은 줄바꿈을 찾기 전까지 버퍼를 소비하지 않아 여기서 끊어도 잃는 게 없다
+        line = await asyncio.wait_for(ps.stdout.readline(), timeout=LOG_FLUSH_SEC if pending else None)
+      except asyncio.TimeoutError:
+        await flush()
+        continue
       if not line:
         break
-      record += line.decode()
-      await app.sio.emit('update', {'record': record})
+      text = line.decode(errors='replace')
+      record += text
+      pending.append(text)
+      if loop.time() - last_flush >= LOG_FLUSH_SEC:
+        await flush()
+    await flush()
 
     err = await ps.stderr.read()
     if err:
-      record += f'\n{err.decode()}'
-      await app.sio.emit('update', {'record': record})
+      text = f'\n{err.decode(errors="replace")}'
+      record += text
+      await app.sio.emit('update', {'record_add': text})
 
     await ps.wait()
     ps = None  # 프로세스가 종료되었으므로 ps를 None으로 설정
     record += "\n[exit]"
-    await app.sio.emit('update', {'record': record, 'exit': True})
+    await app.sio.emit('update', {'record_add': "\n[exit]", 'exit': True})
+    # 실행 중에 파일이 생기거나 지워졌을 때만 목록을 다시 보낸다 (사진 저장·녹음 등)
     directory_data = read_directory(PATH)
-    await app.sio.emit('update_file_manager', {'data': directory_data})
+    if directory_data != files_before:
+      await app.sio.emit('update_file_manager', {'data': directory_data})
 
 # execute 핸들러 수정
 @app.sio.on('execute')
@@ -577,18 +627,18 @@ async def handle_prompt(sid, s):
 async def periodic_system_update():
   while True:
     try:
-      system_info = subprocess.check_output(['/home/pi/openpibo-os/system/system.sh']).decode().strip().split(',')
+      system_info = await run_blocking(get_system_info)
       await app.sio.emit('system', system_info)
     except Exception as err:
       await app.sio.emit('update', {'dialog': 'err_init_sysfile'})
 
     try:
-      await app.sio.emit('update_battery', requests.get('http://127.0.0.1:8080/device/%2315%3A%21').json().split(':')[1])
+      await app.sio.emit('update_battery', await run_blocking(get_device, '%2315%3A%21'))
     except Exception as err:
       await app.sio.emit('update_battery', '0%')
 
     try:
-      await app.sio.emit('update_dc', requests.get('http://127.0.0.1:8080/device/%2314%3A%21').json().split(':')[1])
+      await app.sio.emit('update_dc', await run_blocking(get_device, '%2314%3A%21'))
     except Exception as err:
       await app.sio.emit('update_dc', 'off')
 

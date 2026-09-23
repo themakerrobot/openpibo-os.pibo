@@ -47,6 +47,8 @@ async def device_command(pkt: str):
       return JSONResponse(content=device_control.system_data.get('battery', ''), status_code=200)
     elif pkt == "#40:!":
       return JSONResponse(content=device_control.system_data.get('system', ''), status_code=200)
+    elif pkt == "#14:!":
+      return JSONResponse(content=device_control.system_data.get('dc', ''), status_code=200)
     else:
       response = device_control.send_raw(pkt)
       return JSONResponse(content=response, status_code=200)

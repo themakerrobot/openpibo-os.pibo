@@ -284,13 +284,13 @@ const codeEditor = CodeMirror.fromTextArea(
     theme: "cobalt",
     extraKeys: {
       "Ctrl-S": async (instance) => {
-        if ($("#codepath").html() == "") {
+        if ($("#codepath").text() == "") {
           await alert_popup(translations['nofile'][lang]);
           return;
         }
         saveCode = codeEditor.getValue();
         CodeMirror.signal(codeEditor, "change");
-        socket.emit("save", { codepath: $("#codepath").html(), codetext: saveCode });
+        socket.emit("save", { codepath: $("#codepath").text(), codetext: saveCode });
       },
       "Ctrl-/": "toggleComment"
     },
@@ -309,6 +309,26 @@ let BLOCK_PATH = '';
 let saveCode = "";
 let saveBlock = "{}";
 
+// 빈 블록 파일(새로 만든 파일)은 [깃발 클릭했을 때] 하나를 놓고 연다.
+// 깃발 아래에 붙지 않은 블록은 disable-top-blocks 가 회색으로 막으므로, 빈 화면에서
+// 블록부터 끌어다 놓으면 왜 안 되는지 알 수 없다. 파일은 저장하기 전까지 비어 있고,
+// saveBlock 을 지금 모양으로 맞춰 두어 '저장할까요?' 가 괜히 뜨지 않게 한다.
+// 이벤트는 끄고 놓는다 — 켜 두면 블록 생성 이벤트가 '파일을 먼저 고르세요' 팝업을
+// 띄우고(파일 없이 처음 열 때), 되돌리기로 깃발이 지워진다.
+function loadStarterBlocks() {
+  Blockly.Events.disable();
+  try {
+    Blockly.serialization.workspaces.load(
+      { blocks: { languageVersion: 0, blocks: [{ type: "flag_event", x: 40, y: 40 }] } }, workspace);
+  } finally {
+    Blockly.Events.enable();
+  }
+  workspace.clearUndo();
+  workspace.scroll(0, 0);
+  saveBlock = JSON.stringify(Blockly.serialization.workspaces.save(workspace));
+  update_block();
+}
+
 $("#fontsize").on("change", function () {
   document.querySelector("div.CodeMirror").style.fontSize = `${$("#fontsize").val()}px`;
   codeEditor.refresh();
@@ -317,8 +337,8 @@ $("#fontsize").on("change", function () {
 
 socket.on("update", async (data) => {
   if ("code" in data) {
-    const oldpath = $("#codepath").html();
-    $("#codepath").html(data["filepath"]);
+    const oldpath = $("#codepath").text();
+    $("#codepath").text(data["filepath"]);
 
     if (oldpath != "" || data["code"] != "") {
       let codetype = "";
@@ -339,14 +359,11 @@ socket.on("update", async (data) => {
         }
         catch (e) {
           if (data["code"] == "") {
-            saveBlock = "{}";
-            Blockly.serialization.workspaces.load(JSON.parse("{}"), workspace);
-            workspace.scrollCenter();
-            update_block();
+            loadStarterBlocks();
           }
           else {
             await alert_popup(translations['not_load_block'][lang]);
-            $("#codepath").html(oldpath);
+            $("#codepath").text(oldpath);
           }
         }
       }
@@ -355,20 +372,28 @@ socket.on("update", async (data) => {
         codeEditor.setValue(saveCode);
       }
     }
+    // 파일 없이 블록을 쌓다가 새 파일을 연 경우는 위에서 건너뛴다(쌓은 블록을 그 파일에
+    // 저장하게 하려는 것). 쌓은 게 없을 때만 깃발을 놓는다
+    else if (document.querySelector("div[name=codetype] button[name=block]").classList.contains("checked")
+             && workspace.getAllBlocks(false).length == 0) {
+      loadStarterBlocks();
+    }
   }
 
   if ("image" in data) {
-    $("#mediapath").html(data["filepath"]);
+    $("#mediapath").text(data["filepath"]);
     $("#image").prop("src", `data:image/jpeg;charset=utf-8;base64,${data["image"]}`);
   }
 
   if ("audio" in data) {
-    $("#mediapath").html(data["filepath"]);
+    $("#mediapath").text(data["filepath"]);
     $("#audio").prop("src", `data:audio/mpeg;charset=utf-8;base64,${data["audio"]}`);
   }
 
-  if ("record" in data) {
-    result.value = data["record"];
+  // 서버는 시작할 때 전체(record)를 한 번 보내고, 그 뒤로는 늘어난 부분(record_add)만 보낸다
+  if ("record" in data || "record_add" in data) {
+    if ("record" in data) result.value = data["record"];
+    else result.value += data["record_add"];
     result.scrollTop = result.scrollHeight;
     execute.classList.add("disabled");
     stop.classList.remove("disabled");
@@ -441,14 +466,11 @@ socket.on("init", (d) => {
     }
     catch (e) {
       if (d["codetext"] == "") {
-        saveBlock = "{}";
-        Blockly.serialization.workspaces.load(JSON.parse("{}"), workspace);
-        workspace.scrollCenter();
-        update_block();
         $("#codepath").text(d["codepath"]);
+        loadStarterBlocks();
       }
       else {
-        $("#codepath").html("");
+        $("#codepath").text("");
       }
     }
     finally {
@@ -502,16 +524,16 @@ codeTypeBtns.forEach((btn) => {
       if (before_codetype != "block") {
         $("#codeDiv").hide();
         $("#blocklyDiv").show();
-        CODE_PATH = $("#codepath").html();
-        $("#codepath").html(BLOCK_PATH);
+        CODE_PATH = $("#codepath").text();
+        $("#codepath").text(BLOCK_PATH);
       }
     }
     else {
       if (before_codetype == "block") {
         $("#blocklyDiv").hide();
         $("#codeDiv").show();
-        BLOCK_PATH = $("#codepath").html();
-        $("#codepath").html(CODE_PATH);
+        BLOCK_PATH = $("#codepath").text();
+        $("#codepath").text(CODE_PATH);
       }
     }
     setLanguage(lang);
@@ -525,7 +547,7 @@ codeEditor.on("change", function () {
 });
 
 execute.addEventListener("click", async function () {
-  let filepath = $("#codepath").html();
+  let filepath = $("#codepath").text();
   if (filepath == "") {
     await alert_popup(translations['nofile'][lang]);
     return;
@@ -554,7 +576,7 @@ execute.addEventListener("click", async function () {
   }
   else {
     saveCode = codeEditor.getValue();
-    codepath = $("#codepath").html();
+    codepath = $("#codepath").text();
     CodeMirror.signal(codeEditor, "change");
     socket.emit("execute", { codetype: codetype, codepath: codepath, codetext: saveCode });
   }
@@ -563,7 +585,7 @@ execute.addEventListener("click", async function () {
   stop.classList.remove("disabled");
   execute.disabled = true;
   stop.disabled = false;
-  $("#respath").text($("#codepath").html());
+  $("#respath").text($("#codepath").text());
 });
 
 stop.addEventListener("click", function () {
@@ -593,7 +615,7 @@ socket.on("update_file_manager", (d) => {
       $("<tr>")
         .append(
           $("<td style='width:30px;text-align:center'>").append(`<i class='fa-solid fa-${data[i].type}'></i>`),
-          $("<td>").append(data[i].name)
+          $("<td>").text(data[i].name)
             .hover(
               function () { $(this).animate({ opacity: "0.3" }, 100); $(this).css("cursor", "pointer"); },
               function () { $(this).animate({ opacity: "1" }, 100); $(this).css("cursor", "default"); }
@@ -601,7 +623,7 @@ socket.on("update_file_manager", (d) => {
             .click(async function () {
               let idx = $(this).closest('tr').index();
               let type = $(`#fm_table tr:eq(${idx}) td:eq(0)`).html()
-              let name = $(`#fm_table tr:eq(${idx}) td:eq(1)`).html()
+              let name = $(`#fm_table tr:eq(${idx}) td:eq(1)`).text()
 
               if (name == "..") {
                 if (CURRENT_DIR.length < 4) {
@@ -638,14 +660,14 @@ socket.on("update_file_manager", (d) => {
                     //   return;
                     // }
                     if (saveBlock != JSON.stringify(Blockly.serialization.workspaces.save(workspace))) {
-                      if (await confirm_popup(translations['confirm_save_file'][lang]($("#codepath").html())))
-                        socket.emit("save", { codepath: $("#codepath").html(), codetext: JSON.stringify(Blockly.serialization.workspaces.save(workspace)) });
+                      if (await confirm_popup(translations['confirm_save_file'][lang]($("#codepath").text())))
+                        socket.emit("save", { codepath: $("#codepath").text(), codetext: JSON.stringify(Blockly.serialization.workspaces.save(workspace)) });
                     }
                   }
                   else {
                     if (saveCode != codeEditor.getValue()) {
-                      if (await confirm_popup(translations['confirm_save_file'][lang]($("#codepath").html())))
-                        socket.emit("save", { codepath: $("#codepath").html(), codetext: codeEditor.getValue() });
+                      if (await confirm_popup(translations['confirm_save_file'][lang]($("#codepath").text())))
+                        socket.emit("save", { codepath: $("#codepath").text(), codetext: codeEditor.getValue() });
                     }
                   }
                   socket.emit("load", filepath);
@@ -653,7 +675,7 @@ socket.on("update_file_manager", (d) => {
               }
             })
           ,
-          $("<td style='width:15px;text-align:center'>").append(data[i].type == "" || data[i].protect == true ? "" : `<a href='/download?filename=${data[i].name}'><i class='fa-solid fa-circle-down'></i></a>`)
+          $("<td style='width:15px;text-align:center'>").append(data[i].type == "" || data[i].protect == true ? "" : $("<a>").attr("href", "/download?filename=" + encodeURIComponent(data[i].name)).append("<i class='fa-solid fa-circle-down'></i>"))
             //$("<td style='width:15px;text-align:center'>").append(["", "folder"].includes(data[i].type) || data[i].protect==true?"":`<a href='/download?filename=${data[i].name}'><i class='fa-solid fa-circle-down'></i></a>`)
             .hover(
               function () { $(this).animate({ opacity: "0.3" }, 100); },
@@ -670,7 +692,7 @@ socket.on("update_file_manager", (d) => {
 
               let idx = $(this).closest('tr').index();
               //let type = $(`#fm_table tr:eq(${idx}) td:eq(0)`).html();
-              let name = $(`#fm_table tr:eq(${idx}) td:eq(1)`).html();
+              let name = $(`#fm_table tr:eq(${idx}) td:eq(1)`).text();
               let newname = await prompt_popup(translations['check_newfile_name'][lang], name);
 
               if (newname != null) {
@@ -690,8 +712,8 @@ socket.on("update_file_manager", (d) => {
 
               if (!await confirm_popup(translations['confirm_rename'][lang](name, newname))) return;
 
-              if ($("#codepath").html().includes(CURRENT_DIR.join("/") + "/" + name)) {
-                $("#codepath").html("");
+              if ($("#codepath").text().includes(CURRENT_DIR.join("/") + "/" + name)) {
+                $("#codepath").text("");
               }
               if (CODE_PATH.includes(CURRENT_DIR.join("/") + "/" + name)) {
                 CODE_PATH = "";
@@ -717,10 +739,10 @@ socket.on("update_file_manager", (d) => {
 
               let idx = $(this).closest('tr').index();
               //let type = $(`#fm_table tr:eq(${idx}) td:eq(0)`).html();
-              let name = $(`#fm_table tr:eq(${idx}) td:eq(1)`).html();
+              let name = $(`#fm_table tr:eq(${idx}) td:eq(1)`).text();
               if (await confirm_popup(translations['confirm_delete_file'][lang](`${CURRENT_DIR.join("/")}/${name}`))) {
-                if ($("#codepath").html().includes(CURRENT_DIR.join("/") + "/" + name)) {
-                  $("#codepath").html("");
+                if ($("#codepath").text().includes(CURRENT_DIR.join("/") + "/" + name)) {
+                  $("#codepath").text("");
                 }
                 if (CODE_PATH.includes(CURRENT_DIR.join("/") + "/" + name)) {
                   CODE_PATH = "";
@@ -781,8 +803,8 @@ $("#add_file").on("click", async function () {
       return;
     }
     if (saveCode != codeEditor.getValue()) {
-      if (await confirm_popup(translations['confirm_save_file'][lang]($("#codepath").html())))
-        socket.emit("save", { codepath: $("#codepath").html(), codetext: codeEditor.getValue() });
+      if (await confirm_popup(translations['confirm_save_file'][lang]($("#codepath").text())))
+        socket.emit("save", { codepath: $("#codepath").text(), codetext: codeEditor.getValue() });
     }
     socket.emit('add_file', CURRENT_DIR.join("/") + "/" + name);
   }
@@ -922,7 +944,7 @@ $("#theme_check").on("change", function () {
 });
 
 $("#save").on("click", async function () {
-  let filepath = $("#codepath").html();
+  let filepath = $("#codepath").text();
 
   if (filepath == "") {
     await alert_popup(translations['nofile'][lang]);
@@ -1098,7 +1120,7 @@ disableTopBlocks.init();
 workspace.addChangeListener((event) => {
   update_block();
   if (event.type == Blockly.Events.CREATE) {
-    if ($("#codepath").html() == '') setTimeout(async function () { await alert_popup(translations["confirm_block_file"][lang]) }, 500);
+    if ($("#codepath").text() == '') setTimeout(async function () { await alert_popup(translations["confirm_block_file"][lang]) }, 500);
 
     const allBlocks = workspace.getAllBlocks();
     const matchingBlocks = allBlocks.filter(block => block.type === 'flag_event');
@@ -1125,7 +1147,7 @@ workspace.addChangeListener((event) => {
 $(document).keydown(async (evt) => {
   if ((evt.which == '115' || evt.which == '83') && (evt.ctrlKey || evt.metaKey)) {
     evt.preventDefault();
-    let filepath = $("#codepath").html();
+    let filepath = $("#codepath").text();
 
     if (filepath == "") {
       await alert_popup(translations['nofile'][lang]);
@@ -1443,7 +1465,7 @@ let pendingSave = null;
 const save_btn = document.getElementById("save");
 
 function doSave(codetype) {
-  const path = $("#codepath").html();
+  const path = $("#codepath").text();
   if (codetype == "block") {
     const snap = JSON.stringify(Blockly.serialization.workspaces.save(workspace));
     socket.emit("save", { codepath: "/home/pi/.tmp.py", codetext: Blockly.Python.workspaceToCode(workspace) });
