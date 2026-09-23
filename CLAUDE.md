@@ -525,6 +525,8 @@ YOLO ONNX 를 돌린다(`openpibo/modules/yolo_onnx.py`). 기본 모델은 그�
 - 클래스 이름: ONNX 메타데이터 `names`(ultralytics export 가 넣는다) → 없으면 모델 옆 `labels.txt`.
   그래서 `load_object_model` 블록으로 올리던 사용자 YOLO 모델도 그대로 읽힌다
 - 모델은 처음 `detect_object` 를 부를 때 올린다. `Detect()` 만 만들고 QR·마커만 쓰면 메모리를 안 쓴다
+- mediapipe 도 `load_hand_gesture_model` 에서 처음 import 한다. 손 제스처를 안 쓰면 안 올라온다
+  (기기 버전 0.10.18 기준 +87MB). 포즈는 MoveNet 그대로 — MediaPipe Pose Lite 보다 7배 빠르고 모델 메모리가 1/4
 - 컨테이너 x86 4코어, 320: 예전(ultralytics) 최대 838MB · 53ms → 지금 194MB · 27ms.
   torch import 가 대부분이었다. **파이보 실측은 아직**
 
