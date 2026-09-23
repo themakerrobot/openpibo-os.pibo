@@ -64,6 +64,9 @@ PiBrain 까지 더하면 사본이 여섯 벌이 된다. 그래서 한 파일로
 
 ## 알아둘 것
 
+- **`fa-regular` 아이콘은 쓰지 말 것.** 기기의 `webfonts/` 에는 Font Awesome solid 와
+  brands 글꼴만 있다. regular 는 빈칸으로 그려진다(`fa-solid` 로 바꿀 것)
+
 - `box-sizing` 은 키트 컴포넌트에만 건다. `.pb *` 로 걸면 붙이는 것만으로 기존
   레이아웃이 틀어진다. (이 리포의 세 앱은 이미 전역 `border-box` 라 무해하지만
   PiBrain 은 확인 전이다)

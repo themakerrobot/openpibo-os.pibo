@@ -10,8 +10,8 @@
   <meta name="mobile-web-app-capable" content="yes" />
 
   <link rel="stylesheet" href="../static/fontello.css" type="text/css" />
-  <link rel="stylesheet" href="../static/index.css?ver=260923v2" />
-  <link rel="stylesheet" href="../static/pibo-ui.css?ver=260923v2" />
+  <link rel="stylesheet" href="../static/index.css?ver=260923v4" />
+  <link rel="stylesheet" href="../static/pibo-ui.css?ver=260923v4" />
   <link rel="stylesheet" href="../static/all.min.css" type="text/css" />
   <link rel="stylesheet" href="../static/codemirror.css" />
   <link rel="stylesheet" href="../static/cobalt.css" />
@@ -19,7 +19,7 @@
   <link rel="stylesheet" href="../static/jquery.jsonview.min.css" />
   <link rel="shortcut icon" href="../static/icon.png?ver=240319v1" type="image/x-icon" />
 
-  <script src="../static/ko2en.js?ver=260923v1"></script>
+  <script src="../static/ko2en.js?ver=260923v4"></script>
   <script src="../static/blockly_compressed.js?ver=240319v1"></script>
   <script src="../static/blocks_compressed.js?ver=240319v1"></script>
   <script src="../static/python_compressed.js?ver=240319v1"></script>
@@ -233,7 +233,7 @@
         </div>
 
         <div class="filepath">
-          <i class="fa-solid fa-file"></i><span id="codepath"></span>
+          <i class="fa-solid fa-file"></i><span id="codepath"></span><button type="button" class="pb-btn pb-btn--sm pb-btn--ghost pb-inline-act" id="pycode_bt" hidden><i class="fa-brands fa-python"></i><span data-key="pycode"></span></button>
         </div>
 
         <div class="editor-row">
@@ -265,7 +265,7 @@
           </div>
         </div>
         <div class="filepath">
-          <i class="fa-solid fa-file"></i><span id="respath"></span>
+          <i class="fa-solid fa-file"></i><span id="respath"></span><span id="run_status" class="pb-runstat" hidden aria-live="polite"></span>
         </div>
 
         <div class="editor-row">
@@ -276,6 +276,17 @@
         </div>
       </div>
     </div>
+  <div class="pb-modal" id="pyModal" hidden role="dialog" aria-modal="true" aria-labelledby="pyModalTitle">
+    <div class="pb-modal__box">
+      <div class="pb-modal__head"><i class="fa-brands fa-python"></i><span id="pyModalTitle" data-key="pycode_title"></span>
+        <button type="button" class="pb-btn pb-btn--sm pb-btn--ghost" data-act="close" aria-label="close"><i class="fa-solid fa-xmark"></i></button></div>
+      <div class="pb-modal__body"><pre></pre></div>
+      <div class="pb-modal__foot">
+        <button type="button" class="pb-btn pb-btn--sm" data-act="copy"><i class="fa-solid fa-copy"></i><span data-key="copy"></span></button>
+        <button type="button" class="pb-btn pb-btn--sm pb-btn--accent" data-act="close"><span data-key="close"></span></button>
+      </div>
+    </div>
+  </div>
   </main>
   <footer class="pb-statusbar">
     <div style="float:left;padding:0.7rem 0 0.7rem 0">
@@ -296,8 +307,8 @@
       <span id="d_dc_val"></span>
     </div>
   </footer>
-  <script src="../static/pibo-ui.js?ver=260923v2"></script>
-  <script src="../static/index.js?ver=260917v1"></script>
+  <script src="../static/pibo-ui.js?ver=260923v4"></script>
+  <script src="../static/index.js?ver=260923v4"></script>
 </body>
 
 </html>

@@ -1100,3 +1100,12 @@ main > div.content > .wrapper.ide.pb-pane + .wrapper.ide.pb-pane {
 /* 숨긴 파일 입력(.filebox)이 flex 항목 하나를 차지해 gap 을 하나 더 먹는다. 흐름에서 뺀다 */
 #browser_en .editor-row:first-child .filebox { position: absolute; width: 0; height: 0; overflow: hidden; }
 #browser_en .filepath { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ── 경로 줄 오른쪽의 동작들: [파이썬 코드] 버튼, 실행 상태 칩 ─────────────── */
+.pb-pane .filepath { display: flex; align-items: center; gap: 4px; min-height: 26px; min-width: 0; }
+.pb-pane .filepath > span:not(.pb-runstat) { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pb-inline-act { margin-left: auto; flex: none; }
+/* 오류로 끝난 실행: 터미널 왼쪽에 빨간 띠. 줄 단위 색칠은 터미널이 textarea 라 불가능하다 */
+#result.has-error { border-left: 4px solid var(--red) !important; }
+/* 파일 목록에서 지금 연 파일 */
+#fm_table tr.is-current td { background: var(--light-yellow); font-weight: 700; }

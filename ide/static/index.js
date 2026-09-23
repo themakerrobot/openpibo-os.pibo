@@ -205,72 +205,21 @@ async function prompt_popup(message, defaultValue = '') {
   });
 }
 
-const tools_bt = document.getElementById("tools_bt")
-tools_bt.addEventListener("click", function () {
-  const tools_bt_innerHTML = tools_bt.innerHTML;
-  tools_bt.innerHTML = "<i class='fa-solid fa-spinner fa-spin'></i>";
-  fetch(`http://${location.hostname}/tools?enable=on`)
-  .then(response => {
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    return response.text();
-  })
-  .then(data => {
-    setTimeout(function() {
-      window.open(`http://${location.hostname}:50000`);
-      tools_bt.innerHTML = tools_bt_innerHTML;
-    }, 3000);
-  //   console.log('데이터 수신 성공:', data);
-  })
-  .catch(error => {
-  //   console.error('데이터 요청 중 에러 발생:', error);
-  });
+// 도구·대화·분류기는 누르는 '그 순간' 이름 붙인 새 탭으로 연다 (PiboUI.openService).
+// 탭은 launch.html 대기 페이지로 열리고, 거기서 서비스를 켜고 실제로 응답할 때까지
+// 기다린 뒤 스스로 이동한다.
+// 전에는 켜기 요청 후 무조건 3초 뒤에 window.open 했다. 사용자 클릭에서 3초가 지나
+// 브라우저가 팝업으로 막을 수 있었고, 대화 모델은 3초 안에 안 떠서 빈 화면이 먼저
+// 떴고, 실패하면 .catch 가 에러를 삼켜 스피너가 계속 돌았다.
+// 탭에 이름을 붙였으므로 두 번 눌러도 탭이 하나로 유지된다.
+document.getElementById("tools_bt").addEventListener("click", function () {
+  PiboUI.openService("tools");
 });
-
-const llm_bt = document.getElementById("llm_bt")
-llm_bt.addEventListener("click", function () {
-  const llm_bt_innerHTML = llm_bt.innerHTML;
-  llm_bt.innerHTML = "<i class='fa-solid fa-spinner fa-spin'></i>";
-  fetch(`http://${location.hostname}/llm?enable=on`)
-  .then(response => {
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    return response.text();
-  })
-  .then(data => {
-    setTimeout(function() {
-      window.open(`http://${location.hostname}:50020`);
-      llm_bt.innerHTML = llm_bt_innerHTML;
-    }, 3000);
-  //   console.log('데이터 수신 성공:', data);
-  })
-  .catch(error => {
-  //   console.error('데이터 요청 중 에러 발생:', error);
-  });
+document.getElementById("llm_bt").addEventListener("click", function () {
+  PiboUI.openService("llm");
 });
-const classifier_bt = document.getElementById("classifier_bt")
-classifier_bt.addEventListener("click", async function () {
-  const classifier_bt_innerHTML = classifier_bt.innerHTML;
-  classifier_bt.innerHTML = "<i class='fa-solid fa-spinner fa-spin'></i>";
-  fetch(`http://${location.hostname}/classifier?enable=on`)
-  .then(response => {
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    return response.text();
-  })
-  .then(data => {
-    setTimeout(function() {
-      window.open(`http://${location.hostname}:50010`);
-      classifier_bt.innerHTML = classifier_bt_innerHTML;
-    }, 3000);
-  //   console.log('데이터 수신 성공:', data);
-  })
-  .catch(error => {
-  //   console.error('데이터 요청 중 에러 발생:', error);
-  });
+document.getElementById("classifier_bt").addEventListener("click", function () {
+  PiboUI.openService("classifier");
 });
 
 // 하드웨어 검수 페이지. 일반 사용자가 쓸 일이 없어 헤더에 아이콘을 두지 않고,
@@ -305,7 +254,7 @@ hwtest_bt.addEventListener("click", async function () {
 });
 
 document.getElementById("guide_bt").addEventListener("click", function () {
-  window.open(`http://${location.hostname}:8080`);
+  window.open(`http://${location.hostname}:8080`, "pibo_guide");
 });
 
 document.getElementById("restore_bt").addEventListener("click", async function () {
@@ -426,6 +375,9 @@ socket.on("update", async (data) => {
     execute.disabled = true;
     stop.disabled = false;
   }
+
+  if ("saved" in data) onSaved(data["saved"]);
+  if ("dialog" in data && /^err_save/.test(data["dialog"])) onSaveFailed();
 
   if ("dialog" in data) {
     await alert_popup(t(data["dialog"], data["detail"]));
@@ -980,32 +932,7 @@ $("#save").on("click", async function () {
   codeTypeBtns.forEach((el) => {
     if (el.classList.value.includes("checked")) codetype = el.name;
   });
-  if (codetype == "block") {
-    // if (filepath.substring(filepath.lastIndexOf(".") + 1, filepath.length) != "json") {
-    //   await alert_popup("json 파일만 저장 가능합니다.");
-    //   return;
-    // }
-    saveBlock = JSON.stringify(Blockly.serialization.workspaces.save(workspace))
-    socket.emit("save", {
-      codepath: "/home/pi/.tmp.py",
-      codetext: Blockly.Python.workspaceToCode(workspace)
-    });
-    socket.emit("save", {
-      codepath: $("#codepath").html(),
-      codetext: saveBlock
-    });
-    result.value = Blockly.Python.workspaceToCode(workspace);
-    update_block();
-  }
-  else {
-    codeTypeBtns.forEach((el) => {
-      if (el.classList.value.includes("checked")) codetype = el.name;
-    });
-
-    saveCode = codeEditor.getValue();
-    CodeMirror.signal(codeEditor, "change");
-    socket.emit("save", { codepath: $("#codepath").html(), codetext: saveCode });
-  }
+  doSave(codetype);
 });
 
 let update_block = function () {
@@ -1208,31 +1135,7 @@ $(document).keydown(async (evt) => {
     codeTypeBtns.forEach((el) => {
       if (el.classList.value.includes("checked")) codetype = el.name;
     });
-    if (codetype == "block") {
-      // if (filepath.substring(filepath.lastIndexOf(".") + 1, filepath.length) != "json") {
-      //   await alert_popup("json 파일만 저장 가능합니다.");
-      //   return;
-      // }
-      saveBlock = JSON.stringify(Blockly.serialization.workspaces.save(workspace))
-      socket.emit("save", {
-        codepath: "/home/pi/.tmp.py",
-        codetext: Blockly.Python.workspaceToCode(workspace)
-      });
-      socket.emit("save", {
-        codepath: $("#codepath").html(),
-        codetext: saveBlock
-      });
-      result.value = Blockly.Python.workspaceToCode(workspace);
-      update_block();
-    }
-    else {
-      codeTypeBtns.forEach((el) => {
-        if (el.classList.value.includes("checked")) codetype = el.name;
-      });
-      saveCode = codeEditor.getValue();
-      CodeMirror.signal(codeEditor, "change");
-      socket.emit("save", { codepath: $("#codepath").html(), codetext: saveCode });
-    }
+    doSave(codetype);
     return false;
   }
   return true;
@@ -1526,3 +1429,164 @@ language.addEventListener("change", function () {
 
 // warning
 document.querySelector("div.CodeMirror textarea").setAttribute("name", "ctx");
+
+
+/* ==========================================================================
+   저장 확인
+   서버(run_ide.py handle_save)가 파일을 다 쓴 뒤 {'saved': 경로} 를 보낸다.
+   그걸 받아야 미저장 표시(●)를 지운다. 전에는 보내자마자 지워서, 저장이
+   실패해도 저장된 것처럼 보였다.
+   블록 모드에서 저장하면 생성된 파이썬 코드를 터미널에 덮어쓰던 동작은 뺐다 —
+   [파이썬 코드] 버튼이 그 역할을 한다. 실행 결과가 지워지지 않는다.
+   ========================================================================== */
+let pendingSave = null;
+const save_btn = document.getElementById("save");
+
+function doSave(codetype) {
+  const path = $("#codepath").html();
+  if (codetype == "block") {
+    const snap = JSON.stringify(Blockly.serialization.workspaces.save(workspace));
+    socket.emit("save", { codepath: "/home/pi/.tmp.py", codetext: Blockly.Python.workspaceToCode(workspace) });
+    socket.emit("save", { codepath: path, codetext: snap });
+    beginSave(path, "block", snap);
+  } else {
+    const snap = codeEditor.getValue();
+    socket.emit("save", { codepath: path, codetext: snap });
+    beginSave(path, "code", snap);
+  }
+}
+function beginSave(path, kind, snap) {
+  if (pendingSave) clearTimeout(pendingSave.timer);
+  PiboUI.busy(save_btn, true);
+  pendingSave = {
+    path, kind, snap,
+    timer: setTimeout(() => {           // 5초 안에 확인이 없으면 알린다. 표시(●)는 그대로 둔다
+      if (!pendingSave) return;
+      pendingSave = null;
+      PiboUI.busy(save_btn, false);
+      PiboUI.toast(t("save_unconfirmed"), "warn", 4000);
+    }, 5000)
+  };
+}
+function onSaved(path) {
+  if (!pendingSave || path !== pendingSave.path) return;   // .tmp.py 확인은 무시
+  clearTimeout(pendingSave.timer);
+  if (pendingSave.kind == "block") { saveBlock = pendingSave.snap; update_block(); }
+  else { saveCode = pendingSave.snap; CodeMirror.signal(codeEditor, "change"); }
+  pendingSave = null;
+  PiboUI.busy(save_btn, false);
+  PiboUI.toast(t("saved"), "ok");
+}
+function onSaveFailed() {
+  if (!pendingSave) return;
+  clearTimeout(pendingSave.timer);
+  pendingSave = null;
+  PiboUI.busy(save_btn, false);        // 이유는 뒤이어 뜨는 알림창이 말한다
+}
+
+/* ==========================================================================
+   [파이썬 코드] — 지금 블록이 어떤 파이썬이 되는지 보여준다 (복사 가능)
+   ========================================================================== */
+(function () {
+  const btn = document.getElementById("pycode_bt");
+  const modal = document.getElementById("pyModal");
+  if (!btn || !modal) return;
+  const pre = modal.querySelector("pre");
+  const close = () => { modal.hidden = true; btn.focus(); };
+  btn.addEventListener("click", () => {
+    pre.textContent = Blockly.Python.workspaceToCode(workspace) || "# (empty)";
+    modal.hidden = false;
+    modal.querySelector("[data-act=close]").focus();
+  });
+  modal.addEventListener("click", (e) => {
+    const act = e.target.closest("[data-act]");
+    if (e.target === modal || (act && act.dataset.act == "close")) return close();
+    if (act && act.dataset.act == "copy") {
+      const done = () => PiboUI.toast(t("copied"), "ok");
+      if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(pre.textContent).then(done);
+      else {                          // http 에서는 clipboard API 가 없다 (로봇은 http 다)
+        const r = document.createRange(); r.selectNodeContents(pre);
+        const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r);
+        try { document.execCommand("copy"); done(); } catch (err) { /* 선택된 채로 둔다 */ }
+      }
+    }
+  });
+  document.addEventListener("keydown", (e) => { if (e.key == "Escape" && !modal.hidden) close(); });
+  // 블록 모드에서만 보인다. 모드는 버튼 클릭뿐 아니라 파일을 열 때(init/update)
+  // 코드가 checked 클래스를 바꿔서도 바뀌므로, 클릭이 아니라 클래스 변화를 본다
+  const sync = () => {
+    let ct = ""; codeTypeBtns.forEach((el) => { if (el.classList.contains("checked")) ct = el.name; });
+    btn.hidden = ct != "block";
+  };
+  codeTypeBtns.forEach((b) => new MutationObserver(sync).observe(b, { attributes: true, attributeFilter: ["class"] }));
+  sync();
+})();
+
+/* ==========================================================================
+   실행 상태 — 터미널 제목 줄의 칩: 실행 중(경과 시간) / 끝남 / 오류
+   실행 버튼의 disabled 가 켜지고 꺼지는 것으로 시작·끝을 안다.
+   (블록 단위 강조는 불가능하다. 파이썬이 로봇에서 돌아서 블록별로 추적할 수 없다)
+   ========================================================================== */
+(function () {
+  const chip = document.getElementById("run_status");
+  if (!chip) return;
+  let t0 = 0, timer = null, running = false;
+  const mmss = (s) => String(Math.floor(s / 60)).padStart(2, "0") + ":" + String(s % 60).padStart(2, "0");
+  const set = (kind, text) => { chip.className = "pb-runstat pb-runstat--" + kind; chip.textContent = text; chip.hidden = false; };
+  const tick = () => set("running", t("run_running") + " " + mmss(Math.floor((Date.now() - t0) / 1000)));
+  function begin() {
+    running = true; t0 = Date.now();
+    document.body.setAttribute("data-running", "1");
+    result.classList.remove("has-error");
+    tick(); timer = setInterval(tick, 1000);
+  }
+  function end() {
+    running = false; clearInterval(timer);
+    document.body.removeAttribute("data-running");
+    const sec = Math.max(1, Math.round((Date.now() - t0) / 1000));
+    // 파이썬 예외는 stderr 로 나오고 run_ide.py 가 record 끝에 붙인다
+    const err = /Traceback \(most recent call last\)|^\w*(Error|Exception):/m.test(result.value);
+    if (err) {
+      result.classList.add("has-error");
+      set("error", t("run_error"));
+      PiboUI.toast(t("run_toast_error", sec), "error", 3500);
+    } else {
+      set("done", t("run_done") + " · " + sec + t("sec_unit"));
+      PiboUI.toast(t("run_toast_done", sec), "ok");
+    }
+  }
+  new MutationObserver(() => {
+    if (execute.disabled && !running) begin();
+    else if (!execute.disabled && running) end();
+  }).observe(execute, { attributes: true, attributeFilter: ["disabled"] });
+})();
+
+/* ==========================================================================
+   연결 끊김 — 로봇이 재부팅되거나 WiFi 가 끊기면 배너. 붙으면 저절로 사라진다.
+   끊긴 동안은 로봇에 보내는 버튼(data-needs-robot)을 못 누르게 한다.
+   ========================================================================== */
+[execute, stop, save_btn].forEach((el) => el && el.setAttribute("data-needs-robot", ""));
+PiboUI.watchSocket(socket);
+
+/* ==========================================================================
+   파일 목록에서 지금 연 파일 강조
+   ========================================================================== */
+(function () {
+  const tbody = document.querySelector("#fm_table > tbody");
+  const cp = document.getElementById("codepath");
+  if (!tbody || !cp) return;
+  let last = "";
+  const mark = () => {
+    const cur = cp.textContent.trim();
+    const dir = (CURRENT_DIR || []).join("/");
+    Array.prototype.forEach.call(tbody.rows, (tr) => {
+      const name = tr.cells[1] ? tr.cells[1].textContent : "";
+      const on = !!cur && name && name != ".." && (dir + "/" + name) === cur;
+      tr.classList.toggle("is-current", on);
+      if (on && cur !== last) { tr.classList.remove("pb-flash"); void tr.offsetWidth; tr.classList.add("pb-flash"); }
+    });
+    last = cur;
+  };
+  new MutationObserver(mark).observe(tbody, { childList: true });
+  new MutationObserver(mark).observe(cp, { childList: true, characterData: true, subtree: true });
+})();

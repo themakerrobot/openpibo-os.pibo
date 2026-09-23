@@ -851,3 +851,27 @@ language.addEventListener("change", () => {
   setLanguage(lang);
   localStorage.setItem("language", lang);
 });
+
+
+/* ==========================================================================
+   [IDE] — IDE 가 연 탭이면 닫아서 원래 IDE 탭으로 돌아간다. 주소를 직접 쳐서
+   연 탭은 닫을 수 없으니 IDE 주소로 이동한다. 어느 쪽이든 beforeunload 가
+   이 서비스를 끈다.
+   (오른쪽 끝 THE MAKER 로고도 IDE 로 가지만, 돌아가기 버튼인지 알아볼 수 없었다)
+   ========================================================================== */
+document.getElementById("ide_bt").addEventListener("click", () => PiboUI.backToIDE());
+
+/* ==========================================================================
+   연결 끊김 — 이 탭은 서비스가 꺼지면 소켓이 끊긴다. IDE 에서 다른 도구를 켜거나
+   코드를 실행하면 서버가 이 서비스를 끄기 때문이다. 그때 배너로 알린다.
+   ========================================================================== */
+PiboUI.watchSocket(socket, {
+  banner: () => ({
+    text: PiboUI.text("svc_stopped"),
+    kind: "warn",
+    actions: [
+      { label: PiboUI.text("restart"), primary: true, onClick: () => PiboUI.restartSelf("tools") },
+      { label: PiboUI.text("close"), onClick: () => PiboUI.backToIDE() }
+    ]
+  })
+});

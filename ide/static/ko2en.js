@@ -2,6 +2,19 @@ const blang = (navigator.language || navigator.userLanguage).includes('ko')?'ko'
 let lang = localStorage.getItem("language")?localStorage.getItem("language"):blang;
 
 const translations = {
+  saved:            { ko: "저장했습니다",                 en: "Saved" },
+  save_unconfirmed: { ko: "저장 확인을 받지 못했습니다. 다시 저장해 보세요.", en: "Save was not confirmed. Please save again." },
+  copied:           { ko: "복사했습니다",                 en: "Copied" },
+  pycode:           { ko: "파이썬 코드",                  en: "Python code" },
+  pycode_title:     { ko: "블록이 만드는 파이썬 코드",      en: "Python code made by the blocks" },
+  copy:             { ko: "복사",                        en: "Copy" },
+  close:            { ko: "닫기",                        en: "Close" },
+  run_running:      { ko: "실행 중",                     en: "Running" },
+  run_done:         { ko: "끝남",                        en: "Done" },
+  run_error:        { ko: "오류로 끝남",                  en: "Stopped with an error" },
+  sec_unit:         { ko: "초",                          en: " s" },
+  run_toast_done:   { ko: (s) => `실행 끝 · ${s}초`,       en: (s) => `Finished · ${s} s` },
+  run_toast_error:  { ko: (s) => `오류로 끝남 · ${s}초`,    en: (s) => `Stopped with an error · ${s} s` },
   nav_files:      { ko: "파일",     en: "Files" },
   nav_terminal:   { ko: "터미널",   en: "Terminal" },
   nav_tools:      { ko: "도구",     en: "Tools" },

@@ -465,6 +465,8 @@ async def handle_save(sid, d):
     with open(codePath, 'w') as f:
       f.write(codeText)
     shutil.chown(os.path.dirname(codePath), user='pi', group='pi')
+    # 다 썼다는 확인. 클라이언트는 이걸 받아야 미저장 표시를 지운다
+    await app.sio.emit('update', {'saved': codePath})
   except Exception as err:
     await app.sio.emit('update', {'dialog': 'err_save', 'detail': str(err)})
 
