@@ -91,6 +91,14 @@ PiBrain 까지 더하면 사본이 여섯 벌이 된다. 그래서 한 파일로
   키트 입력(`.pb-field`), 터미널(`.result` `.terminal`)
 - 되돌리려면 body 에서 `pb-refresh` 만 뺀다. PiBrain 은 켜기 전까지 영향이 없다
 
+## 시안 v2 (`?ui=v2`)
+
+색·배치를 새로 잡은 안. 자세한 건 루트 `CLAUDE.md` 의 '디자인 시안 v2'.
+
+- 도구·분류기: `body.pb-v2` (이 파일 맨 아래). 흰 헤더 44px · 노랑은 브랜드 마크와 주 동작만 ·
+  청록은 선택·포커스 · 앱 버튼은 흰 보조 / 옅은 청록 / 옅은 빨강 · 어두운 터미널
+- IDE: 별도 템플릿(`ide/templates/index_v2.html` + `ide/static/v2/`). 이 키트에서는 셸·모달·알림만 쓴다
+
 ## 알아둘 것
 
 - **`fa-regular` 아이콘은 쓰지 말 것.** 기기의 `webfonts/` 에는 Font Awesome solid 와

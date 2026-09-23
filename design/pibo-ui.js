@@ -13,6 +13,7 @@
      5) 서비스: PiboUI.openService('tools'|'classifier'|'llm')  이름 붙인 새 탭으로 연다
               PiboUI.backToIDE()                 도구 탭을 닫고 IDE 로
      6) 버튼 : PiboUI.busy(el, on)               아이콘만 스피너로. 라벨·크기는 그대로
+     7) 시안 : 주소에 ?ui=v2 → 쿠키 pibo_ui. 도구·분류기는 body.pb-v2, IDE 는 index_v2.html
 
    원본은 design/pibo-ui.js 하나뿐이다. static/ 쪽 사본은 design/sync.sh 가 만든다.
    ========================================================================== */
@@ -37,6 +38,27 @@
     try { var s = localStorage.getItem('language'); if (s) return s; } catch (e) { /* 사생활 모드 */ }
     return (navigator.language || 'en').indexOf('ko') === 0 ? 'ko' : 'en';
   }
+  /* ── 디자인 시안 전환 ─────────────────────────────────────────────────────
+     ?ui=v2 로 켜고 ?ui=v1 로 끈다. 쿠키(pibo_ui)에 둔다 — 쿠키는 포트를 가리지 않아서
+     IDE(80)에서 고르면 도구(50000)·분류기(50010)도 같이 따라간다. IDE 는 서버가
+     이 쿠키를 보고 index.html / index_v2.html 을 고른다.
+     v2 전용 화면(body.v2-app)은 자체 CSS 를 쓰므로 pb-v2 층을 얹지 않는다. */
+  var UI = (function () {
+    var q = null;
+    try { q = new URLSearchParams(location.search).get('ui'); } catch (e) { /* 무시 */ }
+    try {
+      if (q === 'v2') document.cookie = 'pibo_ui=v2; path=/; max-age=31536000; SameSite=Lax';
+      else if (q === 'v1') document.cookie = 'pibo_ui=; path=/; max-age=0; SameSite=Lax';
+    } catch (e) { /* 무시 */ }
+    if (q === 'v1' || q === 'v2') return q;
+    var m = null;
+    try { m = document.cookie.match(/(?:^|;\s*)pibo_ui=(v[12])/); } catch (e) { /* 무시 */ }
+    return m ? m[1] : 'v1';
+  })();
+  if (UI === 'v2' && document.body && !document.body.classList.contains('v2-app')) {
+    document.body.classList.add('pb-v2');
+  }
+
   function tr(key) {
     var e = TEXT[key]; if (!e) return key;
     return e[curLang()] || e.en;
@@ -252,7 +274,7 @@
   var TAB = { tools: 'pibo_tools', classifier: 'pibo_classifier', llm: 'pibo_llm' };
   function launchUrl(svc) {
     return 'http://' + location.hostname + '/static/launch.html?svc=' +
-           encodeURIComponent(svc) + '&lang=' + curLang();
+           encodeURIComponent(svc) + '&lang=' + curLang() + '&ui=' + UI;
   }
   function openService(svc) {
     var w = window.open(launchUrl(svc), TAB[svc] || ('pibo_' + svc));

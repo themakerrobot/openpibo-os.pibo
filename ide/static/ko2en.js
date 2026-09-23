@@ -25,6 +25,17 @@ const translations = {
   nav_fullscreen: { ko: "전체화면", en: "Full screen" },
   nav_restore:    { ko: "초기화",   en: "Reset" },
   nav_poweroff:   { ko: "전원",     en: "Power" },
+  // v2 시안 (templates/index_v2.html)
+  v2_view:          { ko: "보기",     en: "View" },
+  v2_more:          { ko: "더보기",   en: "More" },
+  v2_fontsize:      { ko: "글자 크기", en: "Font size" },
+  v2_dark_editor:   { ko: "어두운 파이썬 편집기", en: "Dark Python editor" },
+  v2_language:      { ko: "언어",     en: "Language" },
+  v2_preview:       { ko: "미리보기", en: "Preview" },
+  v2_preview_empty: { ko: "사진·소리 파일을 누르면 여기서 보고 들을 수 있어요", en: "Tap a picture or sound file to preview it here" },
+  v2_no_file:       { ko: "열린 파일 없음", en: "No file open" },
+  v2_prompt_ph:     { ko: "프로그램에 입력 보내기", en: "Send input to the program" },
+  v2_old_design:    { ko: "예전 화면으로", en: "Classic layout" },
   password: {
     ko: "비밀번호",
     en: "Password"

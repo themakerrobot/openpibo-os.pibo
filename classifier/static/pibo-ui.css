@@ -603,3 +603,252 @@ body.pb-refresh .pb-header {
   box-shadow: none;
   border-bottom: 1px solid rgba(0, 0, 0, .10);
 }
+
+/* ==========================================================================
+   v2 — body.pb-v2  (시안. 주소에 ?ui=v2 로 켜고 ?ui=v1 로 끈다)
+   ==========================================================================
+   pb-refresh 위에 얹는다. 색까지 바꾼 안이다.
+
+     바탕   노랑 헤더 · 흰 패널  →  흰 헤더 · 옅은 회색 바닥 위 흰 카드 패널
+     노랑   헤더 전체  →  브랜드 마크와 '주 동작'(실행 · AI 가르치기) 에만
+     청록   버튼 바탕  →  선택 · 포커스 · 슬라이더 같은 '상태' 에만. 버튼은 옅은 청록(tonal)
+     빨강   정지 · 등록 바탕  →  옅은 빨강(tonal). 실행 중인 정지만 진하게
+     글꼴   Helvetica/맑은 고딕  →  시스템 한글 글꼴(Apple SD 산돌고딕 Neo · Noto Sans KR · 맑은 고딕)
+     터미널 흰 바탕  →  어두운 바탕 고정폭
+     상태바 48px  →  28px
+
+   켜고 끄는 건 pibo-ui.js 가 한다. 값은 앱마다(포트마다) 따로 저장되므로
+   IDE 가 도구·분류기를 열 때 launch.html 을 거쳐 ?ui= 를 넘긴다. */
+body.pb-v2 {
+  --v2-canvas:  #f3f4f6;
+  --v2-surface: #ffffff;
+  --v2-sunken:  #f7f8fa;
+  --v2-line:    #e4e7eb;
+  --v2-line-2:  #cfd4da;
+  --v2-ink:     #1c2128;
+  --v2-ink-2:   #57606a;
+  --v2-ink-3:   #8c959f;
+  --v2-yellow:  #ffd43b;
+  --v2-yellow-2:#f5c518;
+  --v2-yellow-t:#fff6d6;
+  --v2-teal:    #0e9fb3;
+  --v2-teal-t:  #e3f5f8;
+  --v2-teal-ink:#06606d;
+  --v2-red:     #dc3d3d;
+  --v2-red-t:   #fdecec;
+  --v2-red-ink: #a61b1b;
+
+  /* 키트 토큰을 v2 값으로 */
+  --pb-bg: var(--v2-surface);  --pb-surface: var(--v2-sunken);  --pb-surface-2: #eef0f3;
+  --pb-border: var(--v2-line-2);  --pb-border-strong: #aeb5bd;
+  --pb-text: var(--v2-ink);  --pb-text-dim: var(--v2-ink-2);
+  --pb-brand: var(--v2-surface);  --pb-brand-2: var(--v2-surface);
+  --pb-accent: var(--v2-yellow);  --pb-accent-edge: var(--v2-yellow-2);
+  --pb-danger: var(--v2-red);  --pb-danger-edge: #b92f2f;
+  --pb-info: var(--v2-teal);  --pb-focus: var(--v2-teal);
+  --pb-radius: 10px;  --pb-radius-s: 8px;
+  --pb-shadow: 0 1px 2px rgba(16, 24, 40, .06);
+  --pb-font: "Pretendard", -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo",
+             "Noto Sans KR", "Malgun Gothic", "맑은 고딕", "Segoe UI", Roboto, sans-serif;
+
+  background: var(--v2-canvas);
+  color: var(--v2-ink);
+  font-family: var(--pb-font);
+  accent-color: var(--v2-teal);
+}
+body.pb-v2 h1, body.pb-v2 h2, body.pb-v2 h3, body.pb-v2 h4, body.pb-v2 h5, body.pb-v2 h6,
+body.pb-v2 header, body.pb-v2 button, body.pb-v2 input, body.pb-v2 select, body.pb-v2 textarea,
+body.pb-v2 label, body.pb-v2 i.fa > span { font-family: var(--pb-font); }
+
+/* ── 헤더: 흰 바탕, 노랑은 브랜드 마크 한 점 ───────────────────────────── */
+body.pb-v2 .pb-header {
+  height: 44px; min-height: 44px;              /* IDE v2 상단바와 같은 높이 */
+  background: var(--v2-surface);
+  border-bottom: 1px solid var(--v2-line);
+  color: var(--v2-ink);
+}
+body.pb-v2 .pb-header__brand { font-size: 15px; gap: 8px; letter-spacing: -.1px; }
+body.pb-v2 .pb-header__brand > i:first-child {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 28px; height: 28px; border-radius: 8px;
+  background: var(--v2-yellow); color: var(--v2-ink); font-size: 14px;
+}
+body.pb-v2 .pb-iconbtn { color: var(--v2-ink-2); }
+body.pb-v2 .pb-iconbtn:hover { background: #f1f3f5; color: var(--v2-ink); }
+body.pb-v2 .pb-iconbtn:active { background: #e7eaee; }
+body.pb-v2 .pb-iconbtn[aria-pressed="true"] { background: var(--v2-teal-t); color: var(--v2-teal-ink); }
+body.pb-v2 .pb-iconbtn--danger { color: var(--v2-ink-2); }
+body.pb-v2 .pb-iconbtn--danger:hover { background: var(--v2-red-t); color: var(--v2-red-ink); }
+body.pb-v2 .pb-iconbtn:not(.pb-iconbtn--danger) + .pb-iconbtn--danger::before { border-color: var(--v2-line); }
+body.pb-v2 .pb-header .pb-field--sm {
+  border-color: var(--v2-line); background: var(--v2-surface); color: var(--v2-ink-2);
+}
+
+/* ── 세그먼트: 눌린 홈 위에 흰 알약 (블록|파이썬 · 분류기 탭 · 입력 종류) ── */
+body.pb-v2 .pb-seg,
+body.pb-v2 div[name="codetype"] {
+  background: #eceef1; border: 0; border-radius: 9px; padding: 3px; gap: 2px;
+  box-shadow: none; overflow: visible;
+}
+body.pb-v2 .pb-seg > button,
+body.pb-v2 div[name="codetype"] > button {
+  background: transparent; color: var(--v2-ink-2); border: 0; border-radius: 7px;
+  box-shadow: none; font-weight: 600;
+}
+body.pb-v2 .pb-seg > button + button,
+body.pb-v2 div[name="codetype"] > button + button { border-left: 0; }
+body.pb-v2 .pb-seg > button:hover:not([aria-selected="true"]),
+body.pb-v2 div[name="codetype"] > button:hover:not(.checked) { background: rgba(255,255,255,.6); color: var(--v2-ink); }
+body.pb-v2 .pb-seg > button[aria-selected="true"],
+body.pb-v2 .cls-tabs > button[aria-selected="true"],
+body.pb-v2 div[name="codetype"] > button.checked {
+  background: var(--v2-surface); color: var(--v2-ink); font-weight: 700;
+  box-shadow: 0 1px 2px rgba(16,24,40,.10), 0 0 0 1px rgba(16,24,40,.04);
+}
+body.pb-v2 .pb-header .pb-seg { height: 32px; }
+
+/* ── 키트 버튼 ──────────────────────────────────────────────────────────── */
+body.pb-v2 .pb-btn { border-color: var(--v2-line-2); box-shadow: var(--pb-shadow); font-weight: 600; }
+body.pb-v2 .pb-btn:hover:not(:disabled) { background: var(--v2-sunken); border-color: #aeb5bd; }
+body.pb-v2 .pb-btn--accent { background: var(--v2-yellow); border-color: transparent; color: var(--v2-ink); font-weight: 700; }
+body.pb-v2 .pb-btn--accent:hover:not(:disabled) { background: var(--v2-yellow-2); border-color: transparent; }
+body.pb-v2 .pb-btn--danger { background: var(--v2-red); border-color: transparent; }
+body.pb-v2 .pb-btn--ghost { box-shadow: none; }
+body.pb-v2 .pb-btn--ghost[aria-pressed="true"] { background: var(--v2-teal-t); color: var(--v2-teal-ink); }
+body.pb-v2 .pb-btn:disabled { background: #f3f4f6; color: #a8b0b8; border-color: #e8eaed; }
+
+/* ── 앱이 직접 그리던 버튼 (IDE · tools). 기본은 흰 보조 버튼 ────────────── */
+body.pb-v2 button:not(.pb-btn):not(.pb-iconbtn):not(.pb-seg > button):not([name="codetype"] > button):not(nav button),
+body.pb-v2 input[type="submit"],
+body.pb-v2 label[for="upload"],
+body.pb-v2 label[for="v_import_motion"] {
+  background: var(--v2-surface) !important;   /* IDE #add_directory 가 인라인 배경을 갖고 있다 */
+  color: var(--v2-ink);
+  border: 1px solid var(--v2-line-2);
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, .06);
+  font-size: 14px; font-weight: 600;
+  filter: none;
+}
+body.pb-v2 button:not(.pb-btn):not(.pb-iconbtn):not(.pb-seg > button):not([name="codetype"] > button):not(nav button):hover:not(:disabled),
+body.pb-v2 input[type="submit"]:hover:not(:disabled),
+body.pb-v2 label[for="upload"]:hover,
+body.pb-v2 label[for="v_import_motion"]:hover {
+  background: var(--v2-sunken) !important; border-color: #aeb5bd; filter: none;
+  box-shadow: 0 1px 3px rgba(16, 24, 40, .10);
+}
+body.pb-v2 button:not(.pb-btn):not(.pb-iconbtn):not(.pb-seg > button):not([name="codetype"] > button):not(nav button):active:not(:disabled) {
+  transform: translateY(1px); box-shadow: none;
+}
+/* 아이콘은 한 톤 옅게 — 글자가 먼저 읽힌다 */
+body.pb-v2 main button:not(.pb-btn):not(.pb-iconbtn) > i,
+body.pb-v2 main label[for="upload"] > i { color: var(--v2-ink-2); }
+
+/* 청록 버튼 → 옅은 청록 (tools 의 프레임 버튼들) */
+body.pb-v2 button.btn-teal {
+  background: var(--v2-teal-t) !important; color: var(--v2-teal-ink);
+  border-color: transparent; box-shadow: none;
+}
+body.pb-v2 button.btn-teal:hover:not(:disabled) { background: #cdeef3 !important; border-color: transparent; }
+body.pb-v2 button.btn-teal > i { color: inherit; }
+/* 빨강 버튼 → 옅은 빨강 */
+body.pb-v2 button.btn-red {
+  background: var(--v2-red-t) !important; color: var(--v2-red-ink);
+  border-color: transparent; box-shadow: none;
+}
+body.pb-v2 button.btn-red:hover:not(:disabled) { background: #fadada !important; border-color: transparent; }
+body.pb-v2 button.btn-red > i { color: inherit; }
+body.pb-v2 button.disabled, body.pb-v2 button:disabled { opacity: .45; filter: none; }
+
+/* IDE 주 동작: 실행 = 노랑. 실행 중인 정지 = 진한 빨강 */
+body.pb-v2 #execute {
+  background: var(--v2-yellow) !important; color: var(--v2-ink);
+  border-color: transparent; font-weight: 700;
+}
+body.pb-v2 #execute:hover:not(:disabled) { background: var(--v2-yellow-2) !important; }
+body.pb-v2 #execute > i { color: var(--v2-ink); }
+body.pb-v2[data-running] #stop:not(.disabled):not(:disabled) {
+  background: var(--v2-red) !important; color: #fff; opacity: 1;
+}
+body.pb-v2[data-running] #stop:not(.disabled):not(:disabled) > i { color: #fff; }
+
+/* ── 입력칸 ─────────────────────────────────────────────────────────────── */
+body.pb-v2 input:not([type]):not(.pb-field),
+body.pb-v2 input[type="text"]:not(.pb-field),
+body.pb-v2 input[type="number"]:not(.pb-field),
+body.pb-v2 input[type="password"]:not(.pb-field),
+body.pb-v2 input[type="search"]:not(.pb-field),
+body.pb-v2 select:not(.pb-field),
+body.pb-v2 textarea:not(.pb-field):not(.result):not(.terminal),
+body.pb-v2 .pb-field {
+  border-color: var(--v2-line-2); border-radius: 8px; color: var(--v2-ink);
+}
+body.pb-v2 input:focus:not([type="range"]), body.pb-v2 select:focus, body.pb-v2 textarea:focus:not(.result):not(.terminal),
+body.pb-v2 .pb-field:focus {
+  border-color: var(--v2-teal) !important;
+  box-shadow: 0 0 0 3px rgba(14, 159, 179, .18) !important; outline: none;
+}
+body.pb-v2 input[type="range"]::-webkit-slider-runnable-track { background: #dfe3e7; }
+body.pb-v2 input[type="range"]::-webkit-slider-thumb { background: var(--v2-teal); }
+body.pb-v2 input[type="range"]::-moz-range-track { background: #dfe3e7; }
+body.pb-v2 input[type="range"]::-moz-range-thumb { background: var(--v2-teal); }
+
+/* ── 패널: 회색 바닥 위 흰 카드 ─────────────────────────────────────────── */
+body.pb-v2 .pb-panes { background: var(--v2-canvas); padding: 8px; }
+body.pb-v2 .pb-pane {
+  background: var(--v2-surface);
+  border: 1px solid var(--v2-line);
+  border-radius: 12px;
+}
+body.pb-v2 .pb-pane[hidden] { display: none; }
+body.pb-v2 .pb-resizer { flex-basis: 8px; background: transparent; }
+body.pb-v2 .pb-resizer:hover, body.pb-v2 .pb-resizer[data-dragging] {
+  background: linear-gradient(90deg, transparent 3px, var(--v2-teal) 3px, var(--v2-teal) 5px, transparent 5px);
+}
+/* tools: 왼쪽 메뉴 레일 + 본문 */
+body.pb-v2 main > nav { background: var(--v2-surface); border-right: 1px solid var(--v2-line); }
+body.pb-v2 nav button { opacity: .38; border-radius: 10px; }
+body.pb-v2 nav button:hover { opacity: .7; background: #f1f3f5; }
+body.pb-v2 nav button.menu-selected { opacity: 1; background: var(--v2-yellow-t); }
+body.pb-v2 main > div.content.pb-pane { border: 0; border-radius: 0; background: var(--v2-canvas); }
+
+/* ── 표 ─────────────────────────────────────────────────────────────────── */
+body.pb-v2 .fm-table-wrap,
+body.pb-v2 .motion-table-wrap { border-color: var(--v2-line); }
+body.pb-v2 .fm-table-wrap td { border-bottom-color: #f0f2f4; }
+body.pb-v2 .fm-table-wrap tr:hover td { background: var(--v2-sunken); }
+body.pb-v2 #fm_table tr.is-current td { background: var(--v2-yellow-t); }
+body.pb-v2 thead,
+body.pb-v2 #motor_table thead td:nth-child(n + 2) { background: var(--v2-sunken); color: var(--v2-ink-2); }
+
+/* ── 편집기 · 터미널 ────────────────────────────────────────────────────── */
+body.pb-v2 .blocklyDiv { border-color: var(--v2-line); }
+body.pb-v2 .result,
+body.pb-v2 .terminal {
+  background: #16191e !important; color: #e6e8eb !important;
+  border: 1px solid #16191e !important; border-radius: 10px;
+  font-family: var(--pb-mono) !important; font-size: 13.5px !important; line-height: 1.55;
+  padding: 10px 12px;
+}
+body.pb-v2 .result::-webkit-scrollbar-thumb,
+body.pb-v2 .terminal::-webkit-scrollbar-thumb { background: #3a4048; }
+body.pb-v2 .result::-webkit-scrollbar-track,
+body.pb-v2 .terminal::-webkit-scrollbar-track { background: transparent; }
+body.pb-v2 img.preview-img { background-color: var(--v2-sunken); border-color: var(--v2-line); border-radius: 10px; }
+
+/* ── 상태바 ─────────────────────────────────────────────────────────────── */
+body.pb-v2 footer.pb-statusbar {
+  background: var(--v2-surface); border-top: 1px solid var(--v2-line); box-shadow: none;
+  color: var(--v2-ink-3); min-height: 28px; height: auto; padding-top: 3px; padding-bottom: 3px;
+  font-size: 12.5px !important;
+}
+body.pb-v2 footer.pb-statusbar * { font-size: 12.5px !important; }
+
+/* ── 모달 · 안내 ────────────────────────────────────────────────────────── */
+body.pb-v2 .pb-modal__box { border-radius: 14px; border: 1px solid var(--v2-line);
+                            box-shadow: 0 12px 32px rgba(16, 24, 40, .18); }
+body.pb-v2 .pb-modal__head { background: var(--v2-surface); border-bottom: 1px solid var(--v2-line); }
+body.pb-v2 .pb-btn--ghost,
+body.pb-v2 .pb-btn--ghost:hover:not(:disabled) { border-color: transparent; }
+/* [블록|파이썬] 은 고정폭 85px 이었다. 글자만큼만 */
+body.pb-v2 div[name="codetype"] > button { width: auto; min-width: 64px; padding: 0 14px; }
