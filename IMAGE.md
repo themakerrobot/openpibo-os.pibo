@@ -40,72 +40,57 @@ pyenv 를 새로 만들면 이 단계가 통째로 빠지니, 처음부터 이�
 
 의존성(`openpibo_models` 등)은 계속 pip 설치본을 쓴다. 지우지 말 것.
 
-### 분류기 런타임 (이미지당 1회)
+### TensorFlow · torch 걷어내기 (260924~, 이미지당 1회)
 
-분류기(260924~)는 TensorFlow 대신 LiteRT 로 이미지 모델을 돌린다.
+분류기·사물 인식이 TensorFlow·ultralytics·torch 를 안 쓴다. 코드가 import 하지 않으므로
+**메모리는 태그만 올려도 줄어든다.** 아래는 SD 카드 용량과 이미지 크기를 줄이는 작업이다.
 
-```bash
-uname -m; ldd --version | head -1       # aarch64 · glibc 2.27 이상이어야 wheel 이 맞는다
-sudo /home/pi/.pyenv/bin/python3 -m pip install ai-edge-litert
-/home/pi/.pyenv/bin/python3 -c "from openpibo.modules.teachlab import load_interpreter; print(load_interpreter())"
-# <class 'ai_edge_litert.interpreter.Interpreter'> 가 나와야 한다
-```
+기기(260923 기준 pip 목록)에 이미 있는 것으로 충분하다. 새로 설치할 것은 없다.
 
-위가 확인된 **뒤에만** TensorFlow 를 지운다. LiteRT·tflite_runtime 이 둘 다 없는데 TF 를
-지우면 `openpibo.vision_detect`(movenet)까지 못 뜬다.
+| 쓰는 곳 | 패키지 (기기 버전) |
+|---|---|
+| 분류기 이미지 · movenet | `tflite-runtime` 2.14.0 |
+| 분류기 손·얼굴·포즈 · 얼굴·손 인식 | `mediapipe` 0.10.18 (jax·jaxlib·matplotlib·sentencepiece·sounddevice 를 요구한다 — 남길 것) |
+| 사물 인식 · TTS | `onnxruntime` 1.20.1 |
+| 얼굴 분석(`vision_face.py`) | `openvino` 2024.5.0 — **남길 것** (`openvino-dev` 는 지워도 된다) |
 
-```bash
-/home/pi/.pyenv/bin/python3 -m pip list 2>/dev/null | grep -i -E "tensorflow|keras"   # 설치된 이름 확인
-sudo /home/pi/.pyenv/bin/python3 -m pip uninstall -y <위에서 나온 이름들>
-/home/pi/.pyenv/bin/python3 -c "from openpibo.vision_detect import Detect; from openpibo.vision_classify import CustomClassifier; print('ok')"
-```
-
-사물 인식(260924~)도 ultralytics 를 안 쓴다. 아래가 되면 ultralytics·torch 를 지워도 된다.
+컨테이너에서 위 버전 그대로(numpy 1.26.4) 분류기·사물 인식을 돌려 확인했다.
 
 ```bash
-/home/pi/.pyenv/bin/python3 -c "import numpy as np; from openpibo.vision_detect import Detect; print(Detect().detect_object(np.zeros((480,640,3),'uint8')))"
-# [] 가 나오면 된다 (빈 그림이라 찾은 게 없음). 에러 없이 끝나는 게 핵심이다
-/home/pi/.pyenv/bin/python3 -m pip list 2>/dev/null | grep -i -E "ultralytics|^torch"
-sudo /home/pi/.pyenv/bin/python3 -m pip uninstall -y <위에서 나온 이름들>
+PY=/home/pi/.pyenv/bin/python3
+SP=$($PY -c "import site; print(site.getsitepackages()[0])")
+
+# 0) 새 태그에서 먼저 확인 — 둘 다 에러 없이 끝나야 한다
+$PY -c "from openpibo.modules.teachlab import load_interpreter; print(load_interpreter())"
+#   <class 'tflite_runtime.interpreter.Interpreter'>  (tensorflow 가 나오면 멈출 것)
+$PY -c "import numpy as np; from openpibo.vision_detect import Detect; print(Detect().detect_object(np.zeros((480,640,3),'uint8')))"
+#   []
+
+# 1) 얼마나 줄어드는지
+du -sh $SP/{tensorflow,tensorflow_estimator,tensorboard,keras,tf_keras,tensorflowjs,flax,optax,chex,orbax,torch,torchvision,torchaudio,ultralytics,openvino/tools} 2>/dev/null | sort -h
+
+# 2) 지우기
+sudo $PY -m pip uninstall -y \
+  tensorflow tensorflow-cpu-aws tensorflow-estimator tensorflow-hub tensorflow-io-gcs-filesystem \
+  tensorboard tensorboard-data-server keras tf-keras tensorflowjs \
+  flax optax chex orbax-checkpoint \
+  ultralytics ultralytics-thop torch torchvision torchaudio \
+  openvino-dev
+
+# 3) 다시 확인
+$PY -m pip check                       # 지운 것 때문에 깨진 의존이 없어야 한다
+$PY -c "from openpibo.modules.teachlab import load_interpreter; print(load_interpreter())"
+$PY -c "import numpy as np; from openpibo.vision_detect import Detect; print(Detect().detect_object(np.zeros((480,640,3),'uint8')))"
+$PY -c "import openpibo.vision_face, openpibo.vision_classify, openpibo.speech; print('ok')"
 ```
 
-### 납품 국가 설정
-
-`system/setup_country.sh <국가코드>` 를 돌린다. 여러 번 돌려도 안전하다.
-timezone · wifi country · `cmdline.txt` 의 `cfg80211.ieee80211_regdom` ·
-`brcmfmac.conf` 잔재 제거 · 실행비트를 한 번에 맞춘다.
-
-```bash
-sudo bash /home/pi/openpibo-os/system/setup_country.sh KR              # 국내
-sudo bash /home/pi/openpibo-os/system/setup_country.sh PH --regdom=KR  # 필리핀
-sudo bash /home/pi/openpibo-os/system/setup_country.sh MY              # 말레이시아
-sudo reboot
-```
-
-| 국가코드 | timezone | regdom | 배포 태그 |
-|---|---|---|---|
-| `KR` | `Asia/Seoul` | `KR` | `YYMMDDvN` (`main`) |
-| `PH` | `Asia/Manila` | **`KR` (`--regdom=KR`)** | `YYMMDDvN-ph` (`ph`) |
-| `MY` | `Asia/Kuala_Lumpur` | `MY` | `YYMMDDvN-ph` (`ph`) |
-
-**필리핀만 `--regdom=KR` 을 붙인다.** timezone 은 `Asia/Manila` 그대로고 무선 규제도메인만
-`KR` 로 간다. `PH` 로 두면 5GHz 상위 채널(149~165)이 통째로 막혀서 현장 공유기를
-36~48 로 묶어야 하는데, 이건 규제가 아니라 Raspberry Pi OS 가 까는 CLM blob 결함이다.
-배경과 실측은 `CLAUDE.md` '현장 네트워크' 참고.
-
-regdom 을 바꾸면 채널 36/40/44 출력이 17 → 20 dBm 으로 올라간다. 열리는 채널 자체는
-PH 허용 범위를 넘지 않는다.
-
-**영문 배포판은 `ph` 브랜치 하나로 필리핀·말레이시아를 같이 쓴다.** UI·예제가
-영문으로 동일하고, 국가별 차이는 이 스크립트가 이미지 만들 때 넣는 값뿐이다.
-말레이시아용 브랜치를 따로 만들지 말 것.
-
-등록되지 않은 국가코드를 주면 스크립트가 usage 만 찍고 멈춘다. 추가할 때는
-`timedatectl list-timezones | grep -i <도시>` 로 실제 존재하는 timezone 인지
-확인한 뒤 스크립트의 `case` 에 넣는다 — 국가코드에서 timezone 을 추측하지 말 것.
-
-AP(핫스팟)는 국가 설정과 무관하다. `hotspot.sh` 가 2.4GHz 채널 1/6/11 중
-시리얼로 하나를 고르는데, 세 국가 모두 허용 범위 안이라 손댈 게 없다.
+- `tflite-runtime` 은 **지우지 말 것.** 없으면 `load_interpreter()` 가 TensorFlow 로 떨어지는데
+  그것도 지웠으면 분류기와 movenet(사물 인식 블록 중 포즈)이 못 뜬다
+- `jax` `jaxlib` `ml-dtypes` `opt_einsum` `scipy` 는 mediapipe·jax 가 요구한다. 남긴다
+- 리포 코드는 안 쓰지만 수업 자료나 다른 도구가 쓸 수 있어 **이 목록에 넣지 않은 것**:
+  `transformers` `tokenizers` `gradio` `librosa` `numba` `konlpy` `mecab*` `g2p*` `gruut*` `unidic*`
+  `jieba` `pypinyin` `pykakasi` `nltk` `pandas` `scikit-learn` `seaborn` `boto3` `google-cloud-storage` 등.
+  예전 TTS 실험의 잔재로 보이지만 확인 전에는 지우지 말 것
 
 ## 2. 뜨기 전 청소
 

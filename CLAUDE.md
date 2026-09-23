@@ -499,12 +499,13 @@ MediaPipe wasm 이 1분마다 `odml.pa.googleapis.com/v1/log` 로 사용 기록�
 없어 `app.js` 맨 위에서 `fetch` 를 감싸 그 주소만 204 로 돌려준다(그러면 MediaPipe 가 전송을 멈춘다).
 vendor 파일을 갈아 끼울 때 이 동작이 그대로인지 확인할 것.
 
-### 기기 요구 (확인 필요)
+### 기기 요구
 
-- `ai-edge-litert` 또는 `tflite-runtime`. 둘 다 없으면 `load_interpreter()` 가 TensorFlow 로 떨어진다.
-  그래야 기존 기기에서 movenet(사물인식)이 안 깨진다. TF 를 지우는 건 LiteRT 를 깐 **뒤에** (IMAGE.md)
-- `mediapipe` — `vision_face.py` 가 이미 쓰고 있다. Tasks API(HandLandmarker·FaceLandmarker blendshape) 필요
-- 파이보에서 실제 추론 속도·메모리는 아직 못 쟀다
+기기(260923 pip 목록)에 이미 있는 것으로 돈다: `tflite-runtime` 2.14.0 · `mediapipe` 0.10.18 ·
+`onnxruntime` 1.20.1 · numpy 1.26.4. **이 버전 그대로** 컨테이너에서 브라우저가 저장한 모델을 돌려
+답 8/8 일치를 확인했다. `load_interpreter()` 는 `tflite_runtime` 을 고른다(LiteRT 설치 불필요).
+TensorFlow·torch 걷어내기 순서와 지울 목록은 IMAGE.md. 파이보에서 실제 추론 속도·메모리는 아직 못 쟀다.
+포즈는 한 화면에 여러 사람이 있으면 브라우저와 파이썬이 다른 사람을 잡을 수 있다(특징 코사인이 0.3 까지 떨어진 적 있음).
 
 ---
 
