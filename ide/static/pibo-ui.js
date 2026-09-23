@@ -14,6 +14,7 @@
               PiboUI.backToIDE()                 도구 탭을 닫고 IDE 로
      6) 버튼 : PiboUI.busy(el, on)               아이콘만 스피너로. 라벨·크기는 그대로
      7) 시안 : 주소에 ?ui=v2 → 쿠키 pibo_ui. 도구·분류기는 body.pb-v2, IDE 는 index_v2.html
+     8) 밝기 : PiboUI.setTheme('light'|'soft'|'dark') → html[data-theme] + 쿠키 pibo_theme (v2 만)
 
    원본은 design/pibo-ui.js 하나뿐이다. static/ 쪽 사본은 design/sync.sh 가 만든다.
    ========================================================================== */
@@ -57,6 +58,63 @@
   })();
   if (UI === 'v2' && document.body && !document.body.classList.contains('v2-app')) {
     document.body.classList.add('pb-v2');
+  }
+
+  /* ── 화면 밝기 (v2) ────────────────────────────────────────────────────
+     흰 바탕이 오래된 노트북 패널에서 눈부시다는 현장 의견으로 넣었다. 기본은 soft(옅은 회색).
+     쿠키라서 IDE 에서 고르면 도구·분류기도 같이 바뀐다. OS 가 어두운 모드면 dark 로 시작한다.
+     v2 IDE 는 <head> 의 짧은 스크립트가 같은 규칙으로 먼저 정한다(첫 페인트 번쩍임 방지). */
+  var THEMES = ['light', 'soft', 'dark'];
+  function getTheme() {
+    var m = null;
+    try { m = document.cookie.match(/(?:^|;\s*)pibo_theme=(light|soft|dark)/); } catch (e) { /* 무시 */ }
+    if (m) return m[1];
+    try { if (window.matchMedia('(prefers-color-scheme: dark)').matches) return 'dark'; } catch (e) { /* 무시 */ }
+    return 'soft';
+  }
+  function setTheme(t) {
+    if (THEMES.indexOf(t) < 0) return;
+    try { document.cookie = 'pibo_theme=' + t + '; path=/; max-age=31536000; SameSite=Lax'; } catch (e) { /* 무시 */ }
+    document.documentElement.setAttribute('data-theme', t);
+    syncThemeButtons();
+    try { window.dispatchEvent(new CustomEvent('pibo-theme', { detail: t })); } catch (e) { /* 무시 */ }
+  }
+  var THEME_ICON = { light: 'fa-sun', soft: 'fa-circle-half-stroke', dark: 'fa-moon' };
+  var THEME_TEXT = { light: { ko: '밝게', en: 'Light' }, soft: { ko: '부드럽게', en: 'Soft' }, dark: { ko: '어둡게', en: 'Dark' } };
+  function syncThemeButtons() {
+    var t = document.documentElement.getAttribute('data-theme') || 'soft';
+    Array.prototype.forEach.call(document.querySelectorAll('[data-theme-set]'), function (b) {
+      b.setAttribute('aria-checked', b.getAttribute('data-theme-set') === t ? 'true' : 'false');
+    });
+    var cyc = document.getElementById('pb_theme_bt');
+    if (cyc) {
+      var L = curLang() === 'ko' ? 'ko' : 'en';
+      cyc.firstChild.className = 'fa-solid ' + THEME_ICON[t];
+      cyc.lastChild.textContent = THEME_TEXT[t][L];
+      cyc.title = THEME_TEXT[t][L];
+    }
+  }
+  if (UI === 'v2') document.documentElement.setAttribute('data-theme', getTheme());
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest && e.target.closest('[data-theme-set]');
+    if (b) setTheme(b.getAttribute('data-theme-set'));
+  });
+  /* 도구·분류기(pb-v2) 헤더에 밝기 버튼을 하나 끼운다. 누를 때마다 밝게 → 부드럽게 → 어둡게 */
+  function addThemeButton() {
+    if (UI !== 'v2' || document.body.classList.contains('v2-app')) return;
+    var bar = document.querySelector('.pb-header .pb-iconbar');
+    if (!bar || document.getElementById('pb_theme_bt')) return;
+    var b = document.createElement('button');
+    b.type = 'button'; b.className = 'pb-iconbtn'; b.id = 'pb_theme_bt';
+    b.innerHTML = '<i></i><span class="pb-iconbtn__label"></span>';
+    b.addEventListener('click', function () {
+      var t = document.documentElement.getAttribute('data-theme') || 'soft';
+      setTheme(THEMES[(THEMES.indexOf(t) + 1) % THEMES.length]);
+    });
+    var lang = document.getElementById('language');
+    bar.insertBefore(b, lang && lang.parentNode === bar ? lang : null);
+    syncThemeButtons();
+    if (lang) lang.addEventListener('change', function () { setTimeout(syncThemeButtons, 0); });
   }
 
   function tr(key) {
@@ -317,9 +375,11 @@
   window.PiboUI = {
     toast: toast, banner: banner, hideBanner: hideBanner, watchSocket: watchSocket,
     openService: openService, backToIDE: backToIDE, restartSelf: restartSelf,
-    busy: busy, text: tr, lang: curLang
+    busy: busy, text: tr, lang: curLang,
+    getTheme: getTheme, setTheme: setTheme, ui: UI
   };
 
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initShell);
-  else initShell();
+  function initAll() { initShell(); addThemeButton(); syncThemeButtons(); }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initAll);
+  else initAll();
 })();

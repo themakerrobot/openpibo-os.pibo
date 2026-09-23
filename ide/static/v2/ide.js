@@ -7,6 +7,8 @@
      3) 상단바 파일 이름: #codepath(전체 경로, index.js 가 채운다)에서 이름만
      4) 글자 크기 [-][+]
      5) data-ph-key / data-title-key 번역 (index.js 의 setLanguage 는 textContent 만 바꾼다)
+     6) 미리보기: 사진·소리 파일을 열었을 때만 파일 패널 아래에 띄운다
+     7) 화면 밝기: 어둡게면 파이썬 편집기도 어두운 테마로 (스위치로 바꿀 수 있다)
    ========================================================================== */
 (function () {
   'use strict';
@@ -134,6 +136,29 @@
   var langSel = $id('language');
   if (langSel) langSel.addEventListener('change', function () { setTimeout(applyExtra, 0); });
   applyExtra();
+
+  /* 6) 미리보기 ─────────────────────────────────────────────────────────── */
+  var browser = $id('browser_en');
+  function watchMedia(el, kind) {
+    new MutationObserver(function () {
+      if (el.getAttribute('src')) { browser.setAttribute('data-media', kind); fire(); }
+    }).observe(el, { attributes: true, attributeFilter: ['src'] });
+  }
+  watchMedia($id('image'), 'image');
+  watchMedia($id('audio'), 'audio');
+  $id('v2_preview_close').addEventListener('click', function () {
+    var a = $id('audio'); try { a.pause(); } catch (e) { /* 무시 */ }
+    browser.removeAttribute('data-media'); fire();
+  });
+
+  /* 7) 화면 밝기 ─────────────────────────────────────────────────────────── */
+  var themeCheck = $id('theme_check');
+  function editorFollowsTheme(t) {
+    if (!themeCheck) return;
+    var want = t === 'dark';
+    if (want && !themeCheck.checked) { themeCheck.checked = true; themeCheck.dispatchEvent(new Event('change', { bubbles: true })); }
+  }
+  window.addEventListener('pibo-theme', function (e) { editorFollowsTheme(e.detail); });
 
   fire();
 })();

@@ -14,16 +14,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="mobile-web-app-capable" content="yes" />
 
+  <script>/* 화면 밝기(pibo-ui.js 와 같은 규칙): 쿠키 → OS 어두운 모드 → 부드럽게. 첫 페인트 전에 정해 번쩍임을 막는다 */
+    (function () { try { var m = document.cookie.match(/(?:^|;\s*)pibo_theme=(light|soft|dark)/);
+      document.documentElement.setAttribute('data-theme', m ? m[1] : (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'soft')); } catch (e) {} })();</script>
   <link rel="stylesheet" href="../static/all.min.css" type="text/css" />
   <link rel="stylesheet" href="../static/codemirror.css" />
   <link rel="stylesheet" href="../static/cobalt.css" />
   <link rel="stylesheet" href="../static/duotone-light.css" />
   <link rel="stylesheet" href="../static/jquery.jsonview.min.css" />
-  <link rel="stylesheet" href="../static/pibo-ui.css?ver=260924v4" />
-  <link rel="stylesheet" href="../static/v2/ide.css?ver=260924v1" />
+  <link rel="stylesheet" href="../static/pibo-ui.css?ver=260924v5" />
+  <link rel="stylesheet" href="../static/v2/ide.css?ver=260924v2" />
   <link rel="shortcut icon" href="../static/icon.png?ver=240319v1" type="image/x-icon" />
 
-  <script src="../static/ko2en.js?ver=260924v2"></script>
+  <script src="../static/ko2en.js?ver=260924v3"></script>
   <script src="../static/blockly_compressed.js?ver=240319v1"></script>
   <script src="../static/blocks_compressed.js?ver=240319v1"></script>
   <script src="../static/python_compressed.js?ver=240319v1"></script>
@@ -101,6 +104,15 @@
       <details class="v2-menu v2-menu--up">
         <summary class="v2-rail__btn"><i class="fa-solid fa-sliders"></i><span data-key="v2_view"></span></summary>
         <div class="v2-pop v2-pop--rail">
+          <div class="v2-pop__row v2-pop__row--stack">
+            <span data-key="v2_theme"></span>
+            <div class="v2-seg v2-seg--full" id="theme_seg" role="radiogroup">
+              <button type="button" data-theme-set="light"><i class="fa-solid fa-sun"></i><span data-key="v2_theme_light"></span></button>
+              <button type="button" data-theme-set="soft"><i class="fa-solid fa-circle-half-stroke"></i><span data-key="v2_theme_soft"></span></button>
+              <button type="button" data-theme-set="dark"><i class="fa-solid fa-moon"></i><span data-key="v2_theme_dark"></span></button>
+            </div>
+          </div>
+          <hr>
           <div class="v2-pop__row">
             <span data-key="v2_fontsize"></span>
             <span class="v2-stepper">
@@ -121,29 +133,34 @@
     <div class="content pb-panes">
       <!-- ── 파일 ──────────────────────────────────────────────────────── -->
       <section class="pb-pane pb-pane--fixed v2-panel" id="browser_en">
-        <div class="v2-panel__head">
-          <h2 data-key="nav_files"></h2>
-        </div>
-        <div class="v2-actions">
-          <label for="upload" class="v2-btn v2-btn--sm"><i class="fa-solid fa-arrow-up-from-bracket"></i><span data-key="upload"></span></label>
+        <div class="v2-fbar">
+          <div class="v2-crumb"><i class="fa-solid fa-folder"></i><span id="path"></span></div>
+          <details class="v2-menu" id="add_menu">
+            <summary class="v2-btn v2-btn--sm"><i class="fa-solid fa-plus"></i><span data-key="v2_add"></span></summary>
+            <div class="v2-pop v2-pop--right">
+              <button type="button" id="add_file" class="v2-pop__item"><i class="fa-solid fa-file-circle-plus"></i><span data-key="add_file"></span></button>
+              <button type="button" id="add_directory" class="v2-pop__item"><i class="fa-solid fa-folder-plus"></i><span data-key="add_directory"></span></button>
+              <hr>
+              <label for="upload" class="v2-pop__item"><i class="fa-solid fa-arrow-up-from-bracket"></i><span data-key="upload"></span></label>
+              <p class="v2-pop__hint" data-key="v2_drop_hint"></p>
+            </div>
+          </details>
           <div class="filebox">
             <form method="post" action="/upload" enctype="multipart/form-data">
               <input type="file" id="upload" multiple>
             </form>
           </div>
-          <button id="add_directory" class="v2-btn v2-btn--sm"><i class="fa-solid fa-folder-plus"></i><span data-key="add_directory"></span></button>
-          <button id="add_file" class="v2-btn v2-btn--sm"><i class="fa-solid fa-file-circle-plus"></i><span data-key="add_file"></span></button>
         </div>
-        <div class="v2-crumb"><i class="fa-solid fa-folder"></i><span id="path"></span></div>
         <div class="fm-table-wrap v2-files">
           <table id="fm_table"><tbody></tbody></table>
         </div>
+        <!-- 미리보기: 사진·소리 파일을 열었을 때만 뜬다 (ide.js 가 data-media 를 단다) -->
         <div class="v2-preview">
-          <div class="v2-preview__head"><span data-key="v2_preview"></span><span id="mediapath"></span></div>
-          <div class="v2-preview__img">
-            <img id="image" class="preview-img" alt="" />
-            <p class="v2-preview__empty" data-key="v2_preview_empty"></p>
+          <div class="v2-preview__head">
+            <span id="mediapath"></span>
+            <button type="button" class="v2-icon" id="v2_preview_close" aria-label="close"><i class="fa-solid fa-xmark"></i></button>
           </div>
+          <img id="image" class="preview-img" alt="" />
           <audio controls id="audio" class="preview-audio"></audio>
         </div>
       </section>
@@ -167,14 +184,14 @@
 
       <!-- ── 터미널 ────────────────────────────────────────────────────── -->
       <section class="pb-pane pb-pane--fixed v2-panel v2-term" id="result_en">
-        <div class="v2-panel__head">
-          <h2 data-key="nav_terminal"></h2>
-          <span id="run_status" class="pb-runstat" hidden aria-live="polite"></span>
-          <span class="v2-grow"></span>
-          <button id="eraser" class="v2-btn v2-btn--sm v2-btn--ghost"><i class="fa-solid fa-eraser"></i><span data-key="reset"></span></button>
-        </div>
         <div class="v2-term__box">
-          <div class="v2-term__path"><i class="fa-solid fa-file-code"></i><span id="respath"></span></div>
+          <div class="v2-term__bar">
+            <i class="fa-solid fa-terminal"></i>
+            <span class="v2-term__path" id="respath"></span>
+            <span class="v2-term__title" data-key="nav_terminal"></span>
+            <span id="run_status" class="pb-runstat" hidden aria-live="polite"></span>
+            <button id="eraser" class="v2-term__clear"><i class="fa-solid fa-eraser"></i><span data-key="reset"></span></button>
+          </div>
           <textarea id="result" class="result" disabled aria-label="result"></textarea>
           <div class="v2-term__input">
             <span class="v2-term__caret">&gt;</span>
@@ -286,9 +303,9 @@
     </div>
   </div>
 
-  <script src="../static/pibo-ui.js?ver=260924v2"></script>
+  <script src="../static/pibo-ui.js?ver=260924v3"></script>
   <script src="../static/index.js?ver=260923v7"></script>
-  <script src="../static/v2/ide.js?ver=260924v1"></script>
+  <script src="../static/v2/ide.js?ver=260924v2"></script>
 </body>
 
 </html>

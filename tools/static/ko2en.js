@@ -4,6 +4,9 @@ let lang = localStorage.getItem("language")?localStorage.getItem("language"):bla
 const translations = {
   nav_tools_title: { ko: "도구", en: "Tools" },
   nav_fullscreen: { ko: "전체화면", en: "Full screen" },
+  nav_motion:     { ko: "동작",     en: "Motion" },
+  nav_vision:     { ko: "카메라",   en: "Camera" },
+  nav_speech:     { ko: "음성",     en: "Speech" },
   sec:       { ko: " 초", en: " s" },
   recording: { ko: "녹음 중", en: "Recording" },
   confirm: {

@@ -31,11 +31,15 @@ const translations = {
   v2_fontsize:      { ko: "글자 크기", en: "Font size" },
   v2_dark_editor:   { ko: "어두운 파이썬 편집기", en: "Dark Python editor" },
   v2_language:      { ko: "언어",     en: "Language" },
-  v2_preview:       { ko: "미리보기", en: "Preview" },
-  v2_preview_empty: { ko: "사진·소리 파일을 누르면 여기서 보고 들을 수 있어요", en: "Tap a picture or sound file to preview it here" },
   v2_no_file:       { ko: "열린 파일 없음", en: "No file open" },
   v2_prompt_ph:     { ko: "프로그램에 입력 보내기", en: "Send input to the program" },
   v2_old_design:    { ko: "예전 화면으로", en: "Classic layout" },
+  v2_add:           { ko: "추가",     en: "New" },
+  v2_drop_hint:     { ko: "파일을 이 목록으로 끌어다 놓아도 올라가요", en: "You can also drag files onto the list" },
+  v2_theme:         { ko: "화면 밝기", en: "Brightness" },
+  v2_theme_light:   { ko: "밝게",     en: "Light" },
+  v2_theme_soft:    { ko: "부드럽게", en: "Soft" },
+  v2_theme_dark:    { ko: "어둡게",   en: "Dark" },
   password: {
     ko: "비밀번호",
     en: "Password"
