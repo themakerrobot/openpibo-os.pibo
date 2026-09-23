@@ -80,7 +80,8 @@ sudo $PY -m pip uninstall -y \
 
 # 3) 2단계 — MeloTTS 시험 잔재 (wheel 약 360MB + 사전 파일)
 #    MeloTTS requirements.txt 29개가 버전까지 그대로 깔려 있다(melotts 패키지 자체는 없다).
-#    지금 TTS(openpibo/modules/speech/mtts.py)는 onnxruntime 하나만 쓴다
+#    지금 TTS 는 Supertonic 3 이다(mtts.py = 원본 py/helper.py 그대로). onnxruntime·numpy·soundfile 만 쓴다.
+#    Supertonic requirements 에 librosa 가 적혀 있지만 helper.py 는 import 하지 않는다
 du -sh $SP/unidic $SP/unidic_lite $SP/mecab_ko_dic $SP/jieba $SP/gruut_lang_* 2>/dev/null   # 사전이 크다
 sudo $PY -m pip uninstall -y \
   txtsplit cached-path transformers tokenizers huggingface-hub num2words docopt \

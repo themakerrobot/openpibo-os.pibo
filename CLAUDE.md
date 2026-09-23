@@ -103,6 +103,9 @@ IDE 블록 8개(`speech_stt` `speech_tts` `speech_tts_play` `vision_call_ai_img(
 - `Dialog.call_llm` — `localhost:50020` (llama-server). 외부 아님
 
 음성은 `SpeechOnDevice`(ONNX, `lang='na'` 자동 판별)와 espeak 로 기기 안에서 처리한다.
+`SpeechOnDevice` 는 **Supertonic 3**(supertone-inc/supertonic, 31개 언어)이다. `openpibo/modules/speech/mtts.py` 는
+원본 `py/helper.py` 와 한 글자도 다르지 않다(2026-09 확인). 쓰는 패키지는 onnxruntime·numpy·soundfile 뿐이다.
+원본 requirements 에 적힌 `librosa`·`PyYAML` 은 helper.py 가 import 하지 않는다.
 
 **n-gram 챗봇도 같이 걷어냈다.** `Dialog` 의 `load` `reset` `ngram` `diff_ngram`
 `get_dialog` 와 블록 3개(`speech_get_dialog` `speech_load_dialog` `speech_reset_dialog`).
