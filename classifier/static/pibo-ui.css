@@ -453,3 +453,133 @@ body[data-running] #stop:not(:disabled) { animation: pb-pulse 1.4s ease-in-out i
     animation: none !important; transition: none !important;
   }
 }
+
+/* ==========================================================================
+   다듬기 — body.pb-refresh (ide · tools · classifier 가 켠다)
+   ==========================================================================
+   색은 그대로다(노랑 · 청록 · 빨강 · 연노랑). 촌스러워 보이던 건 색이 아니라 그리는
+   방식이었다. 여기서는 모양만 바꾼다. 앱 CSS 를 고치지 않고 위에서 덮으므로 body 의
+   클래스 하나를 빼면 예전 모양으로 돌아간다. PiBrain 은 켜기 전까지 영향이 없다.
+
+     1. 버튼   진한 아래 그림자(0 4px)·알약 → 얇은 테두리·옅은 그림자·둥근 사각형
+               (tools 왼쪽 메뉴처럼 nav 안의 버튼은 뺀다 — 아이콘 탭이다)
+     2. 입력칸 연노랑 알약 → 흰 바탕·회색 테두리. 누르면 청록 링
+     3. 슬라이더·체크박스 브라우저 기본 파랑 → 청록
+     4. 표     연두 칸마다 테두리(엑셀) → 흰 바탕에 줄 구분선
+     5. 노랑은 헤더 한 곳에. 상태바·표 머리·빈 미리보기 칸은 무채색 */
+
+body.pb-refresh { accent-color: var(--teal); }      /* 슬라이더 · 체크박스 · 진행바 */
+
+/* 1. 버튼 — 키트 버튼과 IDE 의 [블록|파이썬] 전환은 뺀다 */
+body.pb-refresh button:not(.pb-btn):not(.pb-iconbtn):not(.pb-seg > button):not([name="codetype"] > button):not(nav button),
+body.pb-refresh input[type="submit"],
+body.pb-refresh label[for="upload"],
+body.pb-refresh label[for="v_import_motion"] {
+  border: 1px solid rgba(0, 0, 0, .14);
+  border-radius: 9px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, .10);
+}
+body.pb-refresh button:not(.pb-btn):not(.pb-iconbtn):not(.pb-seg > button):not([name="codetype"] > button):not(nav button):hover:not(:disabled),
+body.pb-refresh input[type="submit"]:hover:not(:disabled),
+body.pb-refresh label[for="upload"]:hover,
+body.pb-refresh label[for="v_import_motion"]:hover {
+  filter: brightness(.96);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, .14);
+}
+body.pb-refresh button:not(.pb-btn):not(.pb-iconbtn):not(.pb-seg > button):not([name="codetype"] > button):not(nav button):active:not(:disabled),
+body.pb-refresh input[type="submit"]:active:not(:disabled),
+body.pb-refresh label[for="upload"]:active,
+body.pb-refresh label[for="v_import_motion"]:active {
+  transform: translateY(1px);
+  top: 0;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, .18);
+}
+body.pb-refresh .upload_label:hover { box-shadow: 0 2px 5px rgba(0, 0, 0, .14); }
+
+/* IDE [블록|파이썬] — 알약 두 개 → 키트 세그먼트와 같은 모양 */
+body.pb-refresh div[name="codetype"] {
+  border: 1px solid var(--pb-border);
+  border-radius: 9px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, .08);
+}
+body.pb-refresh div[name="codetype"] > button { border-radius: 0; }
+body.pb-refresh div[name="codetype"] > button + button { border-left: 1px solid var(--pb-border); }
+
+/* 2. 입력칸 — 키트 입력(.pb-field)과 터미널은 그대로 */
+body.pb-refresh input:not([type]):not(.pb-field),
+body.pb-refresh input[type="text"]:not(.pb-field),
+body.pb-refresh input[type="number"]:not(.pb-field),
+body.pb-refresh input[type="password"]:not(.pb-field),
+body.pb-refresh input[type="search"]:not(.pb-field),
+body.pb-refresh select:not(.pb-field),
+body.pb-refresh textarea:not(.pb-field):not(.result):not(.terminal) {
+  background: #fff;
+  border: 1px solid var(--pb-border);
+  border-radius: 8px;
+  transition: border-color .12s ease, box-shadow .12s ease;
+}
+body.pb-refresh input:not([type]):not(.pb-field):focus,
+body.pb-refresh input[type="text"]:not(.pb-field):focus,
+body.pb-refresh input[type="number"]:not(.pb-field):focus,
+body.pb-refresh input[type="password"]:not(.pb-field):focus,
+body.pb-refresh input[type="search"]:not(.pb-field):focus,
+body.pb-refresh select:not(.pb-field):focus,
+body.pb-refresh textarea:not(.pb-field):not(.result):not(.terminal):focus {
+  border-color: var(--teal);
+  box-shadow: 0 0 0 3px rgba(19, 191, 213, .22);
+  outline: none;
+}
+/* 슬라이더 — 앱의 input 규칙(연노랑 바탕·테두리)이 여기에도 걸려 있었다. accent-color 만 주면
+   브라우저가 안 채운 쪽을 진한 회색으로 칠해 무거워 보여서 트랙·손잡이를 직접 그린다.
+   손잡이는 20px — 태블릿에서 손가락으로 잡을 수 있는 크기 */
+body.pb-refresh input[type="range"] {
+  -webkit-appearance: none; appearance: none;
+  background: transparent; border: 0; border-radius: 0; box-shadow: none;
+  height: 22px; padding: 0; cursor: pointer;
+}
+body.pb-refresh input[type="range"]::-webkit-slider-runnable-track {
+  height: 4px; border-radius: 2px; background: #d4d4d4;
+}
+body.pb-refresh input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none;
+  width: 20px; height: 20px; margin-top: -8px; border-radius: 50%;
+  background: var(--teal); border: 2px solid #fff; box-shadow: 0 1px 3px rgba(0, 0, 0, .35);
+}
+body.pb-refresh input[type="range"]::-moz-range-track { height: 4px; border-radius: 2px; background: #d4d4d4; }
+body.pb-refresh input[type="range"]::-moz-range-thumb {
+  width: 16px; height: 16px; border-radius: 50%;
+  background: var(--teal); border: 2px solid #fff; box-shadow: 0 1px 3px rgba(0, 0, 0, .35);
+}
+body.pb-refresh input[type="range"]:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 4px rgba(19, 191, 213, .3); }
+
+/* 3. 표 — IDE 파일 목록 · tools 모션 표 */
+body.pb-refresh .fm-table-wrap,
+body.pb-refresh .motion-table-wrap { border: 1px solid var(--pb-border); border-radius: 10px; }
+body.pb-refresh .fm-table-wrap table { border-collapse: collapse; }
+body.pb-refresh .fm-table-wrap tbody { background: #fff; }
+body.pb-refresh .fm-table-wrap td { border-bottom: 1px solid #eee; padding-top: 3px; padding-bottom: 3px; }
+body.pb-refresh .fm-table-wrap tr:hover td { background: var(--pb-surface); }
+body.pb-refresh #fm_table tr.is-current td { background: var(--light-yellow); }
+body.pb-refresh thead,
+body.pb-refresh #motor_table thead td:nth-child(n + 2) { background: var(--pb-surface-2); font-weight: 700; }
+body.pb-refresh tbody,
+body.pb-refresh #motor_table tbody td:first-child { background: #fff; }
+
+/* 4. 무채색으로 — 빈 미리보기 칸 · 테두리 · 상태바 */
+body.pb-refresh img.preview-img { background-color: var(--pb-surface); border: 1px solid var(--pb-border); }
+body.pb-refresh .result,
+body.pb-refresh .terminal,
+body.pb-refresh .blocklyDiv { border-color: var(--pb-border); border-radius: 10px; }
+body.pb-refresh footer.pb-statusbar {
+  background: var(--pb-surface);
+  border-top: 1px solid var(--pb-border);
+  box-shadow: none;
+  color: var(--pb-text-dim);
+}
+
+/* 5. 헤더 — 그라데이션 대신 한 색, 아래는 얇은 선 */
+body.pb-refresh .pb-header {
+  background: var(--pb-brand);
+  box-shadow: none;
+  border-bottom: 1px solid rgba(0, 0, 0, .10);
+}
