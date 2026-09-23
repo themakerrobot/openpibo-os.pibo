@@ -22,11 +22,11 @@
   <link rel="stylesheet" href="../static/cobalt.css" />
   <link rel="stylesheet" href="../static/duotone-light.css" />
   <link rel="stylesheet" href="../static/jquery.jsonview.min.css" />
-  <link rel="stylesheet" href="../static/pibo-ui.css?ver=260924v5" />
-  <link rel="stylesheet" href="../static/v2/ide.css?ver=260924v2" />
+  <link rel="stylesheet" href="../static/pibo-ui.css?ver=260924v6" />
+  <link rel="stylesheet" href="../static/v2/ide.css?ver=260924v3" />
   <link rel="shortcut icon" href="../static/icon.png?ver=240319v1" type="image/x-icon" />
 
-  <script src="../static/ko2en.js?ver=260924v3"></script>
+  <script src="../static/ko2en.js?ver=260924v4"></script>
   <script src="../static/blockly_compressed.js?ver=240319v1"></script>
   <script src="../static/blocks_compressed.js?ver=240319v1"></script>
   <script src="../static/python_compressed.js?ver=240319v1"></script>
@@ -154,14 +154,18 @@
         <div class="fm-table-wrap v2-files">
           <table id="fm_table"><tbody></tbody></table>
         </div>
-        <!-- 미리보기: 사진·소리 파일을 열었을 때만 뜬다 (ide.js 가 data-media 를 단다) -->
+        <!-- 미리보기: 늘 있다. 머리를 누르면 접힌다. 사진을 누르면 크게 (ide.js) -->
         <div class="v2-preview">
-          <div class="v2-preview__head">
-            <span id="mediapath"></span>
-            <button type="button" class="v2-icon" id="v2_preview_close" aria-label="close"><i class="fa-solid fa-xmark"></i></button>
+          <button type="button" class="v2-preview__head" id="v2_preview_toggle" aria-expanded="true">
+            <i class="fa-solid fa-chevron-down"></i><span data-key="v2_preview"></span><span id="mediapath"></span>
+          </button>
+          <div class="v2-preview__body">
+            <div class="v2-preview__img">
+              <img id="image" class="preview-img" alt="" />
+              <p class="v2-preview__empty"><i class="fa-solid fa-photo-film"></i><span data-key="v2_preview_empty"></span></p>
+            </div>
+            <audio controls id="audio" class="preview-audio"></audio>
           </div>
-          <img id="image" class="preview-img" alt="" />
-          <audio controls id="audio" class="preview-audio"></audio>
         </div>
       </section>
 
@@ -305,7 +309,7 @@
 
   <script src="../static/pibo-ui.js?ver=260924v3"></script>
   <script src="../static/index.js?ver=260923v7"></script>
-  <script src="../static/v2/ide.js?ver=260924v2"></script>
+  <script src="../static/v2/ide.js?ver=260924v3"></script>
 </body>
 
 </html>

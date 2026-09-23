@@ -14,50 +14,61 @@
      dark   #1d2025 계열. 순수 검정은 쓰지 않는다(흰 글자 번짐·높이감 소실)
    ========================================================================== */
 
+/* 틀(상단바·레일·상태바)은 세 밝기 모두 짙은 남회색이다. 작업면만 밝기를 따른다.
+   흰 면적이 줄어 눈부심이 덜하고, 노랑 [실행] 과 브랜드 마크가 틀 위에서 또렷해진다. */
+:root {
+  --c-frame:     #232a33;
+  --c-frame-2:   #2e3641;   /* 틀 위 칩 · 호버 */
+  --c-frame-3:   #3a4350;   /* 틀 위 눌림 · 선택 */
+  --c-frame-line:#1a2027;
+  --c-frame-ink: #f1f3f6;
+  --c-frame-dim: #aeb7c2;
+}
 :root, :root[data-theme="soft"] {
-  --c-bg:       #f5f5f2;   /* 패널 */
-  --c-top:      #efefeb;   /* 상단바 · 레일 · 상태바 — 패널보다 한 톤 눌러 경계를 만든다 */
-  --c-work:     #eeefeb;   /* 블록 작업판 */
-  --c-canvas:   #e8e9e4;   /* 칩 · 눌린 면 */
-  --c-hover:    #e6e7e2;
-  --c-press:    #dcded8;
-  --c-line:     #d9dbd4;
-  --c-line-2:   #c3c6be;
-  --c-ink:      #1d2126;   /* 바탕 대비 약 15:1 */
-  --c-ink-2:    #4b535c;   /* 약 7.5:1 */
-  --c-ink-3:    #6f7780;   /* 약 4.5:1 — 보조 글자만 */
-  --c-raise:    #fbfbf9;   /* 떠 있는 것(메뉴·대화상자·선택된 탭) */
-  --c-yellow:   #f5cc2e;
-  --c-yellow-2: #e9bd12;
-  --c-yellow-t: #f6ebc2;
-  --c-on-yellow:#1d2126;
-  --c-teal:     #0b8fa1;
-  --c-teal-t:   #d8ecee;
-  --c-teal-ink: #07535e;
-  --c-red:      #d23c3c;
-  --c-red-t:    #f4dedb;
-  --c-red-ink:  #9a1c1c;
-  --c-green:    #1d8a4b;
-  --c-term:     #16191d;
-  --c-term-2:   #1e2227;
-  --c-term-line:#2a2f36;
-  --c-term-ink: #dfe3e7;
-  --c-term-dim: #8a939e;
-  --c-shadow:   rgba(20, 24, 30, .16);
-  --c-scrim:    rgba(20, 24, 30, .42);
+  /* 누런 회색은 칙칙해 보였다 → 푸른기 도는 맑은 오프화이트(L*≈97) */
+  --c-bg:       #f6f7f9;   /* 패널 */
+  --c-top:      #f6f7f9;
+  --c-work:     #eef1f4;   /* 블록 작업판 */
+  --c-canvas:   #e9ecf0;   /* 칩 · 눌린 면 */
+  --c-hover:    #e7eaee;
+  --c-press:    #dce1e7;
+  --c-line:     #dce0e5;
+  --c-line-2:   #c5ccd4;
+  --c-ink:      #1c2128;   /* 바탕 대비 약 15:1 */
+  --c-ink-2:    #4a5360;   /* 약 7.6:1 */
+  --c-ink-3:    #6e7884;   /* 약 4.5:1 — 보조 글자만 */
+  --c-raise:    #fdfdfe;   /* 떠 있는 것(메뉴·대화상자·선택된 탭) */
+  --c-yellow:   #ffcf33;
+  --c-yellow-2: #f2bf0f;
+  --c-yellow-t: #fff1c2;
+  --c-on-yellow:#1c2128;
+  --c-teal:     #0b95a8;
+  --c-teal-t:   #d9f0f3;
+  --c-teal-ink: #06596a;
+  --c-red:      #d9433f;
+  --c-red-t:    #fbe3e1;
+  --c-red-ink:  #a01d1d;
+  --c-green:    #1d9a52;
+  --c-term:     #161a20;
+  --c-term-2:   #1e232a;
+  --c-term-line:#2a3038;
+  --c-term-ink: #e1e5ea;
+  --c-term-dim: #8b95a1;
+  --c-shadow:   rgba(20, 26, 36, .18);
+  --c-scrim:    rgba(20, 26, 36, .45);
   color-scheme: light;
 }
 :root[data-theme="light"] {
-  --c-bg: #ffffff; --c-top: #ffffff; --c-work: #fbfbfc; --c-canvas: #f2f3f5;
-  --c-hover: #f1f3f5; --c-press: #e7eaee; --c-line: #e5e7eb; --c-line-2: #d0d5db;
-  --c-ink: #1b1f24; --c-ink-2: #555e69; --c-ink-3: #7a838d; --c-raise: #ffffff;
+  --c-bg: #ffffff; --c-top: #ffffff; --c-work: #fafbfc; --c-canvas: #f1f3f6;
+  --c-hover: #f1f3f5; --c-press: #e6e9ee; --c-line: #e5e8ec; --c-line-2: #d0d6dc;
+  --c-ink: #1b1f24; --c-ink-2: #545d69; --c-ink-3: #7a838d; --c-raise: #ffffff;
   --c-yellow: #ffd43b; --c-yellow-2: #f5c518; --c-yellow-t: #fff5cc;
   --c-teal: #0e9fb3; --c-teal-t: #e2f5f8; --c-teal-ink: #07606c;
   --c-red: #dc3d3d; --c-red-t: #fdecec; --c-red-ink: #a61b1b;
-  --c-term: #121519; --c-term-2: #1b1f25;
   --c-shadow: rgba(16, 24, 40, .16);
 }
 :root[data-theme="dark"] {
+  --c-frame: #14171b; --c-frame-2: #22262c; --c-frame-3: #2e333a; --c-frame-line: #0d0f12;
   --c-bg: #1d2025; --c-top: #181b1f; --c-work: #202328; --c-canvas: #272b31;
   --c-hover: #2a2e35; --c-press: #333841; --c-line: #2d3138; --c-line-2: #3d434c;
   --c-ink: #e3e6ea; --c-ink-2: #aeb5be; --c-ink-3: #858d97; --c-raise: #262a30;
@@ -140,7 +151,9 @@ body[data-running] #stop:not(.disabled) {
   animation: v2-pulse 1.6s ease-in-out infinite;
 }
 body[data-running] #stop:not(.disabled) > i { color: #fff; }
-body[data-running] #execute { opacity: .5; }
+/* 실행 중의 [실행]: 흐린 노랑은 틀 위에서 탁해 보여서 틀 색으로 물린다 */
+body[data-running] #execute { background: var(--c-frame-2); color: var(--c-frame-dim); box-shadow: none; }
+body[data-running] #execute > i { color: var(--c-frame-dim); }
 @keyframes v2-pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(210,60,60,.35); } 50% { box-shadow: 0 0 0 5px rgba(210,60,60,0); } }
 
 .v2-icon {
@@ -334,18 +347,42 @@ body[data-running] #execute { opacity: .5; }
 @media (hover: none) { #fm_table td:nth-child(n+3) { opacity: 1; } }
 #browser_en.dragover { outline: 2px dashed var(--c-teal); outline-offset: -6px; background: var(--c-teal-t); }
 
-/* 미리보기 — 사진·소리 파일을 열었을 때만 (#browser_en[data-media]) */
-.v2-preview { display: none; flex: none; border-top: 1px solid var(--c-line); padding: 4px 10px 10px; }
-#browser_en[data-media] .v2-preview { display: block; }
-.v2-preview__head { display: flex; align-items: center; gap: 6px; min-width: 0; height: 30px;
-                    font-size: 12px; color: var(--c-ink-2); }
-.v2-preview__head > #mediapath { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.v2-preview img, .v2-preview audio { display: none; }
-#browser_en[data-media="image"] .v2-preview img {
-  display: block; width: 100%; max-height: 200px; object-fit: contain;
-  border-radius: 10px; background: var(--c-canvas);
+/* 미리보기 — 늘 있다. 머리를 누르면 접힌다(#browser_en[data-preview="closed"], 기억).
+   사진을 누르면 크게(#v2_lightbox). 소리 파일이 없으면 플레이어는 흐리게 */
+.v2-preview { flex: none; border-top: 1px solid var(--c-line); padding: 0 10px 10px; }
+.v2-preview__head {
+  display: flex; align-items: center; gap: 8px; width: 100%; min-width: 0; height: 34px; padding: 0 2px;
+  border: 0; background: transparent; color: var(--c-ink-2); cursor: pointer;
+  font: 700 12px/1 var(--font); text-align: left;
 }
-#browser_en[data-media="audio"] .v2-preview audio { display: block; width: 100%; height: 36px; }
+.v2-preview__head > i { width: 12px; font-size: 10px; color: var(--c-ink-3); transition: transform .15s; }
+.v2-preview__head > #mediapath { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis;
+                                  white-space: nowrap; font-weight: 500; color: var(--c-ink-3); text-align: right; }
+#browser_en[data-preview="closed"] .v2-preview { padding-bottom: 0; }
+#browser_en[data-preview="closed"] .v2-preview__head > i { transform: rotate(-90deg); }
+#browser_en[data-preview="closed"] .v2-preview__body { display: none; }
+.v2-preview__img {
+  position: relative; height: 170px; border-radius: 10px; overflow: hidden;
+  background: var(--c-canvas); display: grid; place-items: center;
+}
+.v2-preview__img img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; cursor: zoom-in; }
+.v2-preview__img img:not([src]), .v2-preview__img img[src=""] { display: none; }
+.v2-preview__empty { margin: 0; padding: 0 16px; text-align: center; font-size: 12px; color: var(--c-ink-3);
+                     display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.v2-preview__empty > i { font-size: 22px; opacity: .6; }
+.v2-preview__img img[src]:not([src=""]) ~ .v2-preview__empty { display: none; }
+.v2-preview audio { display: block; width: 100%; height: 36px; margin-top: 8px; }
+.v2-preview audio:not([src]) { opacity: .5; pointer-events: none; }
+:root[data-theme="dark"] .v2-preview audio { filter: invert(.88) hue-rotate(180deg); }
+
+/* 사진 크게 보기 */
+.v2-lightbox {
+  position: fixed; inset: 0; z-index: 1100; display: flex; align-items: center; justify-content: center;
+  padding: 24px; background: rgba(10, 12, 16, .82); cursor: zoom-out; animation: v2-fade .15s ease-out;
+}
+.v2-lightbox img { max-width: 100%; max-height: 100%; border-radius: 8px; box-shadow: 0 20px 60px rgba(0,0,0,.5); }
+.v2-lightbox__cap { position: absolute; left: 0; right: 0; bottom: 14px; text-align: center; color: #cfd5dc; font-size: 13px; }
+@keyframes v2-fade { from { opacity: 0; } to { opacity: 1; } }
 
 /* 편집기 */
 .v2-editor { background: var(--c-work); }
@@ -453,6 +490,36 @@ body[data-running] #execute { opacity: .5; }
 .v2-status a:hover { color: var(--c-ink); }
 .v2-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--c-green); box-shadow: 0 0 0 3px rgba(29,138,75,.18); }
 body[data-offline] .v2-dot { background: var(--c-red); box-shadow: 0 0 0 3px rgba(210,60,60,.18); }
+
+/* ── 틀: 상단바 · 레일 · 상태바 (짙은 남회색) ─────────────────────────── */
+.v2-app .pb-header.v2-top { background: var(--c-frame); border-bottom-color: var(--c-frame-line); color: var(--c-frame-ink); }
+.v2-top .v2-file { background: var(--c-frame-2); color: var(--c-frame-ink); }
+.v2-top .v2-file > i { color: var(--c-frame-dim); }
+.v2-top .v2-file[data-empty] .v2-file__name { color: var(--c-frame-dim); }
+.v2-top .v2-file__dirty { color: var(--c-yellow); }
+.v2-top .v2-btn--ghost { color: var(--c-frame-ink); }
+.v2-top .v2-btn--ghost > i { color: var(--c-frame-dim); }
+.v2-top .v2-btn--ghost:hover:not(:disabled):not(.disabled) { background: var(--c-frame-2); }
+.v2-top .v2-seg { background: var(--c-frame-2); }
+.v2-top .v2-seg > button { color: var(--c-frame-dim); }
+.v2-top .v2-seg > button:hover:not(.checked) { background: var(--c-frame-3); color: var(--c-frame-ink); }
+.v2-top .v2-seg > button.checked { background: var(--c-frame-ink); color: #1c2128; box-shadow: 0 1px 2px rgba(0,0,0,.3); }
+.v2-top .v2-btn--stop { color: #ff9b94; }
+.v2-top .v2-btn--stop > i { color: #ff7d74; }
+.v2-top .v2-sep { background: var(--c-frame-3); }
+.v2-app .v2-top .pb-iconbtn { color: var(--c-frame-dim); }
+.v2-app .v2-top .pb-iconbtn:hover { background: var(--c-frame-2); color: var(--c-frame-ink); }
+.v2-top .v2-menu[open] > summary { background: var(--c-frame-3); color: var(--c-frame-ink); }
+.v2-app .v2-top :focus-visible { outline-color: var(--c-yellow); }
+
+.v2-rail { background: var(--c-frame); border-right-color: var(--c-frame-line); }
+.v2-rail__btn { color: var(--c-frame-dim); }
+.v2-rail__btn:hover { background: var(--c-frame-2); color: var(--c-frame-ink); }
+.v2-rail__btn[aria-pressed="true"] { background: var(--c-frame-3); color: var(--c-frame-ink); }
+.v2-rail .v2-menu[open] > summary { background: var(--c-frame-3); color: var(--c-frame-ink); }
+
+.v2-app footer.v2-status { background: var(--c-frame); border-top-color: var(--c-frame-line); color: var(--c-frame-dim); }
+.v2-status a:hover { color: var(--c-frame-ink); }
 
 /* ── 대화상자 (alert · prompt · confirm) ──────────────────────────────── */
 .alert-popup, .prompt-popup, .confirm-popup, .wifi-popup {

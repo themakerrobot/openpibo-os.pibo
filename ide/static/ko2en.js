@@ -35,6 +35,8 @@ const translations = {
   v2_prompt_ph:     { ko: "프로그램에 입력 보내기", en: "Send input to the program" },
   v2_old_design:    { ko: "예전 화면으로", en: "Classic layout" },
   v2_add:           { ko: "추가",     en: "New" },
+  v2_preview:       { ko: "미리보기", en: "Preview" },
+  v2_preview_empty: { ko: "사진·소리 파일을 누르면 여기서 보고 들어요", en: "Tap a picture or sound file to see or hear it here" },
   v2_drop_hint:     { ko: "파일을 이 목록으로 끌어다 놓아도 올라가요", en: "You can also drag files onto the list" },
   v2_theme:         { ko: "화면 밝기", en: "Brightness" },
   v2_theme_light:   { ko: "밝게",     en: "Light" },

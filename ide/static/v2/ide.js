@@ -7,7 +7,7 @@
      3) 상단바 파일 이름: #codepath(전체 경로, index.js 가 채운다)에서 이름만
      4) 글자 크기 [-][+]
      5) data-ph-key / data-title-key 번역 (index.js 의 setLanguage 는 textContent 만 바꾼다)
-     6) 미리보기: 사진·소리 파일을 열었을 때만 파일 패널 아래에 띄운다
+     6) 미리보기: 늘 있고 접을 수 있다(기억). 파일을 열면 펴진다. 사진을 누르면 크게
      7) 화면 밝기: 어둡게면 파이썬 편집기도 어두운 테마로 (스위치로 바꿀 수 있다)
    ========================================================================== */
 (function () {
@@ -138,17 +138,39 @@
   applyExtra();
 
   /* 6) 미리보기 ─────────────────────────────────────────────────────────── */
-  var browser = $id('browser_en');
-  function watchMedia(el, kind) {
-    new MutationObserver(function () {
-      if (el.getAttribute('src')) { browser.setAttribute('data-media', kind); fire(); }
-    }).observe(el, { attributes: true, attributeFilter: ['src'] });
+  var browser = $id('browser_en'), pvBtn = $id('v2_preview_toggle'), PKEY = 'pibo_v2_preview';
+  function setPreview(open, keep) {
+    browser.setAttribute('data-preview', open ? 'open' : 'closed');
+    pvBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    if (keep) { try { localStorage.setItem(PKEY, open ? 'open' : 'closed'); } catch (e) { /* 무시 */ } }
+    fire();
   }
-  watchMedia($id('image'), 'image');
-  watchMedia($id('audio'), 'audio');
-  $id('v2_preview_close').addEventListener('click', function () {
-    var a = $id('audio'); try { a.pause(); } catch (e) { /* 무시 */ }
-    browser.removeAttribute('data-media'); fire();
+  var pvSaved = null;
+  try { pvSaved = localStorage.getItem(PKEY); } catch (e) { /* 무시 */ }
+  // 저장값이 없으면 세로가 넉넉할 때(700px 이상)만 편다
+  setPreview(pvSaved ? pvSaved === 'open' : window.innerHeight >= 700, false);
+  pvBtn.addEventListener('click', function () {
+    setPreview(browser.getAttribute('data-preview') === 'closed', true);
+  });
+  // 사진·소리 파일을 열면 접혀 있어도 편다
+  ['image', 'audio'].forEach(function (id) {
+    new MutationObserver(function () {
+      if ($id(id).getAttribute('src') && browser.getAttribute('data-preview') === 'closed') setPreview(true, false);
+    }).observe($id(id), { attributes: true, attributeFilter: ['src'] });
+  });
+  // 사진 크게 보기 — 누르거나 Esc 로 닫는다
+  $id('image').addEventListener('click', function () {
+    var src = this.getAttribute('src'); if (!src) return;
+    var box = document.createElement('div');
+    box.className = 'v2-lightbox'; box.setAttribute('role', 'dialog');
+    box.innerHTML = '<img alt=""><div class="v2-lightbox__cap"></div>';
+    box.firstChild.src = src;
+    box.lastChild.textContent = $id('mediapath').textContent;
+    var close = function () { box.remove(); document.removeEventListener('keydown', onKey); };
+    var onKey = function (e) { if (e.key === 'Escape') close(); };
+    box.addEventListener('click', close);
+    document.addEventListener('keydown', onKey);
+    document.body.appendChild(box);
   });
 
   /* 7) 화면 밝기 ─────────────────────────────────────────────────────────── */

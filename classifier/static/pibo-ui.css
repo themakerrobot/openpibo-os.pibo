@@ -613,7 +613,7 @@ body.pb-refresh .pb-header {
    도구·분류기용. IDE v2 는 자체 화면(ide/templates/index_v2.html + ide/static/v2/)이라
    이 층을 쓰지 않는다. 색 값은 ide/static/v2/ide.css 와 같다 — 한쪽을 고치면 같이 고칠 것.
 
-     바탕   노랑 헤더 · 흰 패널  →  한 톤 눌린 헤더 · 바닥 위 카드
+     바탕   노랑 헤더 · 흰 패널  →  짙은 남회색 틀(헤더·왼쪽 메뉴) · 바닥 위 카드
      노랑   헤더 전체  →  브랜드 마크와 '주 동작'(실행 · AI 가르치기) 에만
      청록   버튼 바탕  →  선택 · 포커스 · 슬라이더 같은 '상태' 에만. 버튼은 옅은 청록(tonal)
      빨강   정지 · 등록 바탕  →  옅은 빨강(tonal)
@@ -624,36 +624,42 @@ body.pb-refresh .pb-header {
      soft   흰색 대신 옅은 회색. 오래된 노트북 패널에서 흰 바탕이 눈부신 걸 줄인다
      dark   #1d2025 계열 (순수 검정은 안 쓴다) */
 body.pb-v2 {
-  /* soft (기본) */
-  --v2-canvas:  #e9eae6;   /* 바닥 */
-  --v2-top:     #efefeb;   /* 헤더 · 레일 · 상태바 */
-  --v2-surface: #f6f6f3;   /* 카드 */
-  --v2-raise:   #fbfbf9;   /* 떠 있는 것 · 입력칸 */
-  --v2-sunken:  #ecede8;
-  --v2-hover:   #e6e7e2;
-  --v2-press:   #dcded8;
-  --v2-line:    #d9dbd4;
-  --v2-line-2:  #c3c6be;
-  --v2-ink:     #1d2126;
-  --v2-ink-2:   #4b535c;
-  --v2-ink-3:   #6f7780;
-  --v2-yellow:  #f5cc2e;
-  --v2-yellow-2:#e9bd12;
-  --v2-yellow-t:#f6ebc2;
-  --v2-on-yellow:#1d2126;
-  --v2-teal:    #0b8fa1;
-  --v2-teal-t:  #d8ecee;
-  --v2-teal-t2: #c6e4e8;
-  --v2-teal-ink:#07535e;
-  --v2-red:     #d23c3c;
-  --v2-red-t:   #f4dedb;
-  --v2-red-t2:  #efcfca;
-  --v2-red-ink: #9a1c1c;
-  --v2-term:    #16191d;
-  --v2-term-ink:#dfe3e7;
-  --v2-shadow:  rgba(20, 24, 30, .16);
-  --v2-scrim:   rgba(20, 24, 30, .42);
-  --v2-img-dim: .92;       /* 흰 바탕 사진(로봇 그림)을 조금 누른다 */
+  /* 틀(헤더·왼쪽 메뉴)은 세 밝기 모두 짙은 남회색. IDE v2 와 같다 */
+  --v2-frame:     #232a33;
+  --v2-frame-2:   #2e3641;
+  --v2-frame-3:   #3a4350;
+  --v2-frame-line:#1a2027;
+  --v2-frame-ink: #f1f3f6;
+  --v2-frame-dim: #aeb7c2;
+  /* soft (기본) — 누런 회색 대신 푸른기 도는 맑은 오프화이트 */
+  --v2-canvas:  #eceff3;   /* 바닥 */
+  --v2-top:     #f6f7f9;
+  --v2-surface: #f7f8fa;   /* 카드 */
+  --v2-raise:   #fdfdfe;   /* 떠 있는 것 · 입력칸 */
+  --v2-sunken:  #eef1f4;
+  --v2-hover:   #e7eaee;
+  --v2-press:   #dce1e7;
+  --v2-line:    #dce0e5;
+  --v2-line-2:  #c5ccd4;
+  --v2-ink:     #1c2128;
+  --v2-ink-2:   #4a5360;
+  --v2-ink-3:   #6e7884;
+  --v2-yellow:  #ffcf33;
+  --v2-yellow-2:#f2bf0f;
+  --v2-yellow-t:#fff1c2;
+  --v2-on-yellow:#1c2128;
+  --v2-teal:    #0b95a8;
+  --v2-teal-t:  #d9f0f3;
+  --v2-teal-t2: #c4e7ec;
+  --v2-teal-ink:#06596a;
+  --v2-red:     #d9433f;
+  --v2-red-t:   #fbe3e1;
+  --v2-red-t2:  #f6d0cd;
+  --v2-red-ink: #a01d1d;
+  --v2-term:    #161a20;
+  --v2-term-ink:#e1e5ea;
+  --v2-shadow:  rgba(20, 26, 36, .18);
+  --v2-scrim:   rgba(20, 26, 36, .45);
 }
 html[data-theme="light"] body.pb-v2 {
   --v2-canvas: #f3f4f6; --v2-top: #ffffff; --v2-surface: #ffffff; --v2-raise: #ffffff;
@@ -663,9 +669,9 @@ html[data-theme="light"] body.pb-v2 {
   --v2-yellow: #ffd43b; --v2-yellow-2: #f5c518; --v2-yellow-t: #fff6d6;
   --v2-teal: #0e9fb3; --v2-teal-t: #e3f5f8; --v2-teal-t2: #cdeef3; --v2-teal-ink: #06606d;
   --v2-red: #dc3d3d; --v2-red-t: #fdecec; --v2-red-t2: #fadada; --v2-red-ink: #a61b1b;
-  --v2-img-dim: 1;
 }
 html[data-theme="dark"] body.pb-v2 {
+  --v2-frame: #14171b; --v2-frame-2: #22262c; --v2-frame-3: #2e333a; --v2-frame-line: #0d0f12;
   --v2-canvas: #16181c; --v2-top: #181b1f; --v2-surface: #1d2025; --v2-raise: #262a30;
   --v2-sunken: #22262b; --v2-hover: #2a2e35; --v2-press: #333841;
   --v2-line: #2d3138; --v2-line-2: #3d434c;
@@ -675,7 +681,6 @@ html[data-theme="dark"] body.pb-v2 {
   --v2-red: #e05a52; --v2-red-t: #3d2224; --v2-red-t2: #4a2729; --v2-red-ink: #ffaaa3;
   --v2-term: #121417;
   --v2-shadow: rgba(0, 0, 0, .45); --v2-scrim: rgba(0, 0, 0, .55);
-  --v2-img-dim: .8;
   color-scheme: dark;
 }
 body.pb-v2 {
@@ -706,12 +711,12 @@ body.pb-v2 label, body.pb-v2 i.fa > span { font-family: var(--pb-font); }
 body.pb-v2 [hidden] { display: none !important; }   /* 앱 CSS 의 display:flex 가 hidden 을 이기던 곳(녹음 파형 등) */
 body.pb-v2 ::selection { background: rgba(11, 143, 161, .25); }
 
-/* ── 헤더 ───────────────────────────────────────────────────────────────── */
+/* ── 헤더 (틀) ──────────────────────────────────────────────────────────── */
 body.pb-v2 .pb-header {
   height: 44px; min-height: 44px;              /* IDE v2 상단바와 같은 높이 */
-  background: var(--v2-top);
-  border-bottom: 1px solid var(--v2-line);
-  color: var(--v2-ink);
+  background: var(--v2-frame);
+  border-bottom: 1px solid var(--v2-frame-line);
+  color: var(--v2-frame-ink);
 }
 body.pb-v2 .pb-header__brand { font-size: 15px; gap: 8px; letter-spacing: -.1px; }
 body.pb-v2 .pb-header__brand > i:first-child {
@@ -719,17 +724,22 @@ body.pb-v2 .pb-header__brand > i:first-child {
   width: 28px; height: 28px; border-radius: 8px;
   background: var(--v2-yellow); color: var(--v2-on-yellow); font-size: 14px;
 }
-body.pb-v2 .pb-iconbtn { color: var(--v2-ink-2); }
-body.pb-v2 .pb-iconbtn:hover { background: var(--v2-hover); color: var(--v2-ink); }
-body.pb-v2 .pb-iconbtn:active { background: var(--v2-press); }
+body.pb-v2 .pb-header .pb-iconbtn { color: var(--v2-frame-dim); }
+body.pb-v2 .pb-header .pb-iconbtn:hover { background: var(--v2-frame-2); color: var(--v2-frame-ink); }
+body.pb-v2 .pb-header .pb-iconbtn:active { background: var(--v2-frame-3); }
 body.pb-v2 .pb-iconbtn[aria-pressed="true"] { background: var(--v2-teal-t); color: var(--v2-teal-ink); }
-body.pb-v2 .pb-iconbtn--danger { color: var(--v2-ink-2); }
 body.pb-v2 .pb-iconbtn--danger:hover { background: var(--v2-red-t); color: var(--v2-red-ink); }
-body.pb-v2 .pb-iconbtn:not(.pb-iconbtn--danger) + .pb-iconbtn--danger::before { border-color: var(--v2-line); }
+body.pb-v2 .pb-iconbtn:not(.pb-iconbtn--danger) + .pb-iconbtn--danger::before { border-color: var(--v2-frame-3); }
 body.pb-v2 .pb-header .pb-field--sm {
-  border-color: var(--v2-line-2); background: var(--v2-raise); color: var(--v2-ink-2);
+  border-color: var(--v2-frame-3); background: var(--v2-frame-2); color: var(--v2-frame-ink);
 }
-html[data-theme="dark"] body.pb-v2 #logo_bt img { filter: brightness(1.2); }
+body.pb-v2 .pb-header :focus-visible { outline-color: var(--v2-yellow); }
+/* 헤더 안의 탭(분류기) */
+body.pb-v2 .pb-header .pb-seg { background: var(--v2-frame-2); }
+body.pb-v2 .pb-header .pb-seg > button { color: var(--v2-frame-dim); }
+body.pb-v2 .pb-header .pb-seg > button:hover:not([aria-selected="true"]) { background: var(--v2-frame-3); color: var(--v2-frame-ink); }
+body.pb-v2 .pb-header .pb-seg > button[aria-selected="true"],
+body.pb-v2 .pb-header .cls-tabs > button[aria-selected="true"] { background: var(--v2-frame-ink); color: #1c2128; box-shadow: 0 1px 2px rgba(0,0,0,.3); }
 
 /* ── 세그먼트: 눌린 홈 위에 떠 있는 알약 ─────────────────────────────────── */
 body.pb-v2 .pb-seg,
@@ -854,25 +864,24 @@ body.pb-v2 .pb-resizer:hover, body.pb-v2 .pb-resizer[data-dragging] {
   background: linear-gradient(90deg, transparent 3px, var(--v2-teal) 3px, var(--v2-teal) 5px, transparent 5px);
 }
 
-/* ── tools: 왼쪽 메뉴 레일 + 카드 ─────────────────────────────────────────── */
-body.pb-v2 main > nav { background: var(--v2-top); border-right: 1px solid var(--v2-line); width: 64px; }
+/* ── tools: 왼쪽 메뉴(틀) + 카드 ──────────────────────────────────────────── */
+body.pb-v2 main > nav { background: var(--v2-frame); border-right: 1px solid var(--v2-frame-line); width: 64px; }
 body.pb-v2 nav ul { margin: 0; padding: 6px 0; display: flex; flex-direction: column; align-items: center; gap: 4px; }
 body.pb-v2 nav button {
   width: 52px; padding: 8px 0 6px; border-radius: 10px; opacity: 1;
   display: flex; flex-direction: column; align-items: center; gap: 4px;
-  color: var(--v2-ink-3); font: 600 10.5px/1 var(--pb-font);
+  color: var(--v2-frame-dim); font: 600 10.5px/1 var(--pb-font);
 }
-body.pb-v2 nav button::after { opacity: .45; transform: scale(.8); }   /* PNG 아이콘 */
+body.pb-v2 nav button::after { opacity: .55; transform: scale(.8); filter: invert(1); }   /* 검은 PNG → 틀 위에서 밝게 */
 body.pb-v2 nav button > .pb-navlabel { order: 2; }
-body.pb-v2 nav button:hover { background: var(--v2-hover); color: var(--v2-ink); }
-body.pb-v2 nav button:hover::after { opacity: .75; }
-body.pb-v2 nav button.menu-selected { background: var(--v2-sunken); color: var(--v2-ink); position: relative; }
+body.pb-v2 nav button:hover { background: var(--v2-frame-2); color: var(--v2-frame-ink); }
+body.pb-v2 nav button:hover::after { opacity: .85; }
+body.pb-v2 nav button.menu-selected { background: var(--v2-frame-3); color: var(--v2-frame-ink); position: relative; }
 body.pb-v2 nav button.menu-selected::after { opacity: 1; }
 body.pb-v2 nav button.menu-selected::before {
   content: ""; position: absolute; left: -6px; top: 12px; bottom: 12px; width: 3px;
-  border-radius: 0 3px 3px 0; background: var(--v2-yellow-2);
+  border-radius: 0 3px 3px 0; background: var(--v2-yellow);
 }
-html[data-theme="dark"] body.pb-v2 nav button::after { filter: invert(1); }
 body.pb-v2 main > div.content.pb-pane { border: 0; border-radius: 0; background: var(--v2-canvas); padding: 10px 12px 16px; }
 body.pb-v2 .pb-navlabel { display: block; }
 
@@ -928,8 +937,8 @@ body.pb-v2 img.preview-img { background-color: var(--v2-sunken); border-color: v
 
 /* ── 상태바 ─────────────────────────────────────────────────────────────── */
 body.pb-v2 footer.pb-statusbar {
-  background: var(--v2-top); border-top: 1px solid var(--v2-line); box-shadow: none;
-  color: var(--v2-ink-3); min-height: 26px; height: auto; padding-top: 3px; padding-bottom: 3px;
+  background: var(--v2-frame); border-top: 1px solid var(--v2-frame-line); box-shadow: none;
+  color: var(--v2-frame-dim); min-height: 26px; height: auto; padding-top: 3px; padding-bottom: 3px;
   font-size: 12.5px !important;
 }
 body.pb-v2 footer.pb-statusbar * { font-size: 12.5px !important; }
