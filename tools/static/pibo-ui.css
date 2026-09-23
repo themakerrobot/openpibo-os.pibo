@@ -44,6 +44,7 @@
 
   /* ── 치수 ── 태블릿 기준. 터치 타겟 44px 밑으로 내리지 말 것 ────────── */
   --pb-tap:      44px;
+  --pb-header-h: 40px;
   --pb-radius:   10px;
   --pb-radius-s:  7px;
   --pb-gap:      10px;
@@ -115,39 +116,52 @@
   display: flex; align-items: center; justify-content: space-between;
   gap: var(--pb-gap);
   background: linear-gradient(var(--pb-brand), var(--pb-brand-2));
-  /* 44px 아이콘 버튼 + 위아래 여백 4px. 이보다 낮추면 버튼이 헤더 밖으로 넘친다
-     (배경이 단색이라 눈에는 안 보이지만 잘린 상태가 된다) */
-  padding: 4px var(--pb-pad);
-  min-height: 54px;
+  /* 40px. 버튼(32px)은 아이콘·라벨을 가로 한 줄로 둔다.
+     예전 54px(아이콘 위·라벨 아래)는 작업 화면을 너무 먹었다 */
+  padding: 0 var(--pb-pad);
+  height: var(--pb-header-h); min-height: var(--pb-header-h);
+  flex: 0 0 auto;
   border-bottom: 1px solid rgba(0,0,0,.18);
 }
 .pb-header__brand {
-  font-weight: 700; font-size: var(--pb-fs-l); letter-spacing: .3px;
-  display: flex; align-items: center; gap: 8px;
+  font-weight: 700; font-size: 15px; letter-spacing: .2px; white-space: nowrap;
+  display: flex; align-items: center; gap: 6px;
 }
 
 /* 헤더 안의 아이콘 버튼 — 아이콘만 두지 말고 글자 라벨을 같이 둔다.
-   태블릿에는 hover 가 없어서 title 툴팁이 뜨지 않는다. */
+   태블릿에는 hover 가 없어서 title 툴팁이 뜨지 않는다. 라벨은 폭이 모자랄 때만 접는다 */
 /* <nav> 이 아니라 <div> 를 쓸 것. tools/static/index.css:322 에 bare `nav { position: fixed }`
    가 있어서 <nav class="pb-iconbar"> 로 쓰면 헤더 밖으로 튀어나간다. */
-.pb-iconbar { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+.pb-iconbar { display: flex; align-items: center; gap: 2px; flex-wrap: nowrap; min-width: 0; }
 .pb-iconbtn {
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 2px;
-  min-width: 54px; height: var(--pb-tap); padding: 0 4px;
+  display: flex; flex-direction: row; align-items: center; justify-content: center;
+  gap: 6px; flex: 0 0 auto;
+  min-width: 32px; height: 32px; padding: 0 9px;
   border: 0; background: transparent; color: inherit; box-shadow: none;
   border-radius: var(--pb-radius-s);
-  font: inherit; font-size: var(--pb-fs); text-decoration: none;
+  font: inherit; font-size: var(--pb-fs-s); text-decoration: none; white-space: nowrap;
   cursor: pointer;
 }
-/* 아이콘 자리를 고정한다. JS 가 채우는 아이콘(전체화면 등)은 높이가 제각각이라
-   고정하지 않으면 그 버튼만 라벨이 아래로 밀린다. */
-.pb-iconbtn > :first-child { display: block; height: 18px; line-height: 18px; font-size: 16px; }
-.pb-iconbtn__label { display: block; height: 12px; line-height: 12px;
-                     font-size: 10px; font-weight: 700; letter-spacing: -.2px; }
-.pb-iconbtn:hover  { background: rgba(0,0,0,.09); }
-.pb-iconbtn:active { background: rgba(0,0,0,.16); }
+/* 아이콘 자리를 고정한다. JS 가 채우는 아이콘(전체화면 등)은 크기가 제각각이다 */
+.pb-iconbtn > :first-child { display: inline-flex; align-items: center; justify-content: center;
+                             width: 16px; height: 16px; font-size: 14px; line-height: 1; }
+.pb-iconbtn__label { font-size: var(--pb-fs-s); font-weight: 600; line-height: 1; letter-spacing: -.1px; }
+.pb-iconbtn:hover  { background: rgba(0,0,0,.08); }
+.pb-iconbtn:active { background: rgba(0,0,0,.15); }
 .pb-iconbtn--danger { color: #7a1d0c; }
+/* 되돌릴 수 없는 버튼 묶음 앞에 가는 구분선 */
+.pb-iconbtn:not(.pb-iconbtn--danger) + .pb-iconbtn--danger { margin-left: 9px; position: relative; }
+.pb-iconbtn:not(.pb-iconbtn--danger) + .pb-iconbtn--danger::before {
+  content: ""; position: absolute; left: -6px; top: 8px; bottom: 8px;
+  border-left: 1px solid rgba(0,0,0,.2);
+}
+/* 언어 선택·로고 */
+.pb-header .pb-field--sm { height: 28px; margin-left: 6px; }
+.pb-header #logo_bt { display: flex; align-items: center; margin-left: 6px; }
+.pb-header #logo_bt img { height: 16px !important; }
+/* 헤더 안의 세그먼트(분류기 탭 등) */
+.pb-header .pb-seg { height: 30px; }
+.pb-header .pb-seg > button { font-size: var(--pb-fs-s); padding: 0 12px; }
 
 /* ==========================================================================
    버튼  —  위계는 딱 네 단계. 더 만들지 말 것
@@ -219,7 +233,7 @@
   font: var(--pb-fs)/1 var(--pb-font);
 }
 .pb-field:focus { border-color: var(--pb-focus); }
-/* 헤더 안에 들어가는 작은 입력 (언어 선택 등). 헤더가 46px 이라 44px 는 꽉 낀다 */
+/* 헤더 안에 들어가는 작은 입력 (언어 선택 등). 헤더 안에서는 28px 로 더 줄인다 */
 .pb-field--sm { height: 32px; padding: 0 8px; font-size: var(--pb-fs-s);
                 border-radius: var(--pb-radius-s); }
 /* 세 앱 모두 `select, input { font-size: 16px !important }` 를 전역으로 갖고 있어
@@ -435,15 +449,21 @@ body[data-running] #stop:not(:disabled) { animation: pb-pulse 1.4s ease-in-out i
 /* ==========================================================================
    좁은 화면
    ========================================================================== */
-@media (max-width: 899px) {
-  .pb-iconbtn { min-width: 46px; }
+/* 라벨은 폭이 모자랄 때만 접는다. 기준은 IDE 실측 — 라벨을 다 펴면 1024px 에서
+   한국어 872px / 영어 927px 이 필요하다(파일 토글 포함). 900px 대에는 터미널 토글이 더 붙는다 */
+@media (max-width: 999px) {
   .pb-header { padding-left: 8px; padding-right: 8px; }
+  .pb-iconbtn { padding: 0 8px; }
+  .pb-iconbtn__label { display: none; }
 }
 @media (max-width: 720px) {
-  .pb-iconbtn { min-width: var(--pb-tap); }
-  .pb-iconbtn__label { display: none; }     /* 자리가 없으면 라벨만 접는다 */
   .pb-btn { padding: 0 12px; }
   .pb-btn--accent { padding: 0 16px; }
+  .pb-header #logo_bt { display: none; }
+  /* 폰 폭에서는 버튼 줄을 가로로 밀어 본다. 헤더 높이는 그대로 */
+  .pb-header { gap: 8px; }
+  .pb-iconbar { overflow-x: auto; scrollbar-width: none; }
+  .pb-iconbar::-webkit-scrollbar { display: none; }
 }
 
 /* 동작 줄이기 설정을 존중한다 */
