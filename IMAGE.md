@@ -40,6 +40,26 @@ pyenv 를 새로 만들면 이 단계가 통째로 빠지니, 처음부터 이�
 
 의존성(`openpibo_models` 등)은 계속 pip 설치본을 쓴다. 지우지 말 것.
 
+### 분류기 런타임 (이미지당 1회)
+
+분류기(260924~)는 TensorFlow 대신 LiteRT 로 이미지 모델을 돌린다.
+
+```bash
+uname -m; ldd --version | head -1       # aarch64 · glibc 2.27 이상이어야 wheel 이 맞는다
+sudo /home/pi/.pyenv/bin/python3 -m pip install ai-edge-litert
+/home/pi/.pyenv/bin/python3 -c "from openpibo.modules.teachlab import load_interpreter; print(load_interpreter())"
+# <class 'ai_edge_litert.interpreter.Interpreter'> 가 나와야 한다
+```
+
+위가 확인된 **뒤에만** TensorFlow 를 지운다. LiteRT·tflite_runtime 이 둘 다 없는데 TF 를
+지우면 `openpibo.vision_detect`(movenet)까지 못 뜬다.
+
+```bash
+/home/pi/.pyenv/bin/python3 -m pip list 2>/dev/null | grep -i -E "tensorflow|keras"   # 설치된 이름 확인
+sudo /home/pi/.pyenv/bin/python3 -m pip uninstall -y <위에서 나온 이름들>
+/home/pi/.pyenv/bin/python3 -c "from openpibo.vision_detect import Detect; from openpibo.vision_classify import CustomClassifier; print('ok')"
+```
+
 ### 납품 국가 설정
 
 `system/setup_country.sh <국가코드>` 를 돌린다. 여러 번 돌려도 안전하다.

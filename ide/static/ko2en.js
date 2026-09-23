@@ -2,6 +2,7 @@ const blang = (navigator.language || navigator.userLanguage).includes('ko')?'ko'
 let lang = localStorage.getItem("language")?localStorage.getItem("language"):blang;
 
 const translations = {
+  cf_model_default: { ko: "모델 이름", en: "model name" },
   saved:            { ko: "저장했습니다",                 en: "Saved" },
   save_unconfirmed: { ko: "저장 확인을 받지 못했습니다. 다시 저장해 보세요.", en: "Save was not confirmed. Please save again." },
   copied:           { ko: "복사했습니다",                 en: "Copied" },

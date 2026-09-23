@@ -3,7 +3,7 @@
 Pibo 로봇 OS. Raspberry Pi(`pi` 유저, `/home/pi/openpibo-os`)에서 서비스가 작업본을 직접 실행한다.
 
 주요 디렉토리: `ide/`(Blockly IDE, FastAPI + socket.io), `tools/`(모션·음성 도구),
-`classifier/`(이미지 분류기), `system/`(부팅·핫스팟 스크립트).
+`classifier/`(분류기 — 이미지·손·얼굴·포즈), `system/`(부팅·핫스팟 스크립트).
 
 ---
 
@@ -233,9 +233,10 @@ country PH: DFS-FCC
 > 공유기 펌웨어 업데이트·재부팅 후 채널이 유지됐는지 반드시 확인할 것.
 > 30대가 한꺼번에 떨어지면 30대를 다 재부팅해야 한다.
 
-30명 규모 대역폭: 카메라는 320×240 / 2 FPS(`classifier/run_classify.py:65,93` — 주석의
-`# 10 FPS` 는 틀렸다)로 대당 0.3~0.8 Mbps. 무선은 AP를 거치며 airtime 을 2배 쓰므로
-30대면 약 48 Mbps. 5GHz 80MHz 한 채널이면 여유가 있고, **2.4GHz 로는 안 된다.**
+30명 규모 대역폭: 분류기 카메라는 320×240 JPEG(품질 80), 평소 2 FPS 로 대당 약 0.4 Mbps,
+[꾹 눌러 모으기] 를 누르는 동안만 약 6.7 FPS·1.3 Mbps 다(`classifier/run_classify.py` 의
+`FRAME_SLOW`/`FRAME_FAST`, 복잡한 장면 기준 실측). 무선은 AP를 거치며 airtime 을 2배 쓰므로
+평소 30대면 약 24 Mbps, 전원이 동시에 모으면 약 80 Mbps. 5GHz 80MHz 한 채널이면 여유가 있고, **2.4GHz 로는 안 된다.**
 공유기 한 대에 로봇 30 + 단말 30 = 60대는 동시접속 한계에 걸리니 유선 백홀로 AP 2대를 권한다.
 
 ---
@@ -455,6 +456,58 @@ IDE 의 [도구][대화][분류기] 는 누르는 **그 순간** 이름 붙인 �
 
 ---
 
+## 분류기 (260924)
+
+teach-lab 과 같은 기능(이미지·손·얼굴·포즈 가르치기)을 파이보 카메라로 한다.
+**TensorFlow 를 쓰지 않는다.** 예전 분류기(TF.js MobileNetV2 → keras 변환 → TF 로 추론)를 통째로 바꿨다.
+
+| 단계 | 어디서 | 무엇으로 |
+|---|---|---|
+| 카메라 | 파이보 → 태블릿 | socket.io `camera_image`, 320×240 JPEG |
+| 특징 뽑기·학습 | 태블릿 브라우저 | MediaPipe wasm(`static/vendor/tasks-vision`) + TF.js 작은 MLP |
+| 저장 | 파이보 | `POST /api/models` → `/home/pi/mymodel/<이름>/` |
+| 추론 | 파이보 | `openpibo.vision_classify.CustomClassifier` — LiteRT(이미지) / MediaPipe(손·얼굴·포즈) + numpy |
+
+모델 폴더 하나에 `project.json` `classifier.json` `classifier.bin` `labels.txt` `samples.json`
+과 특징 모델 파일(`.tflite`/`.task`)이 들어간다. teach-lab 파이썬 내보내기와 같은 형식이라
+`pip install teachlab` 으로 PC 에서도 돈다. `samples.json` 은 [이어서 배우기] 용이다.
+
+블록: `[이미지 모델 설정하기]` 에 폴더 `mymodel`, 이름 칸에 모델 이름. 두 번째 칸(라벨)은 안 쓴다.
+`ide/static/ko.js` 의 문구는 여전히 "이미지 모델" 이지만 수정 금지 파일이라 그대로 뒀다.
+**예전 `model.keras` 는 못 읽는다** (불러오면 다시 학습하라는 오류). 의도한 호환 단절이다.
+
+### 가져온 코드 — 두 곳을 함께 고칠 것
+
+- `classifier/static/tl/` ← teach-lab `lib/` (74f421a). 바꾼 곳은 파일 첫 줄에 적었다(경로, `mirror:false`)
+- `openpibo/modules/teachlab/` ← teach-lab `python/teachlab/`. 바꾼 곳은 `load_interpreter()` 하나
+- 브라우저와 파이썬이 **같은 숫자**를 내야 한다. 정규화 식(`features.js` ↔ `landmarks.py`),
+  자르기(`cropTo` ↔ `crop_to`)를 한쪽만 고치면 학습한 모델이 파이보에서 엉뚱한 답을 낸다
+- 로봇 카메라는 거울이 아니다. 어느 소스도 좌우를 뒤집지 않는다
+- 파이보는 추론 전에 카메라 그림을 짧은 변 240 으로 줄인다(`_as_stream_rgb`). 브라우저가 학습 때
+  본 그림과 크기를 맞추려는 것이다. 스트림 크기를 바꾸면 여기도 바꿀 것
+
+### 검증 (컨테이너, 가짜 카메라)
+
+브라우저(headless Chromium)로 네 소스를 학습·저장하고 같은 사진을 `CustomClassifier` 로 돌렸다.
+답은 6/6 일치. 특징 코사인: 손 0.99, 이미지 0.96~0.98(JPEG 차이), 얼굴 0.83~0.94.
+얼굴이 낮은 건 브라우저 wasm 과 파이썬 MediaPipe 의 버전 차이다. 경계에 있는 그림은 한쪽만
+잡기도 한다(손 사진 1장을 파이썬만 잡음). **파이보의 MediaPipe 버전으로는 미검증.**
+
+### 막아 둔 것
+
+MediaPipe wasm 이 1분마다 `odml.pa.googleapis.com/v1/log` 로 사용 기록을 보낸다. 끄는 옵션이
+없어 `app.js` 맨 위에서 `fetch` 를 감싸 그 주소만 204 로 돌려준다(그러면 MediaPipe 가 전송을 멈춘다).
+vendor 파일을 갈아 끼울 때 이 동작이 그대로인지 확인할 것.
+
+### 기기 요구 (확인 필요)
+
+- `ai-edge-litert` 또는 `tflite-runtime`. 둘 다 없으면 `load_interpreter()` 가 TensorFlow 로 떨어진다.
+  그래야 기존 기기에서 movenet(사물인식)이 안 깨진다. TF 를 지우는 건 LiteRT 를 깐 **뒤에** (IMAGE.md)
+- `mediapipe` — `vision_face.py` 가 이미 쓰고 있다. Tasks API(HandLandmarker·FaceLandmarker blendshape) 필요
+- 파이보에서 실제 추론 속도·메모리는 아직 못 쟀다
+
+---
+
 ## merge 충돌 처리
 
 `main` → `ph` merge에서 나는 충돌은 사실상 `ko2en.js`의 1·2행뿐이다.
@@ -484,6 +537,8 @@ IDE 의 [도구][대화][분류기] 는 누르는 **그 순간** 이름 붙인 �
 python3 -m py_compile ide/run_ide.py
 node --check ide/static/index.js ide/static/ko2en.js
 node --check tools/static/index.js tools/static/ko2en.js classifier/static/ko2en.js
+node --check --input-type=module < classifier/static/app.js
+python3 -m py_compile classifier/run_classify.py openpibo/vision_classify.py
 git diff --cached --summary          # 의도치 않은 mode change 없는지
 git ls-tree -r HEAD system | grep -E "hotspot|booting|setup_country|setup_openpibo"   # 100755 확인
 ```
