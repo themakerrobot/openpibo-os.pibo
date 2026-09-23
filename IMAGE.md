@@ -60,6 +60,15 @@ sudo /home/pi/.pyenv/bin/python3 -m pip uninstall -y <위에서 나온 이름들
 /home/pi/.pyenv/bin/python3 -c "from openpibo.vision_detect import Detect; from openpibo.vision_classify import CustomClassifier; print('ok')"
 ```
 
+사물 인식(260924~)도 ultralytics 를 안 쓴다. 아래가 되면 ultralytics·torch 를 지워도 된다.
+
+```bash
+/home/pi/.pyenv/bin/python3 -c "import numpy as np; from openpibo.vision_detect import Detect; print(Detect().detect_object(np.zeros((480,640,3),'uint8')))"
+# [] 가 나오면 된다 (빈 그림이라 찾은 게 없음). 에러 없이 끝나는 게 핵심이다
+/home/pi/.pyenv/bin/python3 -m pip list 2>/dev/null | grep -i -E "ultralytics|^torch"
+sudo /home/pi/.pyenv/bin/python3 -m pip uninstall -y <위에서 나온 이름들>
+```
+
 ### 납품 국가 설정
 
 `system/setup_country.sh <국가코드>` 를 돌린다. 여러 번 돌려도 안전하다.

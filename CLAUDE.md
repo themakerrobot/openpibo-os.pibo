@@ -508,6 +508,27 @@ vendor 파일을 갈아 끼울 때 이 동작이 그대로인지 확인할 것.
 
 ---
 
+## 사물 인식 (260924)
+
+`openpibo.vision_detect.Detect.detect_object` 는 **ultralytics·torch 없이** onnxruntime 으로
+YOLO ONNX 를 돌린다(`openpibo/modules/yolo_onnx.py`). 기본 모델은 그대로
+`/home/pi/.model/object/yolo11s.onnx`.
+
+- ultralytics `predict(conf=0.5, iou=0.4, imgsz=320)` 와 **같은 결과**다. coco128 128장에서
+  `detect_object` 반환값이 예전 코드와 128/128 같았다(320 고정 · 동적 · 640 고정 모델 모두)
+- 입력 크기: 모델에 고정돼 있으면 그 크기, 동적이면 320(`OBJECT_IMGSZ`). 동적 모델은 ultralytics 처럼
+  32 배수까지만 채운다(640×480 → 320×256). 이걸 정사각형으로 채우면 결과가 달라진다
+- 클래스 이름: ONNX 메타데이터 `names`(ultralytics export 가 넣는다) → 없으면 모델 옆 `labels.txt`.
+  그래서 `load_object_model` 블록으로 올리던 사용자 YOLO 모델도 그대로 읽힌다
+- 모델은 처음 `detect_object` 를 부를 때 올린다. `Detect()` 만 만들고 QR·마커만 쓰면 메모리를 안 쓴다
+- 컨테이너 x86 4코어, 320: 예전(ultralytics) 최대 838MB · 53ms → 지금 194MB · 27ms.
+  torch import 가 대부분이었다. **파이보 실측은 아직**
+
+RT-DETR 은 쓰지 않는다. 320 에서 정확도가 크게 떨어졌다(coco128 mAP50-95 0.275 vs yolo11s 0.488).
+공개 가중치가 640 으로 학습돼 있어서다. 쓸 일이 생기면 320 으로 학습·export 한다.
+
+---
+
 ## merge 충돌 처리
 
 `main` → `ph` merge에서 나는 충돌은 사실상 `ko2en.js`의 1·2행뿐이다.
