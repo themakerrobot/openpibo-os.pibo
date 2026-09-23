@@ -69,28 +69,54 @@ $PY -c "import numpy as np; from openpibo.vision_detect import Detect; print(Det
 # 1) 얼마나 줄어드는지
 du -sh $SP/{tensorflow,tensorflow_estimator,tensorboard,keras,tf_keras,tensorflowjs,flax,optax,chex,orbax,torch,torchvision,torchaudio,ultralytics,openvino/tools} 2>/dev/null | sort -h
 
-# 2) 지우기
+# 2) 1단계 — TensorFlow · torch · ultralytics 와 그것만 쓰던 것 (wheel 약 400MB)
 sudo $PY -m pip uninstall -y \
   tensorflow tensorflow-cpu-aws tensorflow-estimator tensorflow-hub tensorflow-io-gcs-filesystem \
   tensorboard tensorboard-data-server keras tf-keras tensorflowjs \
   flax optax chex orbax-checkpoint \
-  ultralytics ultralytics-thop torch torchvision torchaudio \
-  openvino-dev
+  ultralytics ultralytics-thop torch torchvision torchaudio openvino-dev \
+  onnx onnxslim py-cpuinfo libclang h5py gast astunparse google-pasta termcolor namex optree \
+  etils toolz msgpack nest-asyncio grpcio werkzeug markdown
 
-# 3) 다시 확인
+# 3) 2단계 — MeloTTS 시험 잔재 (wheel 약 360MB + 사전 파일)
+#    MeloTTS requirements.txt 29개가 버전까지 그대로 깔려 있다(melotts 패키지 자체는 없다).
+#    지금 TTS(openpibo/modules/speech/mtts.py)는 onnxruntime 하나만 쓴다
+du -sh $SP/unidic $SP/unidic_lite $SP/mecab_ko_dic $SP/jieba $SP/gruut_lang_* 2>/dev/null   # 사전이 크다
+sudo $PY -m pip uninstall -y \
+  txtsplit cached-path transformers tokenizers huggingface-hub num2words docopt \
+  unidic-lite unidic mecab-python3 pykakasi jaconv fugashi g2p-en distance anyascii jamo \
+  gruut gruut-ipa gruut-lang-de gruut-lang-en gruut-lang-es gruut-lang-fr python-crfsuite jsonlines dateparser \
+  g2pkk g2pk python-mecab-ko python-mecab-ko-dic konlpy jpype1 nltk \
+  librosa audioread resampy numba llvmlite pooch pydub eng-to-ipa inflect unidecode \
+  pypinyin cn2an proces jieba gradio gradio-client ffmpy safehttpx semantic-version tomlkit ruff orjson \
+  langid loguru panphon munkres unicodecsv \
+  boto3 botocore s3transfer jmespath google-cloud-storage google-cloud-core google-resumable-media \
+  google-crc32c google-api-core googleapis-common-protos proto-plus google-auth google-auth-oauthlib \
+  requests-oauthlib oauthlib cachetools rsa pyasn1 pyasn1-modules \
+  tweepy twine readme-renderer nh3 rfc3986 requests-toolbelt id keyring \
+  jaraco-classes jaraco-context jaraco-functools jeepney secretstorage backports-tarfile
+
+# 4) 다시 확인
 $PY -m pip check                       # 지운 것 때문에 깨진 의존이 없어야 한다
 $PY -c "from openpibo.modules.teachlab import load_interpreter; print(load_interpreter())"
 $PY -c "import numpy as np; from openpibo.vision_detect import Detect; print(Detect().detect_object(np.zeros((480,640,3),'uint8')))"
-$PY -c "import openpibo.vision_face, openpibo.vision_classify, openpibo.speech; print('ok')"
+$PY -c "import openpibo.vision_face, openpibo.vision_classify, openpibo.speech, openpibo.collect; print('ok')"
+$PY -c "from bs4 import BeautifulSoup; BeautifulSoup('<a/>', 'xml'); print('lxml ok')"   # 뉴스 블록
 ```
 
+두 목록은 기기 pip 목록(310개, `test/requirements.txt`)을 버전별 PyPI 메타데이터로 의존 그래프를
+만들어 계산했다. 131개를 지워도 남는 179개 중 **깨지는 의존은 0개**였다.
+
+- **`lxml` 은 지우지 말 것.** `collect.py` 의 뉴스(`BeautifulSoup(..., 'xml')`)가 쓴다.
+  기기에는 `konlpy` 의 의존으로 들어와 있어서 "고아 정리" 로 딸려 나가기 쉽다
 - `tflite-runtime` 은 **지우지 말 것.** 없으면 `load_interpreter()` 가 TensorFlow 로 떨어지는데
-  그것도 지웠으면 분류기와 movenet(사물 인식 블록 중 포즈)이 못 뜬다
-- `jax` `jaxlib` `ml-dtypes` `opt_einsum` `scipy` 는 mediapipe·jax 가 요구한다. 남긴다
-- 리포 코드는 안 쓰지만 수업 자료나 다른 도구가 쓸 수 있어 **이 목록에 넣지 않은 것**:
-  `transformers` `tokenizers` `gradio` `librosa` `numba` `konlpy` `mecab*` `g2p*` `gruut*` `unidic*`
-  `jieba` `pypinyin` `pykakasi` `nltk` `pandas` `scikit-learn` `seaborn` `boto3` `google-cloud-storage` 등.
-  예전 TTS 실험의 잔재로 보이지만 확인 전에는 지우지 말 것
+  그것도 지웠으면 분류기와 movenet(포즈)이 못 뜬다
+- `jax` `jaxlib` `matplotlib` `sentencepiece` `sounddevice` `ml-dtypes` `opt_einsum` `scipy` 는
+  mediapipe·jax 가 요구한다. `sympy` 는 onnxruntime 이 요구한다. 남긴다
+- `openvino` 는 `vision_face.py` 가 쓴다. 남긴다 (`openvino-dev` 만 지운다)
+- **확인 전 보류**: `pandas` `seaborn` `scikit-learn`. 리포 코드는 안 쓰지만 수업 자료에서 쓸 수 있다
+- 위 목록 밖의 작은 범용 라이브러리(`httpx` `rich` `typer` `aiofiles` `cryptography` 등)는
+  지워도 얻는 게 적어서 그대로 뒀다
 
 ## 2. 뜨기 전 청소
 
