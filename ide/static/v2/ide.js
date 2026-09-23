@@ -1,15 +1,16 @@
 /* ==========================================================================
-   IDE v2 — templates/index_v2.html 전용. index.js 다음에 싣는다.
+   IDE v2 (시안 B) — templates/index_v2.html 전용. index.js 다음에 싣는다.
    index.js 는 고치지 않는다. 여기서는 v2 배치에만 필요한 것을 붙인다.
 
-     1) 레일: 파일·터미널 패널 여닫기 (폭에 따라 처음 상태를 정하고, 누르면 기억)
+     1) 왼쪽 패널: 접기/펴기(기억), [파이보 | 파일] 탭
      2) 펼침 메뉴(<details>): 바깥을 누르거나 Esc 면 닫힌다
-     3) 상단바 파일 이름: #codepath(전체 경로, index.js 가 채운다)에서 이름만
+     3) 편집기 줄의 파일 이름: #codepath(전체 경로, index.js 가 채운다)에서 이름만
      4) 글자 크기 [-][+]
      5) data-ph-key / data-title-key 번역 (index.js 의 setLanguage 는 textContent 만 바꾼다)
-     6) 미리보기: 늘 있고 접을 수 있다(기억). 파일을 열면 펴진다. 사진을 누르면 크게
-     6-1) 화면 출력: [IDE에 보기] 블록의 그림을 터미널 위에 (실시간, 크게 보기도 실시간)
-     7) 화면 밝기: 어둡게면 파이썬 편집기도 어두운 테마로 (스위치로 바꿀 수 있다)
+     6) 화면 출력: [IDE에 보기] 블록의 그림 → [파이보] 탭 위쪽. 파일 미리보기와 가른다
+     7) 크게 보기(사진·화면 출력, 화면 출력은 실시간)
+     8) 화면 밝기: 어둡게면 파이썬 편집기도 어둡게
+     9) 툴박스: 색 타일 분류 + 블록 찾기(@blockly/toolbox-search 1.2.11, Blockly 10 용)
    ========================================================================== */
 (function () {
   'use strict';
@@ -18,52 +19,51 @@
     try { var e = translations[key]; return (e && (e[lang] || e.en)) || ''; } catch (err) { return ''; }
   };
   var fire = function () { window.dispatchEvent(new Event('resize')); };
+  var store = {
+    get: function (k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+    set: function (k, v) { try { localStorage.setItem(k, v); } catch (e) { /* 무시 */ } }
+  };
 
-  /* 1) 레일 ─────────────────────────────────────────────────────────────── */
-  var KEY = 'pibo_v2_panes';
-  var saved = {};
-  try { saved = JSON.parse(localStorage.getItem(KEY) || '{}'); } catch (e) { saved = {}; }
-  // 저장값이 없으면 폭으로 정한다: 파일은 1200px 이상, 터미널은 900px 이상에서 편다
-  var DEFAULT = { browser_en: 1200, result_en: 900 };
-  var editor = document.querySelector('.v2-editor');
-
-  function setPane(id, open) {
-    var pane = $id(id);
-    if (!pane) return;
-    pane.hidden = !open;
-    var bar = document.querySelector('.pb-resizer[data-target="' + id + '"]');
-    if (bar) bar.hidden = !open;
-    var btn = document.querySelector('[data-v2-pane="' + id + '"]');
-    if (btn) btn.setAttribute('aria-pressed', open ? 'true' : 'false');
-  }
-  Object.keys(DEFAULT).forEach(function (id) {
-    var open = (id in saved) ? !!saved[id] : window.innerWidth >= DEFAULT[id];
-    setPane(id, open);
-  });
-  document.addEventListener('click', function (e) {
-    var btn = e.target.closest && e.target.closest('[data-v2-pane]');
-    if (!btn) return;
-    var id = btn.getAttribute('data-v2-pane');
-    var open = btn.getAttribute('aria-pressed') !== 'true';
-    setPane(id, open);
-    // 편 결과 편집기가 너무 좁으면 반대쪽 패널을 접는다
-    if (open && editor.getBoundingClientRect().width < 320) {
-      setPane(id === 'browser_en' ? 'result_en' : 'browser_en', false);
-    }
-    saved[id] = open;
-    try { localStorage.setItem(KEY, JSON.stringify(saved)); } catch (err) { /* 무시 */ }
+  /* 1) 왼쪽 패널 ────────────────────────────────────────────────────────── */
+  var side = $id('v2_side'), sideBtn = $id('v2_side_toggle');
+  function setSide(open, keep) {
+    document.body.setAttribute('data-side', open ? 'open' : 'closed');
+    sideBtn.setAttribute('aria-pressed', open ? 'true' : 'false');
+    if (keep) store.set('pibo_v2_side', open ? 'open' : 'closed');
     fire();
-  });
-  // 편집기가 320px 밑으로 좁아지면 파일 → 터미널 순으로 접는다(저장은 안 한다).
-  // 태블릿을 세로로 돌리거나 창을 줄일 때 편집기가 사라지지 않게 한다
-  function keepEditor() {
-    ['browser_en', 'result_en'].forEach(function (id) {
-      if (editor.getBoundingClientRect().width < 320 && !$id(id).hidden) setPane(id, false);
-    });
   }
-  // 패널을 여닫을 때 쏘는 가짜 resize(isTrusted=false)에는 반응하지 않는다
-  window.addEventListener('resize', function (e) { if (e.isTrusted) keepEditor(); });
-  keepEditor();
+  var sideSaved = store.get('pibo_v2_side');
+  setSide(sideSaved ? sideSaved === 'open' : window.innerWidth >= 760, false);
+  sideBtn.addEventListener('click', function () { setSide(document.body.getAttribute('data-side') !== 'open', true); });
+  // 좁은 화면에선 패널이 편집기 위에 뜬다(ide.css 760px). 편집기를 누르면 닫는다
+  var narrow = window.matchMedia('(max-width: 760px)');
+  document.querySelector('.v2-editor').addEventListener('pointerdown', function () {
+    if (narrow.matches && document.body.getAttribute('data-side') === 'open') setSide(false, false);
+  }, true);   // Blockly 가 전파를 막으므로 캡처 단계에서 받는다
+
+  var tabs = document.querySelectorAll('[data-side-tab]');
+  function setTab(name) {
+    side.setAttribute('data-tab', name);
+    Array.prototype.forEach.call(tabs, function (b) {
+      b.setAttribute('aria-selected', b.getAttribute('data-side-tab') === name ? 'true' : 'false');
+    });
+    Array.prototype.forEach.call(side.querySelectorAll('[data-page]'), function (p) {
+      p.hidden = p.getAttribute('data-page') !== name;
+    });
+    fire();
+  }
+  Array.prototype.forEach.call(tabs, function (b) {
+    b.addEventListener('click', function () { setTab(b.getAttribute('data-side-tab')); });
+  });
+  // 실행을 시작하면 [파이보] 탭으로 — 출력과 화면을 봐야 한다
+  var liveClosed = false;
+  new MutationObserver(function () {
+    if (document.body.hasAttribute('data-running')) {
+      liveClosed = false;
+      if (side.getAttribute('data-tab') !== 'robot') setTab('robot');
+      if (document.body.getAttribute('data-side') !== 'open') setSide(true, false);
+    }
+  }).observe(document.body, { attributes: true, attributeFilter: ['data-running'] });
 
   /* 2) 펼침 메뉴 ─────────────────────────────────────────────────────────── */
   var menus = document.querySelectorAll('details.v2-menu');
@@ -71,7 +71,7 @@
     Array.prototype.forEach.call(menus, function (d) {
       if (!d.open) return;
       if (!d.contains(e.target)) d.open = false;
-      // 메뉴 안의 항목(링크·버튼)을 누르면 닫는다. 입력칸·선택·스위치는 그대로 둔다
+      // 메뉴 안의 항목(링크·버튼)을 누르면 닫는다. 입력칸·선택·스위치·밝기는 그대로 둔다
       else if (e.target.closest('.v2-pop__item') && !e.target.closest('.v2-pop__item--field')) d.open = false;
     });
   });
@@ -81,7 +81,6 @@
       if (d.open) { d.open = false; var s = d.querySelector('summary'); if (s) s.focus(); }
     });
   });
-  // 한쪽을 열면 다른 쪽은 닫는다
   Array.prototype.forEach.call(menus, function (d) {
     d.addEventListener('toggle', function () {
       if (!d.open) return;
@@ -103,8 +102,6 @@
       fileBox.title = full;
     }
   }
-  // setLanguage 가 data-key 로 이 칸을 덮어쓰지 않게 키를 뗀다
-  nameEl.removeAttribute('data-key');
   new MutationObserver(showName).observe(cp, { childList: true, characterData: true, subtree: true });
   showName();
 
@@ -128,54 +125,23 @@
       el.title = s; el.setAttribute('aria-label', s);
     });
     // 아이콘만 남는 폭에서도 뜻이 보이게 라벨을 툴팁으로 복사한다
-    Array.prototype.forEach.call(document.querySelectorAll('.v2-top button, .v2-top a.pb-iconbtn'), function (el) {
+    Array.prototype.forEach.call(document.querySelectorAll('.v2-top a.pb-iconbtn, .v2-top .v2-seg > button, #pycode_bt'), function (el) {
       var lab = el.querySelector('[data-key]');
       if (lab && lab.textContent) el.title = lab.textContent;
     });
     showName();
   }
   var langSel = $id('language');
-  if (langSel) langSel.addEventListener('change', function () { setTimeout(applyExtra, 0); });
+  if (langSel) langSel.addEventListener('change', function () { setTimeout(function () { applyExtra(); whenMsgReady(setupToolbox); }, 0); });
   applyExtra();
 
-  /* 6) 미리보기 ─────────────────────────────────────────────────────────── */
-  var browser = $id('browser_en'), pvBtn = $id('v2_preview_toggle'), PKEY = 'pibo_v2_preview';
-  function setPreview(open, keep) {
-    browser.setAttribute('data-preview', open ? 'open' : 'closed');
-    pvBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
-    if (keep) { try { localStorage.setItem(PKEY, open ? 'open' : 'closed'); } catch (e) { /* 무시 */ } }
-    fire();
-  }
-  var pvSaved = null;
-  try { pvSaved = localStorage.getItem(PKEY); } catch (e) { /* 무시 */ }
-  // 저장값이 없으면 세로가 넉넉할 때(700px 이상)만 편다
-  setPreview(pvSaved ? pvSaved === 'open' : window.innerHeight >= 700, false);
-  pvBtn.addEventListener('click', function () {
-    setPreview(browser.getAttribute('data-preview') === 'closed', true);
-  });
-  // 크게 보기. live 면 새 프레임이 올 때마다 바뀐다
-  var box = null;
-  function openLightbox(src, caption, live) {
-    if (!src) return;
-    closeLightbox();
-    box = document.createElement('div');
-    box.className = 'v2-lightbox'; box.setAttribute('role', 'dialog');
-    if (live) box.setAttribute('data-live', '');
-    box.innerHTML = '<img alt=""><div class="v2-lightbox__cap"></div>';
-    box.firstChild.src = src;
-    box.lastChild.textContent = caption || '';
-    box.addEventListener('click', closeLightbox);
-    document.body.appendChild(box);
-  }
-  function closeLightbox() { if (box) { box.remove(); box = null; } }
-  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeLightbox(); });
-
-  /* 6-1) 화면 출력 — [IDE에 보기] 블록(camera.imshow_to_ide → POST /show)이 보내는 그림.
-     index.js 는 파일 미리보기와 같은 #image 에 넣고 경로를 /home/pi/.tmp.jpg 로 준다.
-     그건 파일이 아니라 실행 결과라서 터미널 위 '화면 출력' 칸으로 옮긴다.
-     파일 패널이 접혀 있어도 보이고, 터미널이 접혀 있으면 편다. */
+  /* 6) 화면 출력 ─────────────────────────────────────────────────────────── */
+  /* [IDE에 보기] 블록(camera.imshow_to_ide → POST /show)은 index.js 가 파일 미리보기와 같은
+     #image 에 넣고 경로를 /home/pi/.tmp.jpg 로 준다. 파일이 아니라 실행 결과라서 [파이보] 탭
+     위쪽 칸으로 옮긴다. run_ide.py 의 /show 저장 경로를 바꾸면 여기도 바꿀 것 */
   var LIVE_PATH = '/home/pi/.tmp.jpg';
-  var live = $id('v2_live'), liveImg = $id('v2_live_img'), liveClosed = false, liveTimer = 0;
+  var browser = $id('browser_en'), live = $id('v2_live'), liveImg = $id('v2_live_img'), liveTimer = 0;
+  var box = null;
   function onFrame(src) {
     liveImg.src = src;
     if (box && box.hasAttribute('data-live')) box.firstChild.src = src;
@@ -183,8 +149,8 @@
     clearTimeout(liveTimer);
     liveTimer = setTimeout(function () { live.removeAttribute('data-fresh'); }, 1500);
     if (liveClosed) return;
-    if (live.hidden) { live.hidden = false; fire(); }
-    if ($id('result_en').hidden) { setPane('result_en', true); fire(); }
+    if (document.body.getAttribute('data-side') !== 'open') setSide(true, false);
+    if (side.getAttribute('data-tab') !== 'robot') setTab('robot');
   }
   new MutationObserver(function () {
     var src = $id('image').getAttribute('src');
@@ -194,34 +160,161 @@
       onFrame(src);
     } else {
       browser.removeAttribute('data-live');
-      if (browser.getAttribute('data-preview') === 'closed') setPreview(true, false);
     }
   }).observe($id('image'), { attributes: true, attributeFilter: ['src'] });
-  new MutationObserver(function () {
-    if ($id('audio').getAttribute('src') && browser.getAttribute('data-preview') === 'closed') setPreview(true, false);
-  }).observe($id('audio'), { attributes: true, attributeFilter: ['src'] });
-  $id('v2_live_close').addEventListener('click', function () { liveClosed = true; live.hidden = true; fire(); });
-  $id('v2_live_zoom').addEventListener('click', function () { openLightbox(liveImg.src, tr('v2_live'), true); });
-  liveImg.addEventListener('click', function () { openLightbox(liveImg.src, tr('v2_live'), true); });
-  // 새로 실행하면 닫아 둔 화면 출력을 다시 받는다
-  new MutationObserver(function () {
-    if (document.body.hasAttribute('data-running')) liveClosed = false;
-  }).observe(document.body, { attributes: true, attributeFilter: ['data-running'] });
 
-  // 파일 사진 크게 보기
+  /* 7) 크게 보기 ─────────────────────────────────────────────────────────── */
+  function openLightbox(src, caption, isLive) {
+    if (!src) return;
+    closeLightbox();
+    box = document.createElement('div');
+    box.className = 'v2-lightbox'; box.setAttribute('role', 'dialog');
+    if (isLive) box.setAttribute('data-live', '');
+    box.innerHTML = '<img alt=""><div class="v2-lightbox__cap"></div>';
+    box.firstChild.src = src;
+    box.lastChild.textContent = caption || '';
+    box.addEventListener('click', closeLightbox);
+    document.body.appendChild(box);
+  }
+  function closeLightbox() { if (box) { box.remove(); box = null; } }
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeLightbox(); });
+  $id('v2_live_zoom').addEventListener('click', function () { openLightbox(liveImg.getAttribute('src'), tr('v2_live'), true); });
+  liveImg.addEventListener('click', function () { openLightbox(liveImg.getAttribute('src'), tr('v2_live'), true); });
   $id('image').addEventListener('click', function () {
     if (browser.hasAttribute('data-live')) return;
     openLightbox(this.getAttribute('src'), $id('mediapath').textContent, false);
   });
 
-  /* 7) 화면 밝기 ─────────────────────────────────────────────────────────── */
+  /* 8) 화면 밝기 ─────────────────────────────────────────────────────────── */
   var themeCheck = $id('theme_check');
-  function editorFollowsTheme(t) {
-    if (!themeCheck) return;
-    var want = t === 'dark';
-    if (want && !themeCheck.checked) { themeCheck.checked = true; themeCheck.dispatchEvent(new Event('change', { bubbles: true })); }
+  window.addEventListener('pibo-theme', function (e) {
+    if (e.detail === 'dark' && themeCheck && !themeCheck.checked) {
+      themeCheck.checked = true; themeCheck.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+  });
+
+  /* 9) 툴박스 ────────────────────────────────────────────────────────────── */
+  /* 분류 행: 왼쪽 색 막대 대신, 아이콘을 분류 색 타일 안에 넣는다. 선택된 행은 색으로 칠하지 않고
+     흰 바탕 + 굵은 글자. Blockly 10 의 ToolboxCategory 를 바꿔 끼운다(index.js 는 그대로) */
+  function registerCategory() {
+    if (!window.Blockly || !Blockly.ToolboxCategory || registerCategory.done) return;
+    class PbCategory extends Blockly.ToolboxCategory {
+      addColourBorder_(colour) { if (this.rowDiv_) this.rowDiv_.style.setProperty('--cat', colour); }
+      setSelected(isSelected) { super.setSelected(isSelected); if (this.rowDiv_) this.rowDiv_.style.backgroundColor = ''; }
+    }
+    Blockly.registry.register(Blockly.registry.Type.TOOLBOX_ITEM, Blockly.ToolboxCategory.registrationName, PbCategory, true);
+    registerCategory.done = true;
   }
-  window.addEventListener('pibo-theme', function (e) { editorFollowsTheme(e.detail); });
+  // 블록 찾기: 두 언어 툴박스 맨 위에 한 번씩 끼운다. index.js 는 언어를 바꿀 때
+  // toolbox_dict[lang] 로 다시 그리므로, 원본 객체에 넣어 두면 그대로 유지된다
+  function addSearch() {
+    if (typeof toolbox_dict === 'undefined') return;
+    Object.keys(toolbox_dict).forEach(function (L) {
+      var tb = toolbox_dict[L];
+      if (!tb || !tb.contents) return;
+      var first = tb.contents[0];
+      var name = (translations.v2_search || {})[L] || 'Search';
+      if (first && first.kind === 'search') { first.name = name; return; }
+      tb.contents.unshift({ kind: 'search', name: name, contents: [] });
+    });
+  }
+  // 검색칸 안내 문구: 플러그인은 늘 영어 'Search' 로 만든다. index.js 는 파일을 열 때마다
+  // setLanguage → updateToolbox 로 툴박스를 새로 그리므로, 다시 그려질 때마다 고친다
+  function searchPlaceholder() {
+    Array.prototype.forEach.call(document.querySelectorAll('.blocklyToolboxDiv input'), function (inp) {
+      var t = tr('v2_search');
+      if (t && inp.placeholder !== t) { inp.placeholder = t; inp.setAttribute('aria-label', t); }
+    });
+  }
+  var tbDiv = document.querySelector('.blocklyToolboxDiv');
+  if (tbDiv) new MutationObserver(searchPlaceholder).observe(tbDiv, { childList: true, subtree: true });
+  // 검색칸을 바로 눌러도 결과가 펼쳐지게: 플러그인은 검색 분류가 '선택'돼 있을 때만 결과를 띄운다
+  document.addEventListener('focusin', function (e) {
+    var el = e.target;
+    if (!el || el.type !== 'search' || !el.closest('.blocklyToolboxDiv')) return;
+    try {
+      var tb = Blockly.getMainWorkspace().getToolbox();
+      var item = tb.getToolboxItems().filter(function (it) { return it.searchField === el; })[0];
+      if (!item) return;
+      if (tb.getSelectedItem() !== item) tb.setSelectedItem(item);
+      // 플러그인은 keyup 에만 검색한다. 한글 입력기(특히 태블릿)는 조합 중에 keyup 을 제대로
+      // 안 보내므로 input 이벤트에도 건다
+      if (!el.__pbInput) { el.__pbInput = true; el.addEventListener('input', function () { item.matchBlocks(); }); }
+    } catch (err) { /* 무시 */ }
+  });
+  // 검색 방식 바꾸기: 플러그인은 3글자 단위(trigram)로 색인해서 '출력'·'소리' 같은 두 글자
+  // 한국어 검색어가 하나도 안 걸린다. 블록 글자를 이어 붙여 두고 부분 문자열로 찾는다.
+  // 안내 문구도 번역한다. 플러그인 파일은 고치지 않고 등록된 클래스의 메서드만 바꿔 끼운다
+  var searchCache = {};
+  function patchSearch() {
+    var C = Blockly.registry.getClass(Blockly.registry.Type.TOOLBOX_ITEM, 'search');
+    if (!C || C.__pb) return;
+    C.__pb = true;
+    C.prototype.initBlockSearcher = function () {
+      var types = new Set(), self = this;
+      ((this.workspace_.options.languageTree || {}).contents || []).forEach(function (e) { self.getAvailableBlocks(e, types); });
+      var key = lang + ':' + types.size;
+      if (!searchCache[key]) {
+        var ws = new Blockly.Workspace(), idx = [];
+        types.forEach(function (t) {
+          var parts = [t.replace(/_/g, ' ')];
+          try {
+            ws.newBlock(t).inputList.forEach(function (inp) {
+              inp.fieldRow.forEach(function (f) {
+                try { parts.push(f.getText()); } catch (e) { /* 무시 */ }
+                if (f instanceof Blockly.FieldDropdown) {
+                  try {
+                    f.getOptions(true).forEach(function (o) {
+                      if (typeof o[0] === 'string') parts.push(o[0]); else if (o[0] && o[0].alt) parts.push(o[0].alt);
+                    });
+                  } catch (e) { /* 무시 */ }
+                }
+              });
+            });
+          } catch (e) { /* 만들 수 없는 블록은 이름으로만 찾는다 */ }
+          idx.push([t, parts.join(' ').toLowerCase()]);
+        });
+        ws.dispose();
+        searchCache[key] = idx;
+      }
+      var index = searchCache[key];
+      this.blockSearcher = {
+        blockTypesMatching: function (q) {
+          var terms = q.toLowerCase().split(/\s+/).filter(Boolean);
+          return index.filter(function (r) { return terms.every(function (w) { return r[1].indexOf(w) >= 0; }); })
+                      .map(function (r) { return r[0]; });
+        }
+      };
+    };
+    C.prototype.matchBlocks = function () {
+      var q = ((this.searchField && this.searchField.value) || '').trim();
+      var found = q ? this.blockSearcher.blockTypesMatching(q) : [];
+      this.flyoutItems_ = found.map(function (t) { return { kind: 'block', type: t }; });
+      if (!this.flyoutItems_.length) this.flyoutItems_.push({ kind: 'label', text: tr(q ? 'v2_search_none' : 'v2_search_hint') });
+      this.parentToolbox_.refreshSelection();
+    };
+  }
+  function setupToolbox() {
+    try {
+      registerCategory();
+      patchSearch();
+      addSearch();
+      var ws = Blockly.getMainWorkspace();
+      if (ws && typeof toolbox_dict !== 'undefined') { ws.updateToolbox(toolbox_dict[lang]); fire(); }
+      searchPlaceholder();
+    } catch (e) { console.warn('toolbox', e); }
+  }
+  // index.js 의 setLanguage 가 ko.js / en.js(블록 문구)를 <script> 로 늦게 붙인다. 문구가 오기 전에
+  // 툴박스를 다시 그리면 검색 플러그인이 블록을 만들다 실패한다(%{BKY_…} 가 비어 있음) → 온 뒤에 한다
+  function whenMsgReady(cb, tries) {
+    tries = tries || 0;
+    var m = window.Blockly && Blockly.Msg && Blockly.Msg.FLAG_EVENT;
+    // 지금 언어의 문구가 왔는지: ko.js 의 문구에는 한글이 있고 en.js 에는 없다
+    var ready = !!m && (/[가-힣]/.test(m) === (lang === 'ko'));
+    if (ready || tries > 100) { cb(); return; }          // 5초 넘으면 그냥 한다
+    setTimeout(function () { whenMsgReady(cb, tries + 1); }, 50);
+  }
+  whenMsgReady(setupToolbox);
 
   fire();
 })();

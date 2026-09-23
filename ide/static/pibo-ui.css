@@ -626,12 +626,17 @@ body.pb-refresh .pb-header {
 body.pb-v2 {
   /* 색 — Ink & Amber (IDE v2 의 ide/static/v2/ide.css 와 같은 값)
      틀 먹빛 남색 · 주 동작 앰버 · 상태 인디고. yellow 는 앰버, accent 는 인디고다 */
-  --v2-frame:     #1c2130;
-  --v2-frame-2:   #272d3d;
-  --v2-frame-3:   #333a4c;
-  --v2-frame-line:#141824;
-  --v2-frame-ink: #eef0f6;
-  --v2-frame-dim: #a3aabb;
+  /* 상단바 = IDE v2(시안 B)와 같은 노랑 */
+  --v2-frame:     #fbc92d;
+  --v2-frame-2:   rgba(31, 36, 48, .10);
+  --v2-frame-3:   rgba(31, 36, 48, .16);
+  --v2-frame-line:rgba(31, 36, 48, .12);
+  --v2-frame-ink: #1f2430;
+  --v2-frame-dim: #2f3542;
+  --v2-rail:      #eceff3;   /* tools 왼쪽 메뉴 */
+  --v2-dark:      #1f2430;   /* 주 동작(먹색) — IDE v2 의 실행·저장과 같다 */
+  --v2-dark-hov:  #333a48;
+  --v2-on-dark:   #ffffff;
   --v2-ring:      rgba(76, 89, 214, .28);
   --v2-ring-soft: rgba(76, 89, 214, .22);
   /* soft (기본) */
@@ -665,6 +670,7 @@ body.pb-v2 {
   --v2-scrim:   rgba(16, 20, 32, .5);
 }
 html[data-theme="light"] body.pb-v2 {
+  --v2-frame: #ffcb2f; --v2-rail: #f1f3f6;
   --v2-canvas: #f1f3f8; --v2-top: #ffffff; --v2-surface: #ffffff; --v2-raise: #ffffff;
   --v2-sunken: #f5f6fa; --v2-hover: #f1f3f7; --v2-press: #e6e9f0;
   --v2-line: #e5e8ef; --v2-line-2: #d0d5df;
@@ -672,7 +678,9 @@ html[data-theme="light"] body.pb-v2 {
   --v2-accent-t: #e8eafc;
 }
 html[data-theme="dark"] body.pb-v2 {
-  --v2-frame: #12151d; --v2-frame-2: #1f2430; --v2-frame-3: #2b3140; --v2-frame-line: #0b0d12;
+  --v2-frame: #1b1e24; --v2-frame-2: rgba(255, 255, 255, .07); --v2-frame-3: rgba(255, 255, 255, .12); --v2-frame-line: #0d0f12;
+  --v2-frame-ink: #eceef2; --v2-frame-dim: #c3c9d2; --v2-rail: #16191e;
+  --v2-dark: #f2c94c; --v2-dark-hov: #e6bb34; --v2-on-dark: #1b1d20;
   --v2-canvas: #151922; --v2-top: #161a22; --v2-surface: #1a1e27; --v2-raise: #242935;
   --v2-sunken: #1f232d; --v2-hover: #282e3a; --v2-press: #313847;
   --v2-line: #2b303c; --v2-line-2: #3b4252;
@@ -736,8 +744,10 @@ body.pb-v2 .pb-header__brand { font-size: 15px; gap: 8px; letter-spacing: -.1px;
 body.pb-v2 .pb-header__brand > i:first-child {
   display: inline-flex; align-items: center; justify-content: center;
   width: 28px; height: 28px; border-radius: 8px;
-  background: var(--v2-yellow); color: var(--v2-on-yellow); font-size: 14px;
+  background: transparent; color: var(--v2-frame-ink); font-size: 16px;
 }
+/* THE MAKER 로고는 노랑 바탕에서 안 보인다. IDE v2 처럼 헤더에서 뺀다 */
+body.pb-v2 .pb-header #logo_bt { display: none; }
 body.pb-v2 .pb-header .pb-iconbtn { color: var(--v2-frame-dim); }
 body.pb-v2 .pb-header .pb-iconbtn:hover { background: var(--v2-frame-2); color: var(--v2-frame-ink); }
 body.pb-v2 .pb-header .pb-iconbtn:active { background: var(--v2-frame-3); }
@@ -753,7 +763,7 @@ body.pb-v2 .pb-header .pb-seg { background: var(--v2-frame-2); }
 body.pb-v2 .pb-header .pb-seg > button { color: var(--v2-frame-dim); }
 body.pb-v2 .pb-header .pb-seg > button:hover:not([aria-selected="true"]) { background: var(--v2-frame-3); color: var(--v2-frame-ink); }
 body.pb-v2 .pb-header .pb-seg > button[aria-selected="true"],
-body.pb-v2 .pb-header .cls-tabs > button[aria-selected="true"] { background: var(--v2-frame-ink); color: #1c2128; box-shadow: 0 1px 2px rgba(0,0,0,.3); }
+body.pb-v2 .pb-header .cls-tabs > button[aria-selected="true"] { background: var(--v2-frame-ink); color: var(--v2-frame); box-shadow: none; }
 
 /* ── 세그먼트: 눌린 홈 위에 떠 있는 알약 ─────────────────────────────────── */
 body.pb-v2 .pb-seg,
@@ -782,8 +792,10 @@ body.pb-v2 div[name="codetype"] > button { width: auto; min-width: 64px; padding
 /* ── 키트 버튼 ──────────────────────────────────────────────────────────── */
 body.pb-v2 .pb-btn { background: var(--v2-raise); color: var(--v2-ink); border-color: var(--v2-line-2); box-shadow: var(--pb-shadow); font-weight: 600; }
 body.pb-v2 .pb-btn:hover:not(:disabled) { background: var(--v2-hover); border-color: var(--v2-line-2); }
-body.pb-v2 .pb-btn--accent { background: var(--v2-yellow); border-color: transparent; color: var(--v2-on-yellow); font-weight: 700; }
-body.pb-v2 .pb-btn--accent:hover:not(:disabled) { background: var(--v2-yellow-2); border-color: transparent; }
+/* 주 동작은 먹색(IDE v2 의 실행·저장과 같다). 노랑은 상단바에만 */
+body.pb-v2 .pb-btn--accent { background: var(--v2-dark); border-color: transparent; color: var(--v2-on-dark); font-weight: 700; }
+body.pb-v2 .pb-btn--accent:hover:not(:disabled) { background: var(--v2-dark-hov); border-color: transparent; }
+body.pb-v2 .pb-btn--accent > i { color: inherit; }
 body.pb-v2 .pb-btn--danger { background: var(--v2-red); border-color: transparent; color: #fff; }
 body.pb-v2 .pb-btn--ghost,
 body.pb-v2 .pb-btn--ghost:hover:not(:disabled) { box-shadow: none; border-color: transparent; background: transparent; }
@@ -878,24 +890,21 @@ body.pb-v2 .pb-resizer:hover, body.pb-v2 .pb-resizer[data-dragging] {
   background: linear-gradient(90deg, transparent 3px, var(--v2-accent) 3px, var(--v2-accent) 5px, transparent 5px);
 }
 
-/* ── tools: 왼쪽 메뉴(틀) + 카드 ──────────────────────────────────────────── */
-body.pb-v2 main > nav { background: var(--v2-frame); border-right: 1px solid var(--v2-frame-line); width: 64px; }
+/* ── tools: 왼쪽 메뉴(옅은 레일) + 카드 ─────────────────────────────────────── */
+body.pb-v2 main > nav { background: var(--v2-rail); border-right: 1px solid var(--v2-line); width: 64px; }
 body.pb-v2 nav ul { margin: 0; padding: 6px 0; display: flex; flex-direction: column; align-items: center; gap: 4px; }
 body.pb-v2 nav button {
   width: 52px; padding: 8px 0 6px; border-radius: 10px; opacity: 1;
   display: flex; flex-direction: column; align-items: center; gap: 4px;
-  color: var(--v2-frame-dim); font: 600 10.5px/1 var(--pb-font);
+  color: var(--v2-ink-3); font: 600 10.5px/1 var(--pb-font);
 }
-body.pb-v2 nav button::after { opacity: .55; transform: scale(.8); filter: invert(1); }   /* 검은 PNG → 틀 위에서 밝게 */
+body.pb-v2 nav button::after { opacity: .5; transform: scale(.8); }   /* 검은 PNG 아이콘 */
+html[data-theme="dark"] body.pb-v2 nav button::after { filter: invert(1); }
 body.pb-v2 nav button > .pb-navlabel { order: 2; }
-body.pb-v2 nav button:hover { background: var(--v2-frame-2); color: var(--v2-frame-ink); }
-body.pb-v2 nav button:hover::after { opacity: .85; }
-body.pb-v2 nav button.menu-selected { background: var(--v2-frame-3); color: var(--v2-frame-ink); position: relative; }
+body.pb-v2 nav button:hover { background: var(--v2-hover); color: var(--v2-ink); }
+body.pb-v2 nav button:hover::after { opacity: .8; }
+body.pb-v2 nav button.menu-selected { background: var(--v2-raise); color: var(--v2-ink); position: relative; box-shadow: 0 1px 2px rgba(0,0,0,.1); }
 body.pb-v2 nav button.menu-selected::after { opacity: 1; }
-body.pb-v2 nav button.menu-selected::before {
-  content: ""; position: absolute; left: -6px; top: 12px; bottom: 12px; width: 3px;
-  border-radius: 0 3px 3px 0; background: var(--v2-yellow);
-}
 body.pb-v2 main > div.content.pb-pane { border: 0; border-radius: 0; background: var(--v2-canvas); padding: 10px 12px 16px; }
 body.pb-v2 .pb-navlabel { display: block; }
 
@@ -969,12 +978,14 @@ body.pb-v2 .alert-popup-content p, body.pb-v2 .prompt-popup-content p, body.pb-v
 body.pb-v2 .alert-popup, body.pb-v2 .prompt-popup, body.pb-v2 .confirm-popup { background-color: var(--v2-scrim); }
 body.pb-v2 .pb-modal__head, body.pb-v2 .pb-modal__foot { background: var(--v2-raise); border-color: var(--v2-line); }
 body.pb-v2 #alertOkBtn, body.pb-v2 #confirmOkBtn, body.pb-v2 #promptOkBtn {
-  background: var(--v2-yellow) !important; color: var(--v2-on-yellow); border-color: transparent;
+  background: var(--v2-dark) !important; color: var(--v2-on-dark); border-color: transparent;
 }
-body.pb-v2 #alertOkBtn:hover, body.pb-v2 #confirmOkBtn:hover, body.pb-v2 #promptOkBtn:hover { background: var(--v2-yellow-2) !important; }
+body.pb-v2 #alertOkBtn:hover, body.pb-v2 #confirmOkBtn:hover, body.pb-v2 #promptOkBtn:hover { background: var(--v2-dark-hov) !important; }
 body.pb-v2 #confirmCancelBtn, body.pb-v2 #promptCancelBtn { color: var(--v2-ink); }
 
 /* ── 분류기가 직접 쓰던 흰색 ────────────────────────────────────────────── */
 body.pb-v2 .store-card, body.pb-v2 .code { background: var(--v2-raise); color: var(--v2-ink); border-color: var(--v2-line); }
 body.pb-v2 .confusion th { background: var(--v2-surface); color: var(--v2-ink-2); }
 body.pb-v2 .saved .fa-circle-check { color: var(--v2-accent); }
+/* [꾹 눌러 모으기] 누르는 동안은 빨강(모으는 중) — 위의 먹색 주 동작 규칙보다 앞서야 한다 */
+body.pb-v2 .cls-hold.is-on { background: var(--v2-red); border-color: transparent; color: #fff; }
