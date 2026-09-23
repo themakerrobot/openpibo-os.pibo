@@ -8,6 +8,7 @@
      4) 글자 크기 [-][+]
      5) data-ph-key / data-title-key 번역 (index.js 의 setLanguage 는 textContent 만 바꾼다)
      6) 미리보기: 늘 있고 접을 수 있다(기억). 파일을 열면 펴진다. 사진을 누르면 크게
+     6-1) 화면 출력: [IDE에 보기] 블록의 그림을 터미널 위에 (실시간, 크게 보기도 실시간)
      7) 화면 밝기: 어둡게면 파이썬 편집기도 어두운 테마로 (스위치로 바꿀 수 있다)
    ========================================================================== */
 (function () {
@@ -152,25 +153,65 @@
   pvBtn.addEventListener('click', function () {
     setPreview(browser.getAttribute('data-preview') === 'closed', true);
   });
-  // 사진·소리 파일을 열면 접혀 있어도 편다
-  ['image', 'audio'].forEach(function (id) {
-    new MutationObserver(function () {
-      if ($id(id).getAttribute('src') && browser.getAttribute('data-preview') === 'closed') setPreview(true, false);
-    }).observe($id(id), { attributes: true, attributeFilter: ['src'] });
-  });
-  // 사진 크게 보기 — 누르거나 Esc 로 닫는다
-  $id('image').addEventListener('click', function () {
-    var src = this.getAttribute('src'); if (!src) return;
-    var box = document.createElement('div');
+  // 크게 보기. live 면 새 프레임이 올 때마다 바뀐다
+  var box = null;
+  function openLightbox(src, caption, live) {
+    if (!src) return;
+    closeLightbox();
+    box = document.createElement('div');
     box.className = 'v2-lightbox'; box.setAttribute('role', 'dialog');
+    if (live) box.setAttribute('data-live', '');
     box.innerHTML = '<img alt=""><div class="v2-lightbox__cap"></div>';
     box.firstChild.src = src;
-    box.lastChild.textContent = $id('mediapath').textContent;
-    var close = function () { box.remove(); document.removeEventListener('keydown', onKey); };
-    var onKey = function (e) { if (e.key === 'Escape') close(); };
-    box.addEventListener('click', close);
-    document.addEventListener('keydown', onKey);
+    box.lastChild.textContent = caption || '';
+    box.addEventListener('click', closeLightbox);
     document.body.appendChild(box);
+  }
+  function closeLightbox() { if (box) { box.remove(); box = null; } }
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeLightbox(); });
+
+  /* 6-1) 화면 출력 — [IDE에 보기] 블록(camera.imshow_to_ide → POST /show)이 보내는 그림.
+     index.js 는 파일 미리보기와 같은 #image 에 넣고 경로를 /home/pi/.tmp.jpg 로 준다.
+     그건 파일이 아니라 실행 결과라서 터미널 위 '화면 출력' 칸으로 옮긴다.
+     파일 패널이 접혀 있어도 보이고, 터미널이 접혀 있으면 편다. */
+  var LIVE_PATH = '/home/pi/.tmp.jpg';
+  var live = $id('v2_live'), liveImg = $id('v2_live_img'), liveClosed = false, liveTimer = 0;
+  function onFrame(src) {
+    liveImg.src = src;
+    if (box && box.hasAttribute('data-live')) box.firstChild.src = src;
+    live.setAttribute('data-fresh', '');
+    clearTimeout(liveTimer);
+    liveTimer = setTimeout(function () { live.removeAttribute('data-fresh'); }, 1500);
+    if (liveClosed) return;
+    if (live.hidden) { live.hidden = false; fire(); }
+    if ($id('result_en').hidden) { setPane('result_en', true); fire(); }
+  }
+  new MutationObserver(function () {
+    var src = $id('image').getAttribute('src');
+    if (!src) return;
+    if (($id('mediapath').textContent || '').trim() === LIVE_PATH) {
+      browser.setAttribute('data-live', '');     // 파일 미리보기에는 안 보이게
+      onFrame(src);
+    } else {
+      browser.removeAttribute('data-live');
+      if (browser.getAttribute('data-preview') === 'closed') setPreview(true, false);
+    }
+  }).observe($id('image'), { attributes: true, attributeFilter: ['src'] });
+  new MutationObserver(function () {
+    if ($id('audio').getAttribute('src') && browser.getAttribute('data-preview') === 'closed') setPreview(true, false);
+  }).observe($id('audio'), { attributes: true, attributeFilter: ['src'] });
+  $id('v2_live_close').addEventListener('click', function () { liveClosed = true; live.hidden = true; fire(); });
+  $id('v2_live_zoom').addEventListener('click', function () { openLightbox(liveImg.src, tr('v2_live'), true); });
+  liveImg.addEventListener('click', function () { openLightbox(liveImg.src, tr('v2_live'), true); });
+  // 새로 실행하면 닫아 둔 화면 출력을 다시 받는다
+  new MutationObserver(function () {
+    if (document.body.hasAttribute('data-running')) liveClosed = false;
+  }).observe(document.body, { attributes: true, attributeFilter: ['data-running'] });
+
+  // 파일 사진 크게 보기
+  $id('image').addEventListener('click', function () {
+    if (browser.hasAttribute('data-live')) return;
+    openLightbox(this.getAttribute('src'), $id('mediapath').textContent, false);
   });
 
   /* 7) 화면 밝기 ─────────────────────────────────────────────────────────── */

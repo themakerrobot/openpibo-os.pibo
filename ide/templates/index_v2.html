@@ -22,11 +22,11 @@
   <link rel="stylesheet" href="../static/cobalt.css" />
   <link rel="stylesheet" href="../static/duotone-light.css" />
   <link rel="stylesheet" href="../static/jquery.jsonview.min.css" />
-  <link rel="stylesheet" href="../static/pibo-ui.css?ver=260924v6" />
-  <link rel="stylesheet" href="../static/v2/ide.css?ver=260924v3" />
+  <link rel="stylesheet" href="../static/pibo-ui.css?ver=260924v7" />
+  <link rel="stylesheet" href="../static/v2/ide.css?ver=260924v4" />
   <link rel="shortcut icon" href="../static/icon.png?ver=240319v1" type="image/x-icon" />
 
-  <script src="../static/ko2en.js?ver=260924v4"></script>
+  <script src="../static/ko2en.js?ver=260924v5"></script>
   <script src="../static/blockly_compressed.js?ver=240319v1"></script>
   <script src="../static/blocks_compressed.js?ver=240319v1"></script>
   <script src="../static/python_compressed.js?ver=240319v1"></script>
@@ -188,6 +188,16 @@
 
       <!-- ── 터미널 ────────────────────────────────────────────────────── -->
       <section class="pb-pane pb-pane--fixed v2-panel v2-term" id="result_en">
+        <!-- 화면 출력: [IDE에 보기] 블록(camera.imshow_to_ide)이 보내는 그림. 실행 결과라서 터미널 위에 둔다 (ide.js) -->
+        <figure class="v2-live" id="v2_live" hidden>
+          <div class="v2-live__bar">
+            <span class="v2-live__dot" aria-hidden="true"></span>
+            <span class="v2-live__title" data-key="v2_live"></span>
+            <button type="button" class="v2-icon" id="v2_live_zoom" data-title-key="v2_zoom"><i class="fa-solid fa-expand"></i></button>
+            <button type="button" class="v2-icon" id="v2_live_close" data-title-key="close"><i class="fa-solid fa-xmark"></i></button>
+          </div>
+          <img id="v2_live_img" alt="" />
+        </figure>
         <div class="v2-term__box">
           <div class="v2-term__bar">
             <i class="fa-solid fa-terminal"></i>
@@ -309,7 +319,7 @@
 
   <script src="../static/pibo-ui.js?ver=260924v3"></script>
   <script src="../static/index.js?ver=260923v7"></script>
-  <script src="../static/v2/ide.js?ver=260924v3"></script>
+  <script src="../static/v2/ide.js?ver=260924v4"></script>
 </body>
 
 </html>

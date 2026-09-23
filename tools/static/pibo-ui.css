@@ -615,7 +615,7 @@ body.pb-refresh .pb-header {
 
      바탕   노랑 헤더 · 흰 패널  →  짙은 남회색 틀(헤더·왼쪽 메뉴) · 바닥 위 카드
      노랑   헤더 전체  →  브랜드 마크와 '주 동작'(실행 · AI 가르치기) 에만
-     청록   버튼 바탕  →  선택 · 포커스 · 슬라이더 같은 '상태' 에만. 버튼은 옅은 청록(tonal)
+     청록   버튼 바탕  →  상태(선택·포커스·슬라이더)는 인디고. 앱의 청록 버튼은 옅은 인디고(tonal)
      빨강   정지 · 등록 바탕  →  옅은 빨강(tonal)
      제목   노랑 형광펜(.mark)  →  굵은 글자 + 작은 노랑 막대
 
@@ -624,63 +624,62 @@ body.pb-refresh .pb-header {
      soft   흰색 대신 옅은 회색. 오래된 노트북 패널에서 흰 바탕이 눈부신 걸 줄인다
      dark   #1d2025 계열 (순수 검정은 안 쓴다) */
 body.pb-v2 {
-  /* 틀(헤더·왼쪽 메뉴)은 세 밝기 모두 짙은 남회색. IDE v2 와 같다 */
-  --v2-frame:     #232a33;
-  --v2-frame-2:   #2e3641;
-  --v2-frame-3:   #3a4350;
-  --v2-frame-line:#1a2027;
-  --v2-frame-ink: #f1f3f6;
-  --v2-frame-dim: #aeb7c2;
-  /* soft (기본) — 누런 회색 대신 푸른기 도는 맑은 오프화이트 */
-  --v2-canvas:  #eceff3;   /* 바닥 */
-  --v2-top:     #f6f7f9;
-  --v2-surface: #f7f8fa;   /* 카드 */
-  --v2-raise:   #fdfdfe;   /* 떠 있는 것 · 입력칸 */
-  --v2-sunken:  #eef1f4;
-  --v2-hover:   #e7eaee;
-  --v2-press:   #dce1e7;
-  --v2-line:    #dce0e5;
-  --v2-line-2:  #c5ccd4;
-  --v2-ink:     #1c2128;
-  --v2-ink-2:   #4a5360;
-  --v2-ink-3:   #6e7884;
-  --v2-yellow:  #ffcf33;
-  --v2-yellow-2:#f2bf0f;
-  --v2-yellow-t:#fff1c2;
-  --v2-on-yellow:#1c2128;
-  --v2-teal:    #0b95a8;
-  --v2-teal-t:  #d9f0f3;
-  --v2-teal-t2: #c4e7ec;
-  --v2-teal-ink:#06596a;
-  --v2-red:     #d9433f;
-  --v2-red-t:   #fbe3e1;
-  --v2-red-t2:  #f6d0cd;
-  --v2-red-ink: #a01d1d;
-  --v2-term:    #161a20;
-  --v2-term-ink:#e1e5ea;
-  --v2-shadow:  rgba(20, 26, 36, .18);
-  --v2-scrim:   rgba(20, 26, 36, .45);
+  /* 색 — Ink & Amber (IDE v2 의 ide/static/v2/ide.css 와 같은 값)
+     틀 먹빛 남색 · 주 동작 앰버 · 상태 인디고. yellow 는 앰버, accent 는 인디고다 */
+  --v2-frame:     #1c2130;
+  --v2-frame-2:   #272d3d;
+  --v2-frame-3:   #333a4c;
+  --v2-frame-line:#141824;
+  --v2-frame-ink: #eef0f6;
+  --v2-frame-dim: #a3aabb;
+  /* soft (기본) */
+  --v2-canvas:  #eceef4;   /* 바닥 */
+  --v2-top:     #f5f6fa;
+  --v2-surface: #f5f6fa;   /* 카드 */
+  --v2-raise:   #fdfdff;   /* 떠 있는 것 · 입력칸 */
+  --v2-sunken:  #eceef4;
+  --v2-hover:   #e5e8ef;
+  --v2-press:   #d9dde7;
+  --v2-line:    #dcdfe7;
+  --v2-line-2:  #c4cad6;
+  --v2-ink:     #1a1e29;
+  --v2-ink-2:   #474f62;
+  --v2-ink-3:   #6b7386;
+  --v2-yellow:  #f7b924;
+  --v2-yellow-2:#e8a90c;
+  --v2-yellow-t:#fdf0cc;
+  --v2-on-yellow:#1a1e29;
+  --v2-accent:  #4c59d6;
+  --v2-accent-t:#e5e7fb;
+  --v2-accent-t2:#d6daf8;
+  --v2-accent-ink:#2c3596;
+  --v2-red:     #df4a4f;
+  --v2-red-t:   #fbe4e5;
+  --v2-red-t2:  #f6d2d4;
+  --v2-red-ink: #9f1f25;
+  --v2-term:    #151924;
+  --v2-term-ink:#e3e6ee;
+  --v2-shadow:  rgba(20, 24, 40, .18);
+  --v2-scrim:   rgba(16, 20, 32, .5);
 }
 html[data-theme="light"] body.pb-v2 {
-  --v2-canvas: #f3f4f6; --v2-top: #ffffff; --v2-surface: #ffffff; --v2-raise: #ffffff;
-  --v2-sunken: #f7f8fa; --v2-hover: #f1f3f5; --v2-press: #e7eaee;
-  --v2-line: #e4e7eb; --v2-line-2: #cfd4da;
-  --v2-ink: #1c2128; --v2-ink-2: #57606a; --v2-ink-3: #7a838d;
-  --v2-yellow: #ffd43b; --v2-yellow-2: #f5c518; --v2-yellow-t: #fff6d6;
-  --v2-teal: #0e9fb3; --v2-teal-t: #e3f5f8; --v2-teal-t2: #cdeef3; --v2-teal-ink: #06606d;
-  --v2-red: #dc3d3d; --v2-red-t: #fdecec; --v2-red-t2: #fadada; --v2-red-ink: #a61b1b;
+  --v2-canvas: #f1f3f8; --v2-top: #ffffff; --v2-surface: #ffffff; --v2-raise: #ffffff;
+  --v2-sunken: #f5f6fa; --v2-hover: #f1f3f7; --v2-press: #e6e9f0;
+  --v2-line: #e5e8ef; --v2-line-2: #d0d5df;
+  --v2-ink-2: #525a6d; --v2-ink-3: #7a8294;
+  --v2-accent-t: #e8eafc;
 }
 html[data-theme="dark"] body.pb-v2 {
-  --v2-frame: #14171b; --v2-frame-2: #22262c; --v2-frame-3: #2e333a; --v2-frame-line: #0d0f12;
-  --v2-canvas: #16181c; --v2-top: #181b1f; --v2-surface: #1d2025; --v2-raise: #262a30;
-  --v2-sunken: #22262b; --v2-hover: #2a2e35; --v2-press: #333841;
-  --v2-line: #2d3138; --v2-line-2: #3d434c;
-  --v2-ink: #e3e6ea; --v2-ink-2: #aeb5be; --v2-ink-3: #858d97;
-  --v2-yellow: #f2c94c; --v2-yellow-2: #e6b930; --v2-yellow-t: #3a331d; --v2-on-yellow: #1b1d20;
-  --v2-teal: #3cbfd1; --v2-teal-t: #193a40; --v2-teal-t2: #20484f; --v2-teal-ink: #9be4ee;
-  --v2-red: #e05a52; --v2-red-t: #3d2224; --v2-red-t2: #4a2729; --v2-red-ink: #ffaaa3;
-  --v2-term: #121417;
-  --v2-shadow: rgba(0, 0, 0, .45); --v2-scrim: rgba(0, 0, 0, .55);
+  --v2-frame: #12151d; --v2-frame-2: #1f2430; --v2-frame-3: #2b3140; --v2-frame-line: #0b0d12;
+  --v2-canvas: #151922; --v2-top: #161a22; --v2-surface: #1a1e27; --v2-raise: #242935;
+  --v2-sunken: #1f232d; --v2-hover: #282e3a; --v2-press: #313847;
+  --v2-line: #2b303c; --v2-line-2: #3b4252;
+  --v2-ink: #e4e7ef; --v2-ink-2: #adb4c4; --v2-ink-3: #858da0;
+  --v2-yellow: #f5c04a; --v2-yellow-2: #e8b030; --v2-yellow-t: #3a311b; --v2-on-yellow: #1a1d24;
+  --v2-accent: #8e98ff; --v2-accent-t: #262c52; --v2-accent-t2: #303769; --v2-accent-ink: #c4c9ff;
+  --v2-red: #e8676b; --v2-red-t: #3e2226; --v2-red-t2: #4b282c; --v2-red-ink: #ffb0b2;
+  --v2-term: #11141b;
+  --v2-shadow: rgba(0, 0, 0, .45); --v2-scrim: rgba(0, 0, 0, .6);
   color-scheme: dark;
 }
 body.pb-v2 {
@@ -691,7 +690,7 @@ body.pb-v2 {
   --pb-brand: var(--v2-top);  --pb-brand-2: var(--v2-top);
   --pb-accent: var(--v2-yellow);  --pb-accent-edge: var(--v2-yellow-2);
   --pb-danger: var(--v2-red);  --pb-danger-edge: var(--v2-red);
-  --pb-info: var(--v2-teal);  --pb-focus: var(--v2-teal);
+  --pb-info: var(--v2-accent);  --pb-focus: var(--v2-accent);
   --pb-radius: 10px;  --pb-radius-s: 8px;
   --pb-shadow: 0 1px 2px rgba(0, 0, 0, .06);
   --pb-font: "Pretendard", -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo",
@@ -703,13 +702,13 @@ body.pb-v2 {
   background: var(--v2-canvas);
   color: var(--v2-ink);
   font-family: var(--pb-font);
-  accent-color: var(--v2-teal);
+  accent-color: var(--v2-accent);
 }
 body.pb-v2 h1, body.pb-v2 h2, body.pb-v2 h3, body.pb-v2 h4, body.pb-v2 h5, body.pb-v2 h6,
 body.pb-v2 header, body.pb-v2 button, body.pb-v2 input, body.pb-v2 select, body.pb-v2 textarea,
 body.pb-v2 label, body.pb-v2 i.fa > span { font-family: var(--pb-font); }
 body.pb-v2 [hidden] { display: none !important; }   /* 앱 CSS 의 display:flex 가 hidden 을 이기던 곳(녹음 파형 등) */
-body.pb-v2 ::selection { background: rgba(11, 143, 161, .25); }
+body.pb-v2 ::selection { background: rgba(76, 89, 214, .25); }
 
 /* ── 헤더 (틀) ──────────────────────────────────────────────────────────── */
 body.pb-v2 .pb-header {
@@ -727,7 +726,7 @@ body.pb-v2 .pb-header__brand > i:first-child {
 body.pb-v2 .pb-header .pb-iconbtn { color: var(--v2-frame-dim); }
 body.pb-v2 .pb-header .pb-iconbtn:hover { background: var(--v2-frame-2); color: var(--v2-frame-ink); }
 body.pb-v2 .pb-header .pb-iconbtn:active { background: var(--v2-frame-3); }
-body.pb-v2 .pb-iconbtn[aria-pressed="true"] { background: var(--v2-teal-t); color: var(--v2-teal-ink); }
+body.pb-v2 .pb-iconbtn[aria-pressed="true"] { background: var(--v2-accent-t); color: var(--v2-accent-ink); }
 body.pb-v2 .pb-iconbtn--danger:hover { background: var(--v2-red-t); color: var(--v2-red-ink); }
 body.pb-v2 .pb-iconbtn:not(.pb-iconbtn--danger) + .pb-iconbtn--danger::before { border-color: var(--v2-frame-3); }
 body.pb-v2 .pb-header .pb-field--sm {
@@ -774,7 +773,7 @@ body.pb-v2 .pb-btn--danger { background: var(--v2-red); border-color: transparen
 body.pb-v2 .pb-btn--ghost,
 body.pb-v2 .pb-btn--ghost:hover:not(:disabled) { box-shadow: none; border-color: transparent; background: transparent; }
 body.pb-v2 .pb-btn--ghost:hover:not(:disabled) { background: var(--v2-hover); }
-body.pb-v2 .pb-btn--ghost[aria-pressed="true"] { background: var(--v2-teal-t); color: var(--v2-teal-ink); }
+body.pb-v2 .pb-btn--ghost[aria-pressed="true"] { background: var(--v2-accent-t); color: var(--v2-accent-ink); }
 body.pb-v2 .pb-btn:disabled { background: var(--v2-sunken); color: var(--v2-ink-3); border-color: var(--v2-line); opacity: .7; }
 
 /* ── 앱이 직접 그리던 버튼 (tools). 기본은 보조 버튼 ─────────────────────── */
@@ -802,12 +801,12 @@ body.pb-v2 button:not(.pb-btn):not(.pb-iconbtn):not(.pb-seg > button):not([name=
 body.pb-v2 main button:not(.pb-btn):not(.pb-iconbtn) > i,
 body.pb-v2 main label[for="upload"] > i { color: var(--v2-ink-2); }
 
-/* 청록 버튼 → 옅은 청록 (tools 의 프레임 버튼들) */
+/* 앱의 청록 버튼(.btn-teal) → 옅은 인디고 (tools 의 프레임 버튼들) */
 body.pb-v2 button.btn-teal {
-  background: var(--v2-teal-t) !important; color: var(--v2-teal-ink);
+  background: var(--v2-accent-t) !important; color: var(--v2-accent-ink);
   border-color: transparent; box-shadow: none;
 }
-body.pb-v2 button.btn-teal:hover:not(:disabled) { background: var(--v2-teal-t2) !important; border-color: transparent; }
+body.pb-v2 button.btn-teal:hover:not(:disabled) { background: var(--v2-accent-t2) !important; border-color: transparent; }
 body.pb-v2 button.btn-teal > i { color: inherit; }
 /* 빨강 버튼 → 옅은 빨강 */
 body.pb-v2 button.btn-red {
@@ -842,14 +841,14 @@ body.pb-v2 .pb-field {
 body.pb-v2 textarea:disabled:not(.result):not(.terminal) { background: var(--v2-sunken); color: var(--v2-ink); opacity: 1; }
 body.pb-v2 input:focus:not([type="range"]), body.pb-v2 select:focus, body.pb-v2 textarea:focus:not(.result):not(.terminal),
 body.pb-v2 .pb-field:focus {
-  border-color: var(--v2-teal) !important;
-  box-shadow: 0 0 0 3px rgba(11, 143, 161, .2) !important; outline: none;
+  border-color: var(--v2-accent) !important;
+  box-shadow: 0 0 0 3px rgba(76, 89, 214, .2) !important; outline: none;
 }
 body.pb-v2 input::placeholder { color: var(--v2-ink-3); }
 body.pb-v2 input[type="range"]::-webkit-slider-runnable-track { background: var(--v2-line-2); }
-body.pb-v2 input[type="range"]::-webkit-slider-thumb { background: var(--v2-teal); border-color: var(--v2-raise); }
+body.pb-v2 input[type="range"]::-webkit-slider-thumb { background: var(--v2-accent); border-color: var(--v2-raise); }
 body.pb-v2 input[type="range"]::-moz-range-track { background: var(--v2-line-2); }
-body.pb-v2 input[type="range"]::-moz-range-thumb { background: var(--v2-teal); border-color: var(--v2-raise); }
+body.pb-v2 input[type="range"]::-moz-range-thumb { background: var(--v2-accent); border-color: var(--v2-raise); }
 
 /* ── 패널: 바닥 위 카드 ───────────────────────────────────────────────────── */
 body.pb-v2 .pb-panes { background: var(--v2-canvas); padding: 8px; }
@@ -861,7 +860,7 @@ body.pb-v2 .pb-pane {
 body.pb-v2 .pb-pane[hidden] { display: none; }
 body.pb-v2 .pb-resizer { flex-basis: 8px; background: transparent; }
 body.pb-v2 .pb-resizer:hover, body.pb-v2 .pb-resizer[data-dragging] {
-  background: linear-gradient(90deg, transparent 3px, var(--v2-teal) 3px, var(--v2-teal) 5px, transparent 5px);
+  background: linear-gradient(90deg, transparent 3px, var(--v2-accent) 3px, var(--v2-accent) 5px, transparent 5px);
 }
 
 /* ── tools: 왼쪽 메뉴(틀) + 카드 ──────────────────────────────────────────── */
@@ -963,4 +962,4 @@ body.pb-v2 #confirmCancelBtn, body.pb-v2 #promptCancelBtn { color: var(--v2-ink)
 /* ── 분류기가 직접 쓰던 흰색 ────────────────────────────────────────────── */
 body.pb-v2 .store-card, body.pb-v2 .code { background: var(--v2-raise); color: var(--v2-ink); border-color: var(--v2-line); }
 body.pb-v2 .confusion th { background: var(--v2-surface); color: var(--v2-ink-2); }
-body.pb-v2 .saved .fa-circle-check { color: var(--v2-teal); }
+body.pb-v2 .saved .fa-circle-check { color: var(--v2-accent); }
