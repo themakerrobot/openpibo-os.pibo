@@ -26,6 +26,8 @@
   --c-frame-line:#141824;
   --c-frame-ink: #eef0f6;
   --c-frame-dim: #a3aabb;
+  --c-ring:      rgba(76, 89, 214, .28);   /* 포커스 링 */
+  --c-ring-soft: rgba(76, 89, 214, .22);   /* 글자 선택 */
 }
 :root, :root[data-theme="soft"] {
   /* 흰색 대신 옅은 청회색(L*≈97). 오래된 노트북 패널의 눈부심을 줄인다 */
@@ -82,6 +84,29 @@
   color-scheme: dark;
 }
 
+/* 청록 틀안 — html[data-frame="teal"] (?frame=teal 로 켜고 ?frame=ink 로 끈다. 쿠키 pibo_frame)
+   Arduino IDE 처럼 틀을 브랜드 색으로. 파이보 청록(#13bfd5)을 깊게 한 색이다.
+   상태색도 청록 계열로 묶어서 색은 '청록 + 앰버' 둘뿐이다 */
+:root[data-frame="teal"] {
+  --c-frame:     #0f4c55;
+  --c-frame-2:   #16606b;
+  --c-frame-3:   #1f7380;
+  --c-frame-line:#0a3a41;
+  --c-frame-ink: #effafb;
+  --c-frame-dim: #a7d2d8;
+  --c-accent:    #0e8a9a;
+  --c-accent-t:  #d9f0f2;
+  --c-accent-ink:#0a5560;
+  --c-ring:      rgba(14, 138, 154, .3);
+  --c-ring-soft: rgba(14, 138, 154, .22);
+}
+:root[data-frame="teal"][data-theme="dark"] {
+  --c-frame: #0b2c32; --c-frame-2: #123c43; --c-frame-3: #1a4d55; --c-frame-line: #071d21;
+  --c-frame-dim: #8fbfc5;
+  --c-accent: #45c6d6; --c-accent-t: #163a40; --c-accent-ink: #a6eaf2;
+  --c-ring: rgba(69, 198, 214, .35); --c-ring-soft: rgba(69, 198, 214, .25);
+}
+
 :root {
   --font: "Pretendard", -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo",
           "Noto Sans KR", "Malgun Gothic", "맑은 고딕", "Segoe UI", Roboto, sans-serif;
@@ -119,7 +144,7 @@ body.v2-app button, body.v2-app input, body.v2-app select, body.v2-app textarea 
 body.v2-app a { color: inherit; text-decoration: none; cursor: pointer; }
 .v2-app [hidden] { display: none !important; }
 .v2-app .hidden { display: none; }
-.v2-app ::selection { background: rgba(76, 89, 214, .25); }
+.v2-app ::selection { background: var(--c-ring-soft); }
 
 /* ── 버튼 ─────────────────────────────────────────────────────────────── */
 .v2-btn {
@@ -278,7 +303,7 @@ body[data-running] #execute > i { color: var(--c-frame-dim); }
 }
 .v2-switch > input:checked + .v2-switch__track { background: var(--c-accent); }
 .v2-switch > input:checked + .v2-switch__track::after { transform: translateX(16px); }
-.v2-switch > input:focus-visible + .v2-switch__track { outline: 3px solid rgba(76,89,214,.35); outline-offset: 2px; }
+.v2-switch > input:focus-visible + .v2-switch__track { outline: 3px solid var(--c-ring); outline-offset: 2px; }
 
 /* ── 본문 ─────────────────────────────────────────────────────────────── */
 .v2-app > main { flex: 1 1 auto; min-height: 0; display: flex; }
@@ -559,7 +584,7 @@ body[data-offline] .v2-dot { background: var(--c-red); box-shadow: 0 0 0 3px rgb
   border: 1px solid var(--c-line-2); border-radius: 9px; font-size: 15px;
   background: var(--c-bg); color: var(--c-ink);
 }
-.prompt-popup-content input:focus, .form-group input:focus { outline: none; border-color: var(--c-accent); box-shadow: 0 0 0 3px rgba(76,89,214,.2); }
+.prompt-popup-content input:focus, .form-group input:focus { outline: none; border-color: var(--c-accent); box-shadow: 0 0 0 3px var(--c-ring); }
 .popup-buttons { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }
 .popup-buttons button {
   height: 38px; min-width: 84px; padding: 0 16px; border-radius: 9px; cursor: pointer;

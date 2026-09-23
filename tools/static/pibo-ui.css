@@ -632,6 +632,8 @@ body.pb-v2 {
   --v2-frame-line:#141824;
   --v2-frame-ink: #eef0f6;
   --v2-frame-dim: #a3aabb;
+  --v2-ring:      rgba(76, 89, 214, .28);
+  --v2-ring-soft: rgba(76, 89, 214, .22);
   /* soft (기본) */
   --v2-canvas:  #eceef4;   /* 바닥 */
   --v2-top:     #f5f6fa;
@@ -682,6 +684,19 @@ html[data-theme="dark"] body.pb-v2 {
   --v2-shadow: rgba(0, 0, 0, .45); --v2-scrim: rgba(0, 0, 0, .6);
   color-scheme: dark;
 }
+/* 청록 틀안 — html[data-frame="teal"]. IDE v2 와 같은 값 */
+html[data-frame="teal"] body.pb-v2 {
+  --v2-frame: #0f4c55; --v2-frame-2: #16606b; --v2-frame-3: #1f7380; --v2-frame-line: #0a3a41;
+  --v2-frame-ink: #effafb; --v2-frame-dim: #a7d2d8;
+  --v2-accent: #0e8a9a; --v2-accent-t: #d9f0f2; --v2-accent-t2: #c3e6ea; --v2-accent-ink: #0a5560;
+  --v2-ring: rgba(14, 138, 154, .3); --v2-ring-soft: rgba(14, 138, 154, .22);
+}
+html[data-frame="teal"][data-theme="dark"] body.pb-v2 {
+  --v2-frame: #0b2c32; --v2-frame-2: #123c43; --v2-frame-3: #1a4d55; --v2-frame-line: #071d21;
+  --v2-frame-dim: #8fbfc5;
+  --v2-accent: #45c6d6; --v2-accent-t: #163a40; --v2-accent-t2: #1d4a51; --v2-accent-ink: #a6eaf2;
+  --v2-ring: rgba(69, 198, 214, .35); --v2-ring-soft: rgba(69, 198, 214, .25);
+}
 body.pb-v2 {
   /* 키트 토큰을 v2 값으로 */
   --pb-bg: var(--v2-raise);  --pb-surface: var(--v2-sunken);  --pb-surface-2: var(--v2-press);
@@ -708,7 +723,7 @@ body.pb-v2 h1, body.pb-v2 h2, body.pb-v2 h3, body.pb-v2 h4, body.pb-v2 h5, body.
 body.pb-v2 header, body.pb-v2 button, body.pb-v2 input, body.pb-v2 select, body.pb-v2 textarea,
 body.pb-v2 label, body.pb-v2 i.fa > span { font-family: var(--pb-font); }
 body.pb-v2 [hidden] { display: none !important; }   /* 앱 CSS 의 display:flex 가 hidden 을 이기던 곳(녹음 파형 등) */
-body.pb-v2 ::selection { background: rgba(76, 89, 214, .25); }
+body.pb-v2 ::selection { background: var(--v2-ring-soft); }
 
 /* ── 헤더 (틀) ──────────────────────────────────────────────────────────── */
 body.pb-v2 .pb-header {
@@ -842,7 +857,7 @@ body.pb-v2 textarea:disabled:not(.result):not(.terminal) { background: var(--v2-
 body.pb-v2 input:focus:not([type="range"]), body.pb-v2 select:focus, body.pb-v2 textarea:focus:not(.result):not(.terminal),
 body.pb-v2 .pb-field:focus {
   border-color: var(--v2-accent) !important;
-  box-shadow: 0 0 0 3px rgba(76, 89, 214, .2) !important; outline: none;
+  box-shadow: 0 0 0 3px var(--v2-ring) !important; outline: none;
 }
 body.pb-v2 input::placeholder { color: var(--v2-ink-3); }
 body.pb-v2 input[type="range"]::-webkit-slider-runnable-track { background: var(--v2-line-2); }

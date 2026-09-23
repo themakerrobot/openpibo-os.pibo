@@ -15,6 +15,7 @@
      6) 버튼 : PiboUI.busy(el, on)               아이콘만 스피너로. 라벨·크기는 그대로
      7) 시안 : 주소에 ?ui=v2 → 쿠키 pibo_ui. 도구·분류기는 body.pb-v2, IDE 는 index_v2.html
      8) 밝기 : PiboUI.setTheme('light'|'soft'|'dark') → html[data-theme] + 쿠키 pibo_theme (v2 만)
+     9) 틀색 : ?frame=teal|ink → html[data-frame] + 쿠키 pibo_frame (v2 만, 시안 비교용)
 
    원본은 design/pibo-ui.js 하나뿐이다. static/ 쪽 사본은 design/sync.sh 가 만든다.
    ========================================================================== */
@@ -95,6 +96,18 @@
     }
   }
   if (UI === 'v2') document.documentElement.setAttribute('data-theme', getTheme());
+  /* 틀 색 시안: ?frame=teal / ?frame=ink (쿠키 pibo_frame). 기본 ink(먹빛) */
+  (function () {
+    var q = null;
+    try { q = new URLSearchParams(location.search).get('frame'); } catch (e) { /* 무시 */ }
+    try {
+      if (q === 'teal') document.cookie = 'pibo_frame=teal; path=/; max-age=31536000; SameSite=Lax';
+      else if (q === 'ink') document.cookie = 'pibo_frame=; path=/; max-age=0; SameSite=Lax';
+    } catch (e) { /* 무시 */ }
+    var teal = q === 'teal' || (q !== 'ink' && /(?:^|;\s*)pibo_frame=teal/.test(document.cookie || ''));
+    if (UI === 'v2' && teal) document.documentElement.setAttribute('data-frame', 'teal');
+    else document.documentElement.removeAttribute('data-frame');
+  })();
   document.addEventListener('click', function (e) {
     var b = e.target.closest && e.target.closest('[data-theme-set]');
     if (b) setTheme(b.getAttribute('data-theme-set'));
