@@ -47,6 +47,8 @@
       if (!name) return;
 
       var target = document.getElementById(bar.getAttribute('data-target') || '');
+      // 패널마다 최소 폭이 다르다. 버튼이 한 줄에 들어가는 폭 밑으로는 못 줄인다
+      var minW = parseInt(bar.getAttribute('data-min'), 10) || MIN;
       var startX = 0, startW = 0, raf = 0;
 
       function onMove(e) {
@@ -66,7 +68,7 @@
           }
         });
         var max = room - others - MIN_GROW;
-        w = Math.max(MIN, Math.min(w, Math.max(MIN, max)));
+        w = Math.max(minW, Math.min(w, Math.max(minW, max)));
 
         if (raf) return;
         raf = requestAnimationFrame(function () {

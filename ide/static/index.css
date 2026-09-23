@@ -990,7 +990,7 @@ main > div.content > .wrapper.ide.pb-pane + .wrapper.ide.pb-pane {
 }
 
 /* 열 너비. --pane-* 를 JS 가 드래그로 바꾸고 localStorage 에 저장한다 */
-:root { --pane-files: 300px; --pane-term: 380px; }
+:root { --pane-files: 320px; --pane-term: 380px; }   /* 파일 패널은 원래 320px 이었다 */
 #browser_en.pb-pane { flex: 0 0 var(--pane-files); }
 #result_en.pb-pane  { flex: 0 0 var(--pane-term); }
 
@@ -1065,3 +1065,38 @@ main > div.content > .wrapper.ide.pb-pane + .wrapper.ide.pb-pane {
 @media (max-width: 1199px) { .pb-iconbtn.pb-pane-toggle[data-toggle-pane="browser_en"] { display: flex; } }
 @media (max-width: 899px)  { .pb-iconbtn.pb-pane-toggle[data-toggle-pane="result_en"]  { display: flex; } }
 .pb-pane-toggle[aria-pressed="true"] { background: rgba(0,0,0,.14); }
+
+/* ── 한/영 전환 안정화 ───────────────────────────────────────────────────
+   번역 문자열 길이가 달라도 버튼이 두 줄이 되거나 높이가 바뀌면 안 된다.
+   실측(1366x768): 영문에서 Upload 가 아이콘/글자 두 줄로 쪼개져 파일 툴바가
+   29 -> 38px 로 커졌고, 한글에서는 같은 버튼이 전부 3px 더 높았다(22 -> 25).
+   한글 글리프가 폴백 글꼴로 그려지는데 그 글꼴의 ascent 가 커서다.
+   1) 버튼 안에서 줄바꿈 금지
+   2) 높이를 글꼴 메트릭이 아니라 고정값으로 */
+.pb-pane .editor-row button,
+.pb-pane .editor-row label[for="upload"] {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  white-space: nowrap;
+  flex: none;
+  height: 26px;
+  line-height: 1;
+  padding-top: 0;
+  padding-bottom: 0;
+  box-sizing: border-box;
+}
+.pb-pane .editor-row button#execute { height: 28px; }
+
+/* 파일 패널 윗줄: 공간이 모자라면 버튼 '하나'가 통째로 다음 줄로 간다.
+   버튼 안에서 쪼개지는 것보다 낫다. 기본 폭(320px)에서는 한/영 모두 한 줄이다 */
+#browser_en .editor-row:first-child,
+#browser_en .editor-row:first-child > .editor-col { flex-wrap: wrap; gap: 6px; min-width: 0; }
+/* 영문(Upload / new folder / new file)이 320px 에 한 줄로 들어가려면 좌우 여백을
+   줄여야 한다. 기본 1rem 이면 2px 넘쳐 new file 이 다음 줄로 갔다 */
+#browser_en .editor-row:first-child button,
+#browser_en .editor-row:first-child label[for="upload"] { padding-left: 8px; padding-right: 8px; min-width: 0; }
+/* 숨긴 파일 입력(.filebox)이 flex 항목 하나를 차지해 gap 을 하나 더 먹는다. 흐름에서 뺀다 */
+#browser_en .editor-row:first-child .filebox { position: absolute; width: 0; height: 0; overflow: hidden; }
+#browser_en .filepath { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
