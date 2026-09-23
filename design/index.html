@@ -7,7 +7,7 @@
 <link rel="stylesheet" href="../ide/static/all.min.css">
 <link rel="stylesheet" href="pibo-ui.css">
 <style>
-  body { margin:0; background:#fafafa; }
+  body { margin:0; background:#fafafa; font-family: var(--pb-font); color: var(--pb-text); }
   .doc { max-width: 1000px; margin: 0 auto; padding: 0 20px 80px; }
   .doc h1 { font-size: 26px; margin: 28px 0 4px; }
   .doc h2 { font-size: 19px; margin: 40px 0 6px; padding-bottom: 6px;
@@ -178,23 +178,19 @@
 터치 타겟이 글리프 크기 그대로 남는다. <code>gap</code> 을 쓸 것.</p>
 
 <h2>6 &nbsp; 글자</h2>
-<p><code>--pb-font</code> 는 <code>system-ui</code> 를 맨 앞에 둔다. 각 OS 의 기본 UI 폰트
-(윈도우 맑은 고딕 / 안드로이드 Noto Sans CJK / iOS Apple SD Gothic Neo)로 잡혀서,
-<b>따로 내려받지 않고도</b> 기기마다 제 글꼴이 나온다. 오프라인에서도 된다.</p>
+<p><code>--pb-font</code> 는 앱(ide·tools·classifier)이 원래 쓰던 스택과 같다. 키트 컴포넌트가
+앱 본문과 다른 글꼴로 튀지 않게 하려는 것이다.</p>
 <div class="pb-note pb-note--danger">
-  <b>지금 스택의 문제 두 가지</b>
-  ① <code>font-family: Helvetica, "맑은 고딕", ...</code> — Helvetica 가 앞이라
-  <b>라틴과 한글이 서로 다른 폰트로 렌더</b>된다. 게다가 맑은 고딕은 윈도우 전용이라
-  태블릿에는 없다.<br>
-  ② <code>"Noto Sans Regular"</code> 가 5곳에 쓰였는데 <b>어디에도 로드되어 있지 않다.</b>
-  <code>@font-face</code> 도, <code>webfonts/</code> 안의 파일도, 구글 폰트 링크도 없다.
-  항상 조용히 폴백돼 왔다.
+  <b>키트는 앱 본문 글꼴을 바꾸지 않는다</b>
+  한때 <code>system-ui</code> 스택을 <code>.pb</code>(= body)에 걸었더니 파일 목록·경로·상태바까지
+  앱 전체가 16px Helvetica/맑은 고딕 → 15px system-ui 로 바뀌었다. 지금 <code>.pb</code> 는 범위 표시일
+  뿐이고, 글꼴은 키트 컴포넌트에만 건다. 글꼴을 바꾸려면 <code>--pb-font</code> 만 고친다.
 </div>
 <div class="pb-note">
-  <b>루트 글자 크기</b>
-  <code>html { font-size: 10px }</code> (<code>index.css:18</code>) 은 <code>rem</code> 계산을
-  쉽게 하려는 트릭인데, <b>브라우저 글자 크기 설정을 무력화</b>한다. 저시력 사용자가
-  키워도 안 커진다. 이 키트는 <code>px</code> 을 쓰고 루트를 건드리지 않는다.
+  <b>알고 있는 문제 (고치려면 따로 결정)</b>
+  ① 앱 스택은 Helvetica 가 앞이라 라틴과 한글이 다른 글꼴로 그려진다. "맑은 고딕" 은 윈도우 전용이다.<br>
+  ② <code>"Noto Sans Regular"</code> 가 앱 CSS 에 쓰였지만 어디에도 로드되어 있지 않다(항상 폴백).<br>
+  ③ <code>html { font-size: 10px }</code> 는 브라우저 글자 크기 설정을 무력화한다.
 </div>
 
 <h2 id="쓰는법">7 &nbsp; 쓰는 법</h2>

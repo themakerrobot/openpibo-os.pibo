@@ -1109,3 +1109,25 @@ main > div.content > .wrapper.ide.pb-pane + .wrapper.ide.pb-pane {
 #result.has-error { border-left: 4px solid var(--red) !important; }
 /* 파일 목록에서 지금 연 파일 */
 #fm_table tr.is-current td { background: var(--light-yellow); font-weight: 700; }
+
+/* 파일 목록: 패널 폭을 다 쓰고, 세로로도 남는 높이를 먹는다. 셸로 바꾸면서
+   원래의 width:320px / height:calc(100vh - 455px) 를 풀었더니 표가 내용 폭만큼
+   좁아지고 높이도 줄어 있었다 */
+#browser_en #fm_row { flex: 1 1 auto; min-height: 120px; align-items: stretch; }
+#browser_en #fm_row > .editor-col { flex: 1 1 auto; min-width: 0; align-items: stretch; }
+#browser_en .fm-table-wrap { width: 100%; height: auto; flex: 1 1 auto; min-height: 0; overflow-y: auto; }
+#fm_table { width: 100%; }
+
+/* 아이콘 <i> 안에 입력칸이 들어 있는 컨트롤(글자 크기 · 테마 · 터미널 폭).
+   폭이 좁아지면 아이콘과 입력칸이 위아래로 쪼개졌다 */
+.pb-pane .editor-col > i.fa-text-height,
+.pb-pane .editor-col > i.fa-circle-half-stroke,
+.pb-pane .editor-col > i.fa-arrows-left-right-to-line {
+  display: inline-flex; align-items: center; gap: 3px; white-space: nowrap; flex: none;
+  margin-top: 0 !important; margin-bottom: 0 !important;
+}
+
+/* 가운데 툴바: 공간이 모자라면 버튼·컨트롤 '하나'가 통째로 다음 줄로 간다.
+   줄바꿈을 막으면 오른쪽 아이콘이 패널 밖으로 잘렸다(900~960px, 1200~1300px) */
+.pb-pane--grow > .editor-row:first-child,
+.pb-pane--grow > .editor-row:first-child > .editor-col { flex-wrap: wrap; row-gap: 6px; min-width: 0; }

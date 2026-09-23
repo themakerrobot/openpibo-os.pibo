@@ -50,11 +50,13 @@
   --pb-pad:      14px;
 
   /* ── 글자 ──
-     system-ui 를 맨 앞에 둔다. 기존 스택은 Helvetica 가 앞이라 라틴과 한글이
-     서로 다른 폰트로 렌더됐고, "맑은 고딕" 은 윈도우 전용이라 태블릿에서
-     빠졌다. 'Noto Sans Regular' 는 어디에도 로드돼 있지 않아 항상 폴백이었다. */
-  --pb-font: system-ui, -apple-system, "Segoe UI", Roboto,
-             "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", sans-serif;
+     앱(ide/tools/classifier)이 원래 쓰던 스택과 같다. 키트 컴포넌트가 앱 본문과
+     다른 글꼴로 튀지 않게 한다.
+     한때 system-ui 를 앞에 둔 스택을 .pb(=body) 에 걸었더니 파일 목록·경로·상태바까지
+     앱 전체 글꼴과 크기가 바뀌었다(16px Helvetica/맑은 고딕 -> 15px system-ui).
+     글꼴을 바꾸려면 여기 값만 고친다. PiBrain 이 다르면 이 변수만 덮어쓴다. */
+  --pb-font: Helvetica, "맑은 고딕", "malgun gothic", "Apple SD Gothic Neo",
+             "Apple SD 산돌고딕 Neo", "Microsoft NeoGothic", "Droid sans", sans-serif;
   --pb-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 
   --pb-fs-s:  13px;
@@ -77,12 +79,15 @@
   box-sizing: border-box;
 }
 
+/* .pb 는 범위 표시일 뿐 앱 본문을 꾸미지 않는다. body 에 붙이므로 여기서 글꼴·크기·색을
+   정하면 앱 전체가 바뀐다. 키트 컴포넌트는 각자 글꼴을 지정한다. */
 .pb {
-  font-family: var(--pb-font);
-  font-size: var(--pb-fs);
-  color: var(--pb-text);
   -webkit-text-size-adjust: 100%;
 }
+.pb-header, .pb-iconbtn, .pb-banner, .pb-toast, .pb-modal, .pb-runstat, .pb-statusbar {
+  font-family: var(--pb-font);
+}
+.pb-header { color: var(--pb-text); }
 
 /* 앱이 bare `button { ... }` 을 꾸며 둬도(IDE 는 노랑 배경·min-width 80px·그림자·
    hover 시 filter:brightness·active 시 transform) 키트 버튼은 영향받지 않게 끊는다.
@@ -255,7 +260,7 @@
 .pb-statusbar { display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
                 background: linear-gradient(var(--pb-brand-2), var(--pb-brand));
                 border-top: 1px solid rgba(0,0,0,.18);
-                padding: 4px var(--pb-pad); font-size: var(--pb-fs-s); font-weight: 600; }
+                padding: 4px var(--pb-pad); }   /* 글자 크기·굵기는 앱의 상태바가 정한다 */
 
 /* ==========================================================================
    셸 레이아웃  —  VS Code 식. 페이지는 스크롤하지 않고 패널 안에서만 스크롤한다.

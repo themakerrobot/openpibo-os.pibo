@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Pibo</title>
 <link rel="stylesheet" href="all.min.css">
-<link rel="stylesheet" href="pibo-ui.css?ver=260923v4">
+<link rel="stylesheet" href="pibo-ui.css?ver=260923v5">
 <link rel="shortcut icon" href="icon.png" type="image/x-icon">
 <style>
   /* 도구·분류기·대화를 새 탭으로 열 때 거치는 대기 페이지.
@@ -13,6 +13,7 @@
      브라우저가 팝업으로 막을 수 있어서다. 여기서 서비스를 켜고, 실제로 응답할
      때까지 기다린 뒤 스스로 그 주소로 이동한다. */
   html, body { height: 100%; margin: 0; background: #fafafa; }
+  body { font-family: var(--pb-font); color: var(--pb-text); }
   .wrap { min-height: calc(100dvh - 54px); display: flex; align-items: center; justify-content: center; padding: 16px; }
   .card { background: #fff; border: 1px solid #e3e3e3; border-radius: 14px; box-shadow: var(--pb-shadow);
           width: min(440px, 100%); padding: 26px 24px 20px; animation: pb-pop .18s ease-out; }
