@@ -540,6 +540,11 @@ RT-DETR 은 쓰지 않는다. 320 에서 정확도가 크게 떨어졌다(coco12
 **v2 가 기본이다(260924 부터).** 예전 화면(v1, `index.html`)은 주소 끝 `?ui=v1` 로 가고 `?ui=v2` 로 돌아온다.
 v1 에는 [새 화면으로](`#new_ui_bt`) 버튼, v2 에는 [더보기] → [예전 화면으로] 가 있다.
 v1 은 되돌아갈 길로만 남겨 둔 것이다. 실기기 확인 후 지운다(이 절 끝 '정리할 것').
+
+**PiBrain(openpibo-os.pibrain)도 같은 화면·키트·분류기를 쓴다(260924).** 원본은 이 리포다.
+`design/`·`ide/static/v2/`·`index_v2.html`·`classifier/`·`openpibo/vision_classify.py`·`modules/teachlab/` 을
+고치면 PiBrain 에도 옮길 것(키트는 `design/sync.sh ~/openpibo-os.pibrain`). PiBrain 에서 다른 점은
+그쪽 CLAUDE.md '화면 v2' · '분류기' 표에 있다(도구 50040, 배터리 칸 없음, 언어 키 `classifier_language` 등).
 시안 A·B·C(Scratch식·MakeCode식·Arduino식) 중 **B(MakeCode식)** 로 정했다(260924).
 
 - 고른 값은 쿠키 `pibo_ui` 에 남는다(`design/pibo-ui.js`). **`v1` 일 때만 쿠키를 심고**, `?ui=v2` 는 쿠키를 지운다.
