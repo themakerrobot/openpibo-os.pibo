@@ -2,7 +2,6 @@ from fastapi_socketio import SocketManager
 from fastapi import FastAPI,Request,UploadFile,File,Body
 from fastapi.responses import HTMLResponse,FileResponse,JSONResponse
 from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
@@ -32,7 +31,6 @@ try:
   app.mount("/static", StaticFiles(directory="static"), name="static")
   app.mount("/webfonts", StaticFiles(directory="webfonts"), name="webfonts")
   app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
-  templates = Jinja2Templates(directory="templates")
   socketio = SocketManager(app=app, cors_allowed_origins=[], mount_location="/socket.io", socketio_path="")
 except Exception as ex:
   logging.error(f'Server Error:{ex}')
@@ -41,7 +39,9 @@ except Exception as ex:
 @app.get('/', response_class=HTMLResponse)
 async def f(request:Request):
   await emit('onoff', False if pibo is None else True)
-  return templates.TemplateResponse("index.html", {"request": request})
+  # 템플릿은 Jinja 문법을 안 쓴다. 파일을 그대로 보낸다(starlette 1.0 에서 옛 TemplateResponse 호출이 500)
+  return FileResponse(os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates", "index.html"), media_type="text/html",
+                      headers={"Cache-Control": "no-cache"})
 
 @app.post('/import_motion')
 async def import_motion(data:UploadFile = File(...)):
