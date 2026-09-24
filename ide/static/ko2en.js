@@ -34,6 +34,7 @@ const translations = {
   v2_no_file:       { ko: "열린 파일 없음", en: "No file open" },
   v2_prompt_ph:     { ko: "프로그램에 입력 보내기", en: "Send input to the program" },
   v2_old_design:    { ko: "예전 화면으로", en: "Classic layout" },
+  v1_new_design:    { ko: "새 화면으로", en: "New layout" },
   v2_add:           { ko: "추가",     en: "New" },
   v2_brand:         { ko: "메이커",   en: "Maker" },
   v2_panel:         { ko: "패널 접기/펴기", en: "Toggle panel" },

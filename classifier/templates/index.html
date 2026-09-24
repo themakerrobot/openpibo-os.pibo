@@ -17,8 +17,8 @@
 </head>
 
 <body class="pb pb-shell pb-refresh" data-tab="learn">
-  <script>/* v2 시안·화면 밝기를 첫 페인트 전에 (규칙은 pibo-ui.js 와 같다) */
-  (function () { try { var c = document.cookie, u = /(?:^|;\s*)pibo_ui=v2/.test(c), m = c.match(/(?:^|;\s*)pibo_theme=(light|soft|dark)/);
+  <script>/* v2(기본)·화면 밝기를 첫 페인트 전에. pibo_ui=v1 이면 예전 화면 (규칙은 pibo-ui.js 와 같다) */
+  (function () { try { var c = document.cookie, u = !/(?:^|;\s*)pibo_ui=v1/.test(c), m = c.match(/(?:^|;\s*)pibo_theme=(light|soft|dark)/);
     if (/[?&]ui=v2/.test(location.search)) u = true; if (/[?&]ui=v1/.test(location.search)) u = false;
     if (u) { document.body.classList.add('pb-v2');
       document.documentElement.setAttribute('data-theme', m ? m[1] : (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'soft'));
@@ -159,7 +159,7 @@
     </div>
   </div>
 
-  <script src="../static/pibo-ui.js?ver=260924v5"></script>
+  <script src="../static/pibo-ui.js?ver=260924v6"></script>
   <script type="module" src="../static/app.js?ver=260924v1"></script>
 </body>
 </html>

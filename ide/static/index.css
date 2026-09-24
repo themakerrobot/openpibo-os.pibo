@@ -1149,3 +1149,7 @@ footer.pb-statusbar { justify-content: space-between; }
    꽉 차게 박는다. (가운데 <form> 은 position 이 없어 기준이 #codeDiv 가 된다) */
 .pb-pane #codeDiv { position: relative; }
 .pb-pane #codeDiv .CodeMirror { position: absolute; top: 0; left: 0; bottom: 0; width: 100%; height: auto; }
+
+/* [새 화면으로](260924, v2 가 기본이 된 뒤 예전 화면에서 돌아가는 길). 라벨이 붙으면
+   1024~1100px 영문에서 로고가 밀려나므로 넓을 때만 라벨을 보인다 */
+@media (max-width: 1179px) { #new_ui_bt .pb-iconbtn__label { display: none; } }

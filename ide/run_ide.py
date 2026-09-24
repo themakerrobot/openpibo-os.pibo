@@ -133,9 +133,10 @@ async def get_directory(folderName: str):
 
 @app.get('/', response_class=HTMLResponse)
 async def read_root(request: Request):
-  # 디자인 시안: ?ui=v2 / ?ui=v1 이 먼저, 없으면 쿠키 pibo_ui (pibo-ui.js 가 심는다)
+  # 기본은 v2(index_v2.html, 260924~). 예전 화면(index.html)은 ?ui=v1 또는 쿠키 pibo_ui=v1 일 때만
+  # 쿼리가 먼저, 없으면 쿠키 (pibo-ui.js 가 심는다)
   ui = request.query_params.get('ui') or request.cookies.get('pibo_ui')
-  page = "index_v2.html" if ui == 'v2' else "index.html"
+  page = "index.html" if ui == 'v1' else "index_v2.html"
   return templates.TemplateResponse(page, {"request": request})
 
 @app.get("/download")

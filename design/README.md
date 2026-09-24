@@ -91,12 +91,13 @@ PiBrain 까지 더하면 사본이 여섯 벌이 된다. 그래서 한 파일로
   키트 입력(`.pb-field`), 터미널(`.result` `.terminal`)
 - 되돌리려면 body 에서 `pb-refresh` 만 뺀다. PiBrain 은 켜기 전까지 영향이 없다
 
-## 시안 v2 (`?ui=v2`)
+## 화면 v2 (기본, 260924~)
 
-색·배치를 새로 잡은 안. 자세한 건 루트 `CLAUDE.md` 의 '디자인 시안 v2'.
+색·배치를 새로 잡은 시안 B. **기본 화면이다** — 예전 화면은 `?ui=v1`(쿠키 `pibo_ui=v1`).
+자세한 건 루트 `CLAUDE.md` 의 '화면 v2'.
 
-- 도구·분류기: `body.pb-v2` (이 파일 맨 아래). 헤더 44px · 노랑은 브랜드 마크와 주 동작만 ·
-  청록은 선택·포커스 · 앱 버튼은 보조 / 옅은 청록 / 옅은 빨강 · 제목은 형광펜 대신 굵은 글자
+- 도구·분류기: `body.pb-v2` (`pibo-ui.css` 맨 아래). 상단바 노랑 · 주 동작 먹색 ·
+  포커스·스위치 인디고 · 지울 것 빨강
 - 화면 밝기 `html[data-theme]` = light / soft(기본) / dark. `PiboUI.setTheme()` · 쿠키 `pibo_theme`.
   도구·분류기 헤더에는 pibo-ui.js 가 밝기 버튼을 끼운다(누를 때마다 순환)
 - IDE: 별도 템플릿(`ide/templates/index_v2.html` + `ide/static/v2/`). 이 키트에서는 셸·모달·알림만 쓴다
