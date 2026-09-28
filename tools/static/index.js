@@ -524,41 +524,46 @@ const getMotions = (socket) => {
     /* ── 표에 추가(260928) ─────────────────────────────────────────────
        '모션 하나 만드는 데 오래 걸린다'는 의견으로 시간을 매번 적지 않게 했다: 표가 바뀔 때마다 시간 칸이
        '마지막 줄 + 0.5초' 로 채워진다. 나머지는 원래 도구 규칙 그대로(줄을 누르면 그 자세·시간을 불러오고,
-       같은 시간으로 [추가하기] 하면 그 줄을 바꾼다) — 상자 아래 한 줄로 적어 둔다.
-       ※ 간격 고르기·[끝에 붙이기]·[이 장면 고치기] 로 바뀌는 버튼·[팔·손 좌우 같이] 는 넣었다가
-         '더 헷갈린다'는 의견으로 뺐다(260928) */
+       같은 시간이면 그 줄을 바꾼다 → 버튼 이름 [추가·수정]).
+       자리: 시간·[추가·수정] 은 조작 패널 맨 아래(각도를 맞추고 바로 아래에서 누른다),
+       [이 줄 지우기] 는 표 쪽 버튼 줄(표를 다루는 버튼이라 [표 비우기] 옆).
+       ※ 따로 상자(왼쪽 아랫줄 140px)로 두었더니 내용은 한 줄인데 상자만 커서 뺐다(260928).
+         간격 고르기·[끝에 붙이기]·이름이 바뀌는 버튼·[팔·손 좌우 같이] 도 '더 헷갈린다'는 의견으로 뺐다 */
     const STEP_MS = 500;
-    /* 배치(v2, 901px 이상): 두 카드를 같은 폭·같은 세 줄로 맞춘다(pibo-ui.css 의 '줄 맞춤').
-         윗줄    [원래자세 · 키 안내]   ↔  [반복 · 실행 · 정지 · 표 비우기]
-         가운데  사진 + 조작 패널       ↔  표
-         아랫줄  표에 추가              ↔  저장 칸(같은 높이 상자) */
-    const scene = document.createElement("div"); scene.className = "mscene";
-    scene.innerHTML = `<div class="mscene__title" data-key="scene_title"></div>
-      <div class="mscene__row"><span class="mscene__lbl" data-key="time"></span><span id="ms_time_slot"></span>
-        <span id="ms_add_slot"></span>
-        <button type="button" id="ms_delete" hidden><i class="fa-solid fa-trash-can"></i><span data-key="scene_delete"></span></button></div>
-      <div class="mscene__help" data-key="scene_help"></div>`;
+    /* 배치(v2, 901px 이상, pibo-ui.css 의 '줄 맞춤'): 두 카드 같은 폭·같은 높이.
+         왼쪽   [원래자세 · 키 안내] / 사진 + 조작 패널(아래에 시간·추가·수정)
+         오른쪽 [반복 · 실행 · 정지 · (이 줄 지우기) · 표 비우기] / 표 / 저장 칸 */
+    const addBox = document.createElement("div"); addBox.className = "mpanel__add";
+    addBox.innerHTML = `<div class="mpanel__time"><span data-key="time"></span><span id="ms_time_slot"></span></div>
+      <span id="ms_add_slot"></span>
+      <div class="mpanel__hint" data-key="scene_help"></div>`;
+    panel.appendChild(addBox);
+    const delBt = document.createElement("button");
+    delBt.type = "button"; delBt.id = "ms_delete"; delBt.hidden = true;
+    delBt.innerHTML = `<i class="fa-solid fa-delete-left"></i><span data-key="scene_delete"></span>`;   // [표 비우기](휴지통)와 다른 아이콘
+    const clearBt = document.getElementById("init_frame_bt");
+    clearBt.parentNode.insertBefore(delBt, clearBt);
     const mhead = document.createElement("div"); mhead.className = "mhead";
     mhead.innerHTML = `<span class="mhead__keys" data-key="scene_keys"></span>`;
     mhead.prepend(document.getElementById("init_bt"));
     sec.insertBefore(mhead, body);
-    body.after(scene);
     const topRow = sec.querySelector(":scope > div:first-child");   // 예전 윗줄(시간·추가하기). 요소만 옮기고 숨긴다
     const timeIn = document.getElementById("m_time_val");
-    scene.querySelector("#ms_time_slot").append(timeIn, topRow.querySelector(".motion-unit"));
+    addBox.querySelector("#ms_time_slot").append(timeIn, topRow.querySelector(".motion-unit"));
     const addBt = document.getElementById("add_frame_bt");
-    scene.querySelector("#ms_add_slot").replaceWith(addBt);
+    addBox.querySelector("#ms_add_slot").replaceWith(addBt);
     topRow.style.display = "none";
 
     // 사진 크기: 가운데 줄 높이·폭에 맞춘다(그림 비율 840×1145). 점은 % 자리라 따라온다
     const fitStage = () => {
       if (window.innerWidth <= 900 || !body.clientHeight) { stage.style.width = ""; return; }
-      const w = Math.min(body.clientHeight / 1.363, body.clientWidth - side.offsetWidth - 14, 520);
+      const col = getComputedStyle(body).flexDirection === "column";   // 1199px 이하: 패널이 사진 아래
+      const w = col ? Math.min((body.clientHeight - side.offsetHeight - 12) / 1.363, body.clientWidth - 24, 520)   // 점이 그림 밖으로 조금 나간다
+                    : Math.min(body.clientHeight / 1.363, body.clientWidth - side.offsetWidth - 14, 520);
       stage.style.width = `${Math.max(180, Math.floor(w))}px`;
     };
     if (window.ResizeObserver) new ResizeObserver(fitStage).observe(body);
     window.addEventListener("resize", fitStage);
-    const delBt = scene.querySelector("#ms_delete");
     addBt.querySelector("span").dataset.key = "add_or_edit";   // 같은 시간이면 그 줄을 바꾸므로 [추가·수정] (v1 은 [추가하기] 그대로)
     document.querySelector("#article_motion .motion-empty").dataset.key = "frames_empty_v2";
     const tr8 = () => document.querySelectorAll("#article_motion [data-key]").forEach((e) => {
@@ -572,6 +577,8 @@ const getMotions = (socket) => {
     const updateScene = () => {
       const ms = timeMs(), picked = frames.includes(ms);
       delBt.title = t("scene_delete");                // 좁은 폭에선 아이콘만 보인다
+      clearBt.title = t("clear_frames");
+      addBt.title = t("add_or_edit_tip");
       delBt.hidden = !picked;
       document.querySelectorAll("#motor_table > tbody > tr").forEach((tr, i) => tr.toggleAttribute("data-sel", picked && frames[i] === ms));
     };

@@ -752,13 +752,10 @@ const translations = {
   tts_error:    { ko: (e) => `말하지 못했어요: ${e}`, en: (e) => `Could not speak: ${e}` },
   samples_toggle: { ko: (n) => `예제 동작 ${n}개`, en: (n) => `Sample motions (${n})` },
   // [동작] 표에 추가(260928)
-  scene_title:  { ko: "지금 자세를 표에 추가", en: "Add this pose to the table" },
   scene_delete: { ko: "이 줄 지우기", en: "Delete row" },
   add_or_edit:  { ko: "추가·수정", en: "Add / Update" },
-  scene_help:   {
-    ko: "누를 때마다 시간이 0.5초씩 늘어나요. 표의 줄을 누르면 그 자세를 불러오고, 같은 시간이면 그 줄을 수정해요.",
-    en: "Each press moves the time on by 0.5 s. Click a row to load its pose; the same time updates that row."
-  },
+  scene_help:   { ko: "누를 때마다 시간 +0.5초", en: "Time +0.5 s each press" },
+  add_or_edit_tip: { ko: "지금 자세를 이 시간에 넣어요. 표에 같은 시간이 있으면 그 줄을 수정해요.", en: "Puts this pose at this time. If the table has the same time, that row is updated." },
   scene_keys:   { ko: "← → 모터 · ↑ ↓ 1° (Shift 5°) · Enter 추가·수정", en: "← → motor · ↑ ↓ 1° (Shift 5°) · Enter add/update" },
   frames_empty_v2: {
     ko: "표가 비어 있어요. 왼쪽에서 자세를 잡고 [추가·수정] 을 누르세요.",
