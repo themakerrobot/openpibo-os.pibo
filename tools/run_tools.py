@@ -5,7 +5,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
-import time,os,json,shutil,logging
+import time,os,json,shutil,logging,asyncio
 from urllib import parse
 import argparse
 from threading import Timer
@@ -147,7 +147,16 @@ async def mic_replay(sid, d=None):
 async def tts(sid, d=None):
   if pibo is None:
     return
-  pibo.tts(d)
+  # 온디바이스 합성이 1~2초 걸린다. 스레드로 돌려야 그동안 다른 화면(카메라 스트림 등)이 안 멈춘다
+  err = await asyncio.to_thread(pibo.tts, d)
+  await emit('tts_status', {'ok': err is None, 'error': err or ''})
+
+@app.sio.on('tts_stop')
+async def tts_stop(sid, d=None):
+  if pibo is None:
+    return
+  await asyncio.to_thread(pibo.tts_stop)
+  await emit('tts_status', {'ok': True, 'stopped': True, 'error': ''})
 
 # speech
 # motion

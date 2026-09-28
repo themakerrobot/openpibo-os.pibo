@@ -427,8 +427,8 @@ const translations = {
     en: "Voice type"
   },
   espeak: {
-    ko: "기본음성",
-    en: "Espeak"
+    ko: "기계음 (espeak)",
+    en: "Robot (espeak)"
   },
   man: {
     ko: "남성",
@@ -739,6 +739,18 @@ const translations = {
   // [카메라]·[음성] 정리(260928)
   v_camera:       { ko: "카메라",          en: "Camera" },
   camera_waiting: { ko: "카메라 화면을 기다리는 중", en: "Waiting for the camera" },
+  // [음성] 목소리 10가지 — PiBrain 도구와 같다(SpeechOnDevice m1~m5 / f1~f5)
+  voice_m1: { ko: "남성 1", en: "Male 1" },  voice_m2: { ko: "남성 2", en: "Male 2" },
+  voice_m3: { ko: "남성 3", en: "Male 3" },  voice_m4: { ko: "남성 4", en: "Male 4" },
+  voice_m5: { ko: "남성 5", en: "Male 5" },
+  voice_f1: { ko: "여성 1", en: "Female 1" }, voice_f2: { ko: "여성 2", en: "Female 2" },
+  voice_f3: { ko: "여성 3", en: "Female 3" }, voice_f4: { ko: "여성 4", en: "Female 4" },
+  voice_f5: { ko: "여성 5", en: "Female 5" },
+  tts_speaking: { ko: "말하는 중…", en: "Speaking…" },
+  tts_done:     { ko: "다 말했어요", en: "Done" },
+  tts_stopped:  { ko: "멈췄어요",   en: "Stopped" },
+  tts_error:    { ko: (e) => `말하지 못했어요: ${e}`, en: (e) => `Could not speak: ${e}` },
+  samples_toggle: { ko: (n) => `예제 동작 ${n}개`, en: (n) => `Sample motions (${n})` },
 };
 
 // 키 → 현재 언어 문자열. 모르는 키(일반 문자열)는 그대로 반환.

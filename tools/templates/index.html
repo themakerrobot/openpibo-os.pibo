@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="../static/all.min.css?ver=240110v1" type="text/css" />
     <link rel="stylesheet" href="../static/jquery.jsonview.min.css" />
     <link rel="stylesheet" href="../static/index.css?ver=260923v3" />
-  <link rel="stylesheet" href="../static/pibo-ui.css?ver=260928v4" />
+  <link rel="stylesheet" href="../static/pibo-ui.css?ver=260928v5" />
     <link rel="stylesheet" href="../static/simulator.css?ver=240110v1" />
     <link rel="shortcut icon" href="../static/icon.png" type="image/x-icon" />
 
@@ -422,6 +422,7 @@
                     disabled
                   ></textarea>
                   <div class="motion-samples">
+                    <button type="button" class="motion-samples-toggle" id="motion_samples_toggle" hidden><i class="fa-solid fa-chevron-right"></i><span id="motion_samples_toggle_txt"></span></button>
                     <span class="motion-saved-title" data-key="example"></span><span class="pb-sep">:</span>
                     <b><span id="motion_samples"></span></b>
                   </div>
@@ -527,14 +528,23 @@
                 <span class="label" data-key="volume"></span><span class="pb-sep">:</span>
                 <input type="number" id="volume" min="0" max="100" value="80" pattern="\d*" /><i class="fa-solid fa-percent"></i>
               </div>
-              <div class="speech-input-group">
+              <div class="speech-input-group s-voice-row">
                 <span class="label" data-key="voice_type"></span><span class="pb-sep">:</span>
                 <select name="s_voice_type">
+                  <option value="m1" data-key="voice_m1"></option>
+                  <option value="m2" data-key="voice_m2"></option>
+                  <option value="m3" data-key="voice_m3"></option>
+                  <option value="m4" data-key="voice_m4"></option>
+                  <option value="m5" data-key="voice_m5"></option>
+                  <option value="f1" data-key="voice_f1"></option>
+                  <option value="f2" data-key="voice_f2"></option>
+                  <option value="f3" data-key="voice_f3"></option>
+                  <option value="f4" data-key="voice_f4"></option>
+                  <option value="f5" data-key="voice_f5"></option>
                   <option value="espeak" data-key="espeak"></option>
-                  <option value="m1" data-key="man"></option>
-                  <option value="f1" data-key="woman"></option>
                 </select>
               </div>
+              <div class="s-voice-tiles" id="s_voice_tiles" hidden></div>
               <div class="speech-input-group">
                 <span class="label" data-key="text"></span><span class="pb-sep">:</span>
                 <input type="text" id="s_tts_val" maxlength="30" />
@@ -542,7 +552,12 @@
                   <i class="fa-solid fa-play"></i>
                   <span data-key="execute"></span>
                 </button>
+                <button id="s_tts_stop_bt">
+                  <i class="fa-solid fa-stop"></i>
+                  <span data-key="stop"></span>
+                </button>
               </div>
+              <div class="s-status" id="s_tts_status"></div>
             </section>
 
             <section class="s-rec">
@@ -576,7 +591,7 @@
       </div>
     </main>
   </body>
-  <script src="../static/ko2en.js?ver=260928v2"></script>
+  <script src="../static/ko2en.js?ver=260928v3"></script>
   <script src="../static/pibo-ui.js?ver=260924v6"></script>
-  <script src="../static/index.js?ver=260928v2"></script>
+  <script src="../static/index.js?ver=260928v3"></script>
 </html>

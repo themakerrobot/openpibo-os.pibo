@@ -657,10 +657,16 @@ OS 가 어두운 모드면 `dark` 로 시작한다.
     화면 높이보다 크면 `index.js` 의 `fitRobot()` 이 `zoom` 으로 줄인다(모터 칸이 px 로 자리 잡혀 있어 통째로 줄여야
     모양이 유지된다. 1366×768 에서 0.87). 900px 이하(태블릿 세로)만 위아래로 쌓는다.
     한때 1200px 아래에서 표를 로봇 아래로 내렸는데 표를 보면 로봇이 화면 밖으로 나가서 되돌렸다
+  - **오른쪽 칸도 화면 높이에 맞추고 표만 스크롤한다**(`--motion-h`, `fitRobot` 이 잰다). [반복·실행·정지] 줄과
+    [모션이름·등록] 줄은 늘 보인다. 예제 알약은 [예제 동작 N개 ▸] 로 접어 둔다(펼친 상태는 localStorage)
 - **도구 [카메라]·[음성] (260928)**: 카메라는 4:3 화면 칸 + '기다리는 중' 안내(`.v-stage[data-has]`), 방향 슬라이더 정리.
   비전 기능은 select 대신 **타일**(`#v_tiles`, `index.js` 가 select 의 option 으로 만든다 — 누르면 select 값을 바꿔
   원래 `detect` 흐름 그대로). 마커 길이는 마커일 때만(`#article_vision[data-func]`). 음성은 이름표 폭을 맞춘 폼,
   꽉 찬 파랑은 [실행하기]·[녹음하기] 하나씩. v1 은 select·기존 모양 그대로
+  - **목소리 10가지 + espeak** (PiBrain 도구와 같은 `SpeechOnDevice` m1~m5 / f1~f5). [정지하기](`tts_stop` → `Audio.stop`),
+    결과 한 줄(`tts_status`). 합성은 `asyncio.to_thread` 로 — 1~2초 동안 카메라 스트림 등이 멈추지 않게.
+    espeak 는 인자 목록으로 부른다(전엔 `os.system(f'espeak "{text}"')` 라 글자가 셸 명령으로 실행될 수 있었다, root).
+    **확인 필요:** 파이보 기기에 `voice_styles/M2~M5·F2~F5.json` 이 다 있는지(없으면 그 목소리만 오류 문구가 뜬다)
   - 키트의 일반 버튼 규칙(`body.pb-v2 button:not(...)…`)이 `:not()` 이 많아 우선순위가 높다. 도구 안의 버튼 모양을 바꿀 땐
     id 를 앞에 붙이고 배경은 `!important` 로 (`#v_tiles .v-tile`)
 

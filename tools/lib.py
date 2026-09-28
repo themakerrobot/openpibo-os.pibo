@@ -1,3 +1,4 @@
+import subprocess
 import openpibo_models
 from openpibo.vision_camera import Camera
 from openpibo.vision_face import Face
@@ -197,33 +198,40 @@ class Pibo:
     filename = "/home/pi/myaudio/mic.wav"
     self.aud.record(filename=filename, timeout=record_time)
 
+  # 온디바이스 TTS(SpeechOnDevice) 목소리. PiBrain 도구와 같은 10가지(m1~m5 남성, f1~f5 여성)
+  OD_VOICES = ("m1", "m2", "m3", "m4", "m5", "f1", "f2", "f3", "f4", "f5")
+
   def tts(self, d):
+    """말하기. 성공하면 None, 실패하면 오류 문구를 돌려준다(도구 화면에 그대로 보인다)"""
     print("TTS", d)
     voice_type = d['voice_type']
     volume = d['volume']
+    filename = "/home/pi/myaudio/tts.wav"
 
     try:
       if voice_type == "espeak":
-        filename = "/home/pi/myaudio/tts.wav"
-        os.system(f'espeak "{d["text"]}" -w {filename}')
-      elif voice_type in ("m1", "f1"):
-        # 온디바이스 TTS(SpeechOnDevice). ONNX 모델 로딩이 무거워 처음 호출될 때만 올린다.
+        # 인자 목록으로 넘긴다. 전엔 os.system(f'espeak "{text}"') 이라 글자에 " 나 ; 가 들어가면
+        # 셸 명령으로 실행됐다(서비스가 root 라 그대로 root 권한)
+        subprocess.run(['espeak', str(d['text']), '-w', filename], check=True, timeout=30)
+      elif voice_type in self.OD_VOICES:
+        # ONNX 모델 로딩이 무거워 처음 호출될 때만 올린다.
         # lang='na' 는 자동 판별이라 한국어·영어 양쪽 배포판에서 그대로 쓸 수 있다.
-        filename = "/home/pi/myaudio/tts.wav"
         if self.speech_od is None:
           from openpibo.speech import SpeechOnDevice
           self.speech_od = SpeechOnDevice()
         self.speech_od.tts(text=d['text'], filename=filename, voice=voice_type, lang='na')
       else:
-        # 드롭다운이 espeak / m1 / f1 뿐이라 여기 올 일은 없다.
-        # 서버 TTS(oe-sapi)는 제거됐다.
+        # 서버 TTS(oe-sapi)는 제거됐다
         logging.error(f'[tts] unsupported voice_type: {voice_type}')
-        return
+        return f'unsupported voice: {voice_type}'
       self.aud.play(filename=filename, volume=volume)
     except Exception as ex:
       logging.error(f'[tts] Error: {ex}')
-      pass
-    return
+      return str(ex)
+    return None
+
+  def tts_stop(self):
+    self.aud.stop()
 
   ## motion
   def make_raw(self):

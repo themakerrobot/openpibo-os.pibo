@@ -661,6 +661,20 @@ const getMotions = (socket) => {
     return `<a id="motion_${e}_bt" style="color:#df7e3d;cursor:pointer">${e}</a>`
   }).join(', '));
 
+  // v2: 예제 알약은 접어 둔다(펼친 상태는 기억). 펼치면 표가 그만큼 줄어든다 — 오른쪽 칸은 화면 높이에 맞춰져 있다
+  const samplesBox = document.querySelector(".motion-samples");
+  const samplesToggle = document.getElementById("motion_samples_toggle");
+  const setSamplesOpen = (open) => {
+    if (open) samplesBox.setAttribute("data-open", ""); else samplesBox.removeAttribute("data-open");
+    try { localStorage.setItem("motion_samples_open", open ? "1" : "0"); } catch (e) {}
+  };
+  window.updateSamplesToggle = () => { $("#motion_samples_toggle_txt").text(t("samples_toggle", sample_motions.length)); };
+  let samplesOpen = false;
+  try { samplesOpen = localStorage.getItem("motion_samples_open") === "1"; } catch (e) {}
+  setSamplesOpen(samplesOpen);
+  window.updateSamplesToggle();
+  samplesToggle.addEventListener("click", () => setSamplesOpen(!samplesBox.hasAttribute("data-open")));
+
   for (idx in sample_motions) {
     $(`#motion_${sample_motions[idx]}_bt`).on("click", function () {
       let i = sample_motions.indexOf($(this).text());
@@ -690,6 +704,31 @@ const getMotions = (socket) => {
 
 const getSpeech = (socket) => {
   const max_tts_length = 30;
+
+  // 목소리: v2 화면은 select 대신 타일(select 값은 그대로 맞춘다 — v1 은 select). PiBrain 도구와 같은 10가지 + espeak
+  const voiceSel = document.querySelector("select[name=s_voice_type]");
+  const voiceTiles = document.getElementById("s_voice_tiles");
+  voiceSel.parentNode.appendChild(voiceTiles);   // [음성종류] 이름표 옆으로(select 자리)
+  const showVoice = () => voiceTiles.querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", b.dataset.v === voiceSel.value ? "true" : "false"));
+  Array.from(voiceSel.options).forEach((o) => {
+    const b = document.createElement("button");
+    b.type = "button"; b.className = "s-voice"; b.dataset.v = o.value;
+    const icon = o.value === "espeak" ? "robot" : (o.value[0] === "f" ? "person-dress" : "person");
+    b.innerHTML = `<i class="fa-solid fa-${icon}"></i><span data-key="${o.dataset.key}"></span>`;
+    b.addEventListener("click", () => { voiceSel.value = o.value; showVoice(); });
+    voiceTiles.appendChild(b);
+  });
+  voiceSel.addEventListener("change", showVoice);
+  showVoice();
+
+  const ttsStatus = document.getElementById("s_tts_status");
+  const setTtsStatus = (text, kind) => { ttsStatus.textContent = text; ttsStatus.dataset.kind = kind || ""; };
+  socket.on("tts_status", (d) => {
+    if (d && d.stopped) setTtsStatus(t("tts_stopped"));
+    else if (d && d.ok) setTtsStatus(t("tts_done"), "ok");
+    else setTtsStatus(t("tts_error", (d && d.error) || ""), "err");
+  });
+  $("#s_tts_stop_bt").on("click", () => socket.emit("tts_stop"));
   $("#s_tts_bt").on("click", async function () {
     if ($("input[name=s_voice_en]:checked").val() == "off") {
       await alert_popup(translations["voice_enable"][lang]);
@@ -705,6 +744,7 @@ const getSpeech = (socket) => {
       await alert_popup(translations["text_size_limit"][lang](max_tts_length));
       return;
     }
+    setTtsStatus(t("tts_speaking"));
     socket.emit("tts", {
       text: string,
       voice_type: $("select[name=s_voice_type]").val(),
@@ -727,6 +767,7 @@ const getSpeech = (socket) => {
         await alert_popup(translations["text_size_limit"][lang](max_tts_length));
         return;
       }
+      setTtsStatus(t("tts_speaking"));
       socket.emit("tts", {
         text: string,
         voice_type: $("select[name=s_voice_type]").val(),
@@ -822,13 +863,18 @@ const fitRobot = () => {
   const pane = document.querySelector("main > div.content");
   if (!sec || !pane) return;
   sec.style.zoom = "";
-  if (!document.body.classList.contains("pb-v2") || window.innerWidth <= 900 || !sec.offsetHeight) return;
+  if (!document.body.classList.contains("pb-v2") || !sec.offsetHeight) return;
   const cs = getComputedStyle(pane);
   const avail = pane.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom) - 8;
+  // 오른쪽 칸(표·저장)도 이 높이에 맞춘다 — 표만 스크롤되고 위아래 버튼 줄은 늘 보이게(pibo-ui.css 의 --motion-h)
+  document.getElementById("article_motion").style.setProperty("--motion-h", `${Math.floor(avail)}px`);
+  if (window.innerWidth <= 900) return;   // 태블릿 세로는 위아래로 쌓고 페이지가 스크롤된다
   const z = Math.min(1, avail / sec.offsetHeight);
   if (z < 1) sec.style.zoom = Math.max(0.6, z).toFixed(3);
 };
 window.addEventListener("resize", fitRobot);
+window.addEventListener("load", fitRobot);
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitRobot);   // 글꼴이 바뀌면 높이도 바뀐다
 
 const handleMenu = (name) => {
   if (name === "vision") {
@@ -899,6 +945,7 @@ language.addEventListener("change", () => {
   lang = language.value;
   setLanguage(lang);
   setRobotState(onoffVal.dataset.state === 'on');
+  if (window.updateSamplesToggle) window.updateSamplesToggle();
   localStorage.setItem("language", lang);
 });
 
