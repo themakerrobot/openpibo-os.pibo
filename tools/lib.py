@@ -253,7 +253,7 @@ class Pibo:
     self.mot.set_motors(pos_lst, movetime)
 
   def add_frame(self, seq):
-    seq = int(seq)
+    seq = int(round(float(seq)))   # 초×1000 이 16100.000000000002 처럼 올 수 있다(int 만 하면 32.3초가 32299 가 된다)
     _check = False
     for idx, pos in enumerate(self.motion_p):
       if pos['seq'] == seq:
@@ -267,6 +267,7 @@ class Pibo:
     return self.motion_p
 
   def delete_frame(self, seq):
+    seq = int(round(float(seq)))
     for idx, pos in enumerate(self.motion_p):
       if pos['seq'] == seq:
         del self.motion_p[idx]

@@ -751,6 +751,21 @@ const translations = {
   tts_stopped:  { ko: "멈췄어요",   en: "Stopped" },
   tts_error:    { ko: (e) => `말하지 못했어요: ${e}`, en: (e) => `Could not speak: ${e}` },
   samples_toggle: { ko: (n) => `예제 동작 ${n}개`, en: (n) => `Sample motions (${n})` },
+  // [동작] 장면 만들기(260928)
+  scene_title:  { ko: "장면 만들기",   en: "Make a scene" },
+  scene_step:   { ko: "간격",          en: "Step" },
+  scene_add:    { ko: "장면 추가",     en: "Add scene" },
+  scene_edit:   { ko: "이 장면 고치기", en: "Update scene" },
+  scene_append: { ko: "끝에 붙이기",   en: "Copy to end" },
+  scene_delete: { ko: "지우기",        en: "Delete" },
+  scene_mirror: { ko: "팔·손 좌우 같이", en: "Mirror arms" },
+  scene_keys:   { ko: "← → 모터 · ↑ ↓ 1° (Shift 5°) · Enter 추가", en: "← → motor · ↑ ↓ 1° (Shift 5°) · Enter add" },
+  frames_empty_v2: {
+    ko: "아직 장면이 없어요. 왼쪽에서 자세를 잡고 [장면 추가] 를 누르세요. 시간은 간격만큼 저절로 늘어나요.",
+    en: "No scenes yet. Pose the robot on the left and press [Add scene]. The time moves on by the step."
+  },
+  confirm_frame_delete: { ko: (s) => `${s} 초 장면을 지울까요?`, en: (s) => `Delete the scene at ${s} s?` },
+  saved_empty:  { ko: "아직 저장한 동작이 없어요", en: "No saved motions yet" },
 };
 
 // 키 → 현재 언어 문자열. 모르는 키(일반 문자열)는 그대로 반환.

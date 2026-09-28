@@ -466,16 +466,22 @@ const getMotions = (socket) => {
       <input type="range" id="mp_range" />
       <div class="mpanel__steps"><button type="button" data-d="-5">−5</button><button type="button" data-d="-1">−1</button><button type="button" data-d="1">+1</button><button type="button" data-d="5">+5</button></div>
       <div class="mpanel__lim" id="mp_lim"></div>`;
-    body.appendChild(panel);
+    const side = document.createElement("div"); side.className = "mside";
+    body.appendChild(side); side.appendChild(panel);
     const mpNum = panel.querySelector("#mp_num"), mpRange = panel.querySelector("#mp_range");
     const lim = (m) => [Number($(`#m${m}_range`).attr("min")), Number($(`#m${m}_range`).attr("max"))];
     const cur = (m) => Number($(`#m${m}_value`).val()) || 0;
-    let sel = 2, dragging = false, sendTimer = 0;
+    let sel = 2, dragging = false, sendTimer = 0, mirrorOn = false;
+    // [팔·손 좌우 같이]: 한쪽을 움직이면 반대쪽을 부호만 바꿔 같이 움직인다. 기본 자세가 -80/80·-25/25 이고
+    // 예제(motion_db)의 박수·환영도 반대 부호라 팔·손은 확실하다. 다리·발은 예제만으로 규칙을 못 정해 뺐다
+    const TWIN = { 2: 8, 8: 2, 3: 9, 9: 3 };
+    const twinOf = (m) => (mirrorOn && m in TWIN ? TWIN[m] : null);
 
     const paint = () => {
       MDOT.forEach(([m]) => {
         dots[m].querySelector(".mdot__v").textContent = $(`#m${m}_value`).val() === "" ? "–" : cur(m);
         dots[m].setAttribute("aria-pressed", m === sel ? "true" : "false");
+        dots[m].toggleAttribute("data-twin", m === twinOf(sel));
       });
       const [lo, hi] = lim(sel);
       panel.querySelector("#mp_name").textContent = t(`motor_m${sel}`);
@@ -485,23 +491,25 @@ const getMotions = (socket) => {
       if (document.activeElement !== mpNum) mpNum.value = cur(sel);
     };
     const select = (m) => { sel = m; paint(); };
-    const setVal = (v) => {                       // 저장소(숨긴 칸)와 화면을 같이 바꾼다
-      $(`#m${sel}_value`).val(v); $(`#m${sel}_range`).val(v);
-      mpRange.value = v; mpNum.value = v;
-      dots[sel].querySelector(".mdot__v").textContent = v;
+    const store = (m, v) => {                     // 저장소(숨긴 칸)와 점을 같이 바꾼다
+      $(`#m${m}_value`).val(v); $(`#m${m}_range`).val(v);
+      dots[m].querySelector(".mdot__v").textContent = v;
+    };
+    const setVal = (v) => {
+      store(sel, v); mpRange.value = v; mpNum.value = v;
+      const w = twinOf(sel);
+      if (w !== null) { const [lo, hi] = lim(w); store(w, Math.max(lo, Math.min(hi, -v))); }
     };
     const send = (now) => {                       // [±] 를 빠르게 눌러도 서보 명령은 모아서 한 번
       clearTimeout(sendTimer);
-      const m = sel;
-      const go = () => socket.emit("set_motor", { idx: m, pos: cur(m) });
+      const ms = [sel, twinOf(sel)].filter((m) => m !== null);
+      const go = () => ms.forEach((m) => socket.emit("set_motor", { idx: m, pos: cur(m) }));
       if (now) go(); else sendTimer = setTimeout(go, 150);
     };
+    const nudge = (d) => { const [lo, hi] = lim(sel); setVal(Math.max(lo, Math.min(hi, cur(sel) + d))); send(false); };
     mpRange.addEventListener("input", () => { dragging = true; setVal(Number(mpRange.value)); });
     mpRange.addEventListener("change", () => { dragging = false; send(true); });
-    panel.querySelectorAll(".mpanel__steps button").forEach((b) => b.addEventListener("click", () => {
-      const [lo, hi] = lim(sel);
-      setVal(Math.max(lo, Math.min(hi, cur(sel) + Number(b.dataset.d)))); send(false);
-    }));
+    panel.querySelectorAll(".mpanel__steps button").forEach((b) => b.addEventListener("click", () => nudge(Number(b.dataset.d))));
     const commitNum = async () => {
       const v = Number(mpNum.value), [lo, hi] = lim(sel);
       if (mpNum.value === "" || isNaN(v) || v < lo || v > hi) {
@@ -519,8 +527,148 @@ const getMotions = (socket) => {
       if (document.getElementById("article_motion").offsetParent === null) return;
       const now = MDOT.map(([m]) => $(`#m${m}_value`).val()).join(",");
       if (now !== last) { last = now; paint(); }
+      markChip();
     }, 300);
-    window.refreshMotorPanel = paint;
+
+    /* ── 장면 만들기(260928) ─────────────────────────────────────────────
+       '모션 하나 만드는 데 오래 걸린다'는 의견으로: 시간을 매번 적지 않게 [장면 추가] 뒤 시간이 간격만큼
+       저절로 늘고, 표 줄을 누르면 그 장면을 [고치기]·[끝에 붙이기](같은 자세 반복)·[지우기] 할 수 있다.
+       서버 쪽은 그대로(add_frame 은 같은 시간이면 덮어쓰고, 아니면 끼워 넣는다) */
+    const scene = document.createElement("div"); scene.className = "mscene";
+    scene.innerHTML = `<div class="mscene__title" data-key="scene_title"></div>
+      <div class="mscene__row"><span class="mscene__lbl" data-key="time"></span><span id="ms_time_slot"></span></div>
+      <div class="mscene__row"><span class="mscene__lbl" data-key="scene_step"></span><select id="ms_step">${
+        [0.3, 0.5, 1, 1.5, 2].map((v) => `<option value="${v}">${v}</option>`).join("")}</select><span class="motion-unit" data-key="sec"></span></div>
+      <div id="ms_add_slot"></div>
+      <div class="mscene__sub"><button type="button" id="ms_append"><i class="fa-solid fa-arrow-down"></i><span data-key="scene_append"></span></button><button type="button" id="ms_delete"><i class="fa-solid fa-trash-can"></i><span data-key="scene_delete"></span></button></div>
+      <label class="mscene__mirror"><input type="checkbox" id="ms_mirror" /><span data-key="scene_mirror"></span></label>
+      <div class="mscene__keys" data-key="scene_keys"></div>`;
+    side.appendChild(scene);
+    const topRow = sec.querySelector(":scope > div:first-child");
+    const timeIn = document.getElementById("m_time_val");
+    scene.querySelector("#ms_time_slot").append(timeIn, topRow.querySelector(".motion-unit"));
+    const addBt = document.getElementById("add_frame_bt");
+    scene.querySelector("#ms_add_slot").replaceWith(addBt);
+    stage.appendChild(document.getElementById("init_bt"));    // [원래자세] 는 사진 왼쪽 위 빈 자리로
+    topRow.style.display = "none";
+    const addIcon = addBt.querySelector("i"), addLbl = addBt.querySelector("span");
+    const stepSel = scene.querySelector("#ms_step"), appendBt = scene.querySelector("#ms_append");
+    const delBt = scene.querySelector("#ms_delete"), mirror = scene.querySelector("#ms_mirror");
+    document.querySelector("#article_motion .motion-empty").dataset.key = "frames_empty_v2";
+    const tr8 = () => document.querySelectorAll("#article_motion [data-key]").forEach((e) => {
+      const v = translations[e.dataset.key] && translations[e.dataset.key][lang];
+      if (typeof v === "string") e.textContent = v;
+    });
+
+    try { stepSel.value = localStorage.getItem("motion_step") || "0.5"; } catch (e) { stepSel.value = "0.5"; }
+    if (!stepSel.value) stepSel.value = "0.5";
+    try { mirrorOn = mirror.checked = localStorage.getItem("motion_mirror") === "1"; } catch (e) {}
+
+    let frames = [];                                   // 표에 있는 장면 시간(ms), 서버가 정렬해서 준다
+    const stepMs = () => Math.round(Number(stepSel.value) * 1000);
+    const timeMs = () => Math.round(Number(timeIn.value) * 1000);
+    const nextTime = () => (frames.length ? frames[frames.length - 1] + stepMs() : 0) / 1000;
+    const updateScene = () => {
+      const ms = timeMs(), editing = frames.includes(ms);
+      addLbl.dataset.key = editing ? "scene_edit" : "scene_add";
+      addLbl.textContent = t(addLbl.dataset.key);
+      addIcon.className = editing ? "fa-solid fa-pen" : "fa-solid fa-plus";
+      scene.toggleAttribute("data-editing", editing);
+      delBt.disabled = !editing; appendBt.disabled = !frames.length;
+      document.querySelectorAll("#motor_table > tbody > tr").forEach((tr, i) => tr.toggleAttribute("data-sel", editing && frames[i] === ms));
+    };
+    // 표가 바뀌면(추가·고치기·지우기·불러오기) 다음 시간 = 마지막 장면 + 간격
+    window.afterMotionTable = (data) => {
+      frames = data.map((f) => Math.round(Number(f.seq)));
+      timeIn.value = +nextTime().toFixed(3);
+      timeIn.classList.remove("is-bumped"); void timeIn.offsetWidth; timeIn.classList.add("is-bumped");
+      updateScene();
+    };
+    timeIn.addEventListener("input", updateScene);
+    timeIn.addEventListener("change", updateScene);
+    document.querySelector("#motor_table > tbody").addEventListener("click", updateScene);   // 줄 클릭(jQuery)이 시간을 먼저 바꾼다
+    stepSel.addEventListener("change", () => {
+      try { localStorage.setItem("motion_step", stepSel.value); } catch (e) {}
+      if (!frames.includes(timeMs())) timeIn.value = +nextTime().toFixed(3);
+      updateScene();
+    });
+    appendBt.addEventListener("click", () => { if (frames.length) socket.emit("add_frame", Math.round(nextTime() * 1000)); });
+    delBt.addEventListener("click", async () => {
+      const ms = timeMs();
+      if (!frames.includes(ms)) return;
+      if (await confirm_popup(t("confirm_frame_delete", ms / 1000))) socket.emit("delete_frame", ms);
+    });
+    mirror.addEventListener("change", () => {
+      mirrorOn = mirror.checked;
+      try { localStorage.setItem("motion_mirror", mirrorOn ? "1" : "0"); } catch (e) {}
+      paint();
+    });
+
+    // 키보드(노트북): ← → 모터 고르기, ↑ ↓ 1°(Shift 5°), Enter 장면 추가. 입력칸·팝업에 있을 때는 건드리지 않는다
+    const ORDER = MDOT.map(([m]) => m);
+    document.addEventListener("keydown", (e) => {
+      if (e.ctrlKey || e.metaKey || e.altKey || e.isComposing) return;
+      if (document.getElementById("article_motion").offsetParent === null) return;
+      if (["alertPopup", "confirmPopup", "promptPopup"].some((id) => { const p = document.getElementById(id); return p && p.style.display !== "none"; })) return;
+      const tg = e.target, tag = tg.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || tg.isContentEditable) return;
+      if (tag === "BUTTON" && !tg.closest(".mstage, .mpanel")) return;
+      if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
+        const i = ORDER.indexOf(sel);
+        select(ORDER[(i + (e.key === "ArrowRight" ? 1 : ORDER.length - 1)) % ORDER.length]);
+      } else if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+        nudge((e.key === "ArrowUp" ? 1 : -1) * (e.shiftKey ? 5 : 1));
+      } else if (e.key === "Enter") {
+        addBt.click();
+      } else return;
+      e.preventDefault();
+    });
+
+    /* ── 저장 칸(내 동작): 표 아래 한 덩어리로 모은다. 저장된 이름은 칩 — 누르면 이름 칸에 들어가고
+       [불러오기]·[삭제하기] 가 그 이름에 쓰인다. 두 번 누르면 바로 [불러오기] */
+    const rec = document.querySelector("#article_motion .motion-record");
+    const nameWrap = rec.querySelector(".motion-name-wrap"), pathBox = rec.querySelector(".motion-path");
+    const nameIn = document.getElementById("motion_name_val");
+    const lib = document.createElement("div"); lib.className = "mlib";
+    const head = document.createElement("div"); head.className = "mlib__head";
+    const libTools = document.createElement("div"); libTools.className = "mlib__tools";
+    libTools.append(document.getElementById("export_motion_bt"), nameWrap.querySelector('label[for="v_import_motion"]'),
+                    nameWrap.querySelector(".filebox"), document.getElementById("reset_motion_bt"));
+    head.append(pathBox.querySelector(".motion-saved-title"), document.getElementById("motion-path-disabled"), libTools);
+    const chips = document.createElement("div"); chips.className = "mlib__chips"; chips.id = "mlib_chips";
+    lib.append(head, nameWrap, chips, pathBox.querySelector(".motion-samples"));
+    rec.parentNode.appendChild(lib);
+    Array.from(nameWrap.childNodes).forEach((n) => { if (n.nodeType === 3) n.remove(); });   // ':' 글자
+    nameWrap.querySelectorAll(".pb-sep").forEach((n) => n.remove());
+    const markChip = () => {
+      const v = nameIn.value.trim();
+      chips.querySelectorAll(".mchip").forEach((c) => c.setAttribute("aria-pressed", c.dataset.name === v ? "true" : "false"));
+    };
+    window.afterMotionRecord = (names) => {
+      chips.replaceChildren();
+      if (!names.length) {
+        const e = document.createElement("span"); e.className = "mlib__empty"; e.dataset.key = "saved_empty"; e.textContent = t("saved_empty");
+        chips.appendChild(e); return;
+      }
+      names.forEach((n) => {
+        const c = document.createElement("button");
+        c.type = "button"; c.className = "mchip"; c.dataset.name = n; c.textContent = n;
+        c.addEventListener("click", () => { nameIn.value = n; markChip(); });
+        c.addEventListener("dblclick", () => { nameIn.value = n; markChip(); document.getElementById("load_motion_bt").click(); });
+        chips.appendChild(c);
+      });
+      markChip();
+    };
+    nameIn.addEventListener("input", markChip);
+    window.afterMotionRecord([]);
+
+    const nameHint = () => {
+      nameIn.placeholder = t("motion_name"); nameIn.setAttribute("aria-label", t("motion_name"));
+      libTools.querySelectorAll("[data-key]").forEach((e) => e.parentNode.title = t(e.dataset.key));   // 좁은 폭엔 아이콘만 보인다
+    };
+    nameHint();
+    window.refreshMotorPanel = () => { paint(); tr8(); updateScene(); nameHint(); };
+    tr8(); updateScene();
     paint();
   }
 
@@ -550,7 +698,7 @@ const getMotions = (socket) => {
 
   // 저장 버튼
   $("#add_frame_bt").on("click", function () {
-    socket.emit("add_frame", $("#m_time_val").val() * 1000);
+    socket.emit("add_frame", Math.round($("#m_time_val").val() * 1000));
   });
 
   socket.on("disp_motion", function (datas) {
@@ -572,6 +720,7 @@ const getMotions = (socket) => {
         res.push(name);
       }
       $('#motor_record').text(res.join(', '));
+      if (window.afterMotionRecord) window.afterMotionRecord(res);
     }
 
     // 테이블 로드
@@ -632,13 +781,14 @@ const getMotions = (socket) => {
             })
             .dblclick(async function () {
               let tv = $(this).text().split(" ")[0];
-              if (await confirm_popup(translations["confirm_motion_delete"][lang](tv))) {
-                socket.emit("delete_frame", Number(tv) * 1000);
+              if (await confirm_popup(t("confirm_frame_delete", tv))) {
+                socket.emit("delete_frame", Math.round(Number(tv) * 1000));
                 $(this).remove();
               }
             })
         );
       }
+      if (window.afterMotionTable) window.afterMotionTable(data);
     }
   });
 
