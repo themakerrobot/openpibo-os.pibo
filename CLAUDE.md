@@ -753,6 +753,11 @@ git ls-tree -r HEAD system | grep -E "hotspot|booting|setup_country|setup_openpi
 - 실행 중에 새로 붙은 화면(`init`)에는 그 소켓에만 `record` 를 한 번 보낸다
 - 전에는 줄마다 전체를 다시 보냈다. 2000줄 출력(39KB)에 42MB·2000프레임이 나갔다 → 지금 43KB·5프레임
 - 기기에 붙는 외부 도구(fleet 등)는 `record`·`record_add` 둘 다 처리해야 한다
+- **학생 프로그램의 stderr 는 stdout 에 합친다(260928).** `execute` 가 `stderr=STDOUT` 으로 띄우고 4KB 조각으로 읽는다
+  (점진 UTF-8 디코더). 전에는 stderr 를 프로그램이 끝난 뒤에 읽어서 ① 무한 반복 안의 에러가 [정지] 전까지 안 보였고
+  ② stderr 가 약 1MB 쌓이면 프로그램이 멈췄다(실측: 20초 넘게 안 끝남 → 지금 0.2초). 줄 단위(`readline`)도 버렸다 —
+  64KB 넘는 한 줄(`print('x'*100000)`)에서 예외로 실행이 끊겼고, 줄바꿈 없는 `input('이름? ')` 안내문이 안 보였다
+- **학생 코드는 root 로 돈다 — 의도한 것이다.** GPIO 등 하드웨어 접근 때문. `pi` 권한으로 내리지 말 것
 
 `periodic_system_update`(10초 주기)의 `system.sh`·`requests` 는 `run_blocking()` 으로
 스레드에서 돈다. 코루틴 안에서 직접 부르면 그동안 IDE 전체(실행 출력·저장)가 멈춘다.
