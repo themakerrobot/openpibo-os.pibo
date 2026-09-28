@@ -716,6 +716,26 @@ const translations = {
     ko: "내보내기",
     en: "Export"
   },
+  // [동작] 화면 정리(260928) — 키를 파일 끝에 붙인다(1·2행이 PH 델타라 그 근처는 피한다)
+  motor_m0: { ko: "M0 오른발",     en: "M0 Right Foot" },
+  motor_m1: { ko: "M1 오른다리",   en: "M1 Right Leg" },
+  motor_m2: { ko: "M2 오른팔",     en: "M2 Right Arm" },
+  motor_m3: { ko: "M3 오른손",     en: "M3 Right Hand" },
+  motor_m4: { ko: "M4 고개 좌우",  en: "M4 Head Pan" },
+  motor_m5: { ko: "M5 고개 위아래", en: "M5 Head Tilt" },
+  motor_m6: { ko: "M6 왼발",       en: "M6 Left Foot" },
+  motor_m7: { ko: "M7 왼다리",     en: "M7 Left Leg" },
+  motor_m8: { ko: "M8 왼팔",       en: "M8 Left Arm" },
+  motor_m9: { ko: "M9 왼손",       en: "M9 Left Hand" },
+  clear_frames:       { ko: "표 비우기",        en: "Clear table" },
+  remove_all_motions: { ko: "동작 모두 지우기", en: "Delete all motions" },
+  frames_empty: {
+    ko: "아직 장면이 없어요. 왼쪽에서 자세를 잡고 시간을 적은 뒤 [추가하기] 를 누르세요.",
+    en: "No frames yet. Pose the robot on the left, set the time, then press [Add]."
+  },
+  saved_motions: { ko: "저장된 동작", en: "Saved motions" },
+  robot_ready:   { ko: "로봇 연결됨",  en: "Robot ready" },
+  robot_waiting: { ko: "로봇 준비 중", en: "Starting robot" },
 };
 
 // 키 → 현재 언어 문자열. 모르는 키(일반 문자열)는 그대로 반환.

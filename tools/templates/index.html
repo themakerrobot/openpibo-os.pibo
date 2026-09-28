@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="../static/all.min.css?ver=240110v1" type="text/css" />
     <link rel="stylesheet" href="../static/jquery.jsonview.min.css" />
     <link rel="stylesheet" href="../static/index.css?ver=260923v3" />
-  <link rel="stylesheet" href="../static/pibo-ui.css?ver=260924v12" />
+  <link rel="stylesheet" href="../static/pibo-ui.css?ver=260928v1" />
     <link rel="stylesheet" href="../static/simulator.css?ver=240110v1" />
     <link rel="shortcut icon" href="../static/icon.png" type="image/x-icon" />
 
@@ -101,7 +101,7 @@
                     step="0.1"
                     value="0"
                     pattern="\d*"
-                  />
+                  /><span class="motion-unit" data-key="sec"></span>
                   <button id="add_frame_bt" class="btn-teal">
                     <i class="fa-solid fa-plus"></i>
                     <span data-key="add"></span>
@@ -113,7 +113,7 @@
                 <div class="motion-input-row">
                   <div>
                     <div class="motion-input-label">
-                      <span class="label">M5(Head Tilt)</span>
+                      <span class="label" data-key="motor_m5">M5(Head Tilt)</span>
                       <input
                         type="number"
                         name="head_tilt_value"
@@ -135,7 +135,7 @@
                 <div class="motion-input-row">
                   <div>
                     <div class="motion-input-label">
-                      <span class="label">M4(Head Pan)</span>
+                      <span class="label" data-key="motor_m4">M4(Head Pan)</span>
                       <input
                         type="number"
                         name="head_pan_value"
@@ -157,7 +157,7 @@
                 <div class="motion-input-row">
                   <div>
                     <div class="motion-input-label">
-                      <span class="label">M2(Right Arm)</span>
+                      <span class="label" data-key="motor_m2">M2(Right Arm)</span>
                       <input
                         type="number"
                         name="right_arm_value"
@@ -177,7 +177,7 @@
                   </div>
                   <div>
                     <div class="motion-input-label">
-                      <span class="label">M8(Left Arm)</span>
+                      <span class="label" data-key="motor_m8">M8(Left Arm)</span>
                       <input
                         type="number"
                         name="left_arm_value"
@@ -199,7 +199,7 @@
                 <div class="motion-input-row">
                   <div>
                     <div class="motion-input-label">
-                      <span class="label">M3(Right Hand)</span>
+                      <span class="label" data-key="motor_m3">M3(Right Hand)</span>
                       <input
                         type="number"
                         name="right_hand_value"
@@ -219,7 +219,7 @@
                   </div>
                   <div>
                     <div class="motion-input-label">
-                      <span class="label">M9(Left Hand)</span>
+                      <span class="label" data-key="motor_m9">M9(Left Hand)</span>
                       <input
                         type="number"
                         name="left_hand_value"
@@ -241,7 +241,7 @@
                 <div class="motion-input-row">
                   <div>
                     <div class="motion-input-label">
-                      <span class="label">M1(Right Leg)</span>
+                      <span class="label" data-key="motor_m1">M1(Right Leg)</span>
                       <input
                         type="number"
                         name="right_leg_value"
@@ -261,7 +261,7 @@
                   </div>
                   <div>
                     <div class="motion-input-label">
-                      <span class="label">M7(Left Leg)</span>
+                      <span class="label" data-key="motor_m7">M7(Left Leg)</span>
                       <input
                         type="number"
                         name="left_leg_value"
@@ -283,7 +283,7 @@
                 <div class="motion-input-row">
                   <div>
                     <div class="motion-input-label">
-                      <span class="label">M0(Right Foot)</span>
+                      <span class="label" data-key="motor_m0">M0(Right Foot)</span>
                       <input
                         type="number"
                         name="right_foot_value"
@@ -303,7 +303,7 @@
                   </div>
                   <div>
                     <div class="motion-input-label">
-                      <span class="label">M6(Left Foot)</span>
+                      <span class="label" data-key="motor_m6">M6(Left Foot)</span>
                       <input
                         type="number"
                         name="left_foot_value"
@@ -337,7 +337,7 @@
                     value="1"
                     pattern="\d*"
                   />
-                  <span> - </span>
+                  <span class="pb-sep"> - </span>
                   <button id="play_frame_bt" class="btn-teal">
                     <i class="fa-solid fa-play"></i>
                     <span data-key="execute"></span>
@@ -346,10 +346,10 @@
                     <i class="fa-solid fa-stop"></i>
                     <span data-key="stop"></span>
                   </button>
-                  <i class="fa-solid fa-ellipsis-vertical"></i>
+                  <i class="fa-solid fa-ellipsis-vertical pb-sep"></i>
                   <button id="init_frame_bt" class="btn-teal">
                     <i class="fa-solid fa-trash-can"></i>
-                    <span data-key="remove_all"></span>
+                    <span data-key="clear_frames"></span>
                   </button>
                 </div>
                 <div class="motion-table-wrap">
@@ -371,6 +371,7 @@
                     </thead>
                     <tbody></tbody>
                   </table>
+                  <div class="motion-empty" data-key="frames_empty" hidden></div>
                 </div>
                 <div class="motion-name-wrap">
                   <span data-key="motion_name"></span>:
@@ -392,12 +393,12 @@
                     <i class="fa-solid fa-minus"></i>
                     <span data-key="remove"></span>
                   </button>
-                  <i class="fa-solid fa-ellipsis-vertical"></i>
+                  <i class="fa-solid fa-ellipsis-vertical pb-sep"></i>
                   <button id="reset_motion_bt">
                     <i class="fa-solid fa-trash-can"></i>
-                    <span data-key="remove_all"></span>
+                    <span data-key="remove_all_motions"></span>
                   </button>
-                  <i class="fa-solid fa-ellipsis-vertical"></i>
+                  <i class="fa-solid fa-ellipsis-vertical pb-sep"></i>
                   <button id="export_motion_bt">
                     <i class="fas fa-file-export"></i>
                     <span data-key="export"></span>
@@ -411,6 +412,7 @@
 
                 </div>
                 <div class="motion-path">
+                  <span class="motion-saved-title" data-key="saved_motions"></span>
                   <input type="text" id="motion-path-disabled" value="~/mymotion.json" disabled />
                   <textarea
                     name="motor_record"
@@ -419,8 +421,10 @@
                     wrap="hard"
                     disabled
                   ></textarea>
-                  <span data-key="example"></span>:
-                  <b><span id="motion_samples"></span></b>
+                  <div class="motion-samples">
+                    <span class="motion-saved-title" data-key="example"></span><span class="pb-sep">:</span>
+                    <b><span id="motion_samples"></span></b>
+                  </div>
                 </div>
               </div>
             </section>
@@ -568,7 +572,7 @@
       </div>
     </main>
   </body>
-  <script src="../static/ko2en.js?ver=260924v1"></script>
+  <script src="../static/ko2en.js?ver=260928v1"></script>
   <script src="../static/pibo-ui.js?ver=260924v6"></script>
-  <script src="../static/index.js?ver=260923v4"></script>
+  <script src="../static/index.js?ver=260928v1"></script>
 </html>

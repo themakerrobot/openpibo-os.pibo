@@ -214,6 +214,12 @@ const socket = io(`http://${location.host}`, { path: "/socket.io" });
 const onoffVal = document.getElementById('onoff_val');
 const onoffCount = document.getElementById('onoff_count'); 
 onoffVal.innerHTML = `<i class="fas fa-toggle-off fa-sm fa-fade" style="--fa-animation-duration: 2s; --fa-fade-opacity: 0.6">&nbsp;off</i>`;
+// v2 화면은 'off 1' 대신 상태 칩을 그린다(pibo-ui.css). 글자는 여기서 번역해 data-label 로 넘긴다
+const setRobotState = (on) => {
+  onoffVal.dataset.state = on ? 'on' : 'off';
+  onoffVal.dataset.label = t(on ? 'robot_ready' : 'robot_waiting');
+};
+setRobotState(false);
 
 let onoff_count = 0;
 let onoff_intv = setInterval(() => {
@@ -225,6 +231,7 @@ setInterval(() => {
 }, 5000);
 
 socket.on("onoff", function (data) {
+  setRobotState(!!data);
   onoffVal.innerHTML = data?
     `<i class="fas fa-toggle-on">&nbsp;on</i>`
     : `<i class="fas fa-toggle-off fa-sm fa-fade" style="--fa-animation-duration: 2s; --fa-fade-opacity: 0.6">&nbsp;off</i>`
@@ -849,6 +856,7 @@ localStorage.setItem("language", lang);
 language.addEventListener("change", () => {
   lang = language.value;
   setLanguage(lang);
+  setRobotState(onoffVal.dataset.state === 'on');
   localStorage.setItem("language", lang);
 });
 
