@@ -535,25 +535,42 @@ const getMotions = (socket) => {
        저절로 늘고, 표 줄을 누르면 그 장면을 [고치기]·[끝에 붙이기](같은 자세 반복)·[지우기] 할 수 있다.
        서버 쪽은 그대로(add_frame 은 같은 시간이면 덮어쓰고, 아니면 끼워 넣는다) */
     const scene = document.createElement("div"); scene.className = "mscene";
+    /* 배치(v2, 901px 이상): 두 카드를 같은 폭·같은 세 줄로 맞춘다(pibo-ui.css 의 '줄 맞춤').
+         윗줄    [원래자세 · 팔·손 좌우 같이 · 키 안내]  ↔  [반복 · 실행 · 정지 · 표 비우기]
+         가운데  사진 + 조작 패널                      ↔  표
+         아랫줄  장면 만들기                           ↔  저장 칸(같은 높이 상자) */
     scene.innerHTML = `<div class="mscene__title" data-key="scene_title"></div>
-      <div class="mscene__row"><span class="mscene__lbl" data-key="time"></span><span id="ms_time_slot"></span></div>
-      <div class="mscene__row"><span class="mscene__lbl" data-key="scene_step"></span><select id="ms_step">${
-        [0.3, 0.5, 1, 1.5, 2].map((v) => `<option value="${v}">${v}</option>`).join("")}</select><span class="motion-unit" data-key="sec"></span></div>
-      <div id="ms_add_slot"></div>
-      <div class="mscene__sub"><button type="button" id="ms_append"><i class="fa-solid fa-arrow-down"></i><span data-key="scene_append"></span></button><button type="button" id="ms_delete"><i class="fa-solid fa-trash-can"></i><span data-key="scene_delete"></span></button></div>
-      <label class="mscene__mirror"><input type="checkbox" id="ms_mirror" /><span data-key="scene_mirror"></span></label>
-      <div class="mscene__keys" data-key="scene_keys"></div>`;
-    side.appendChild(scene);
-    const topRow = sec.querySelector(":scope > div:first-child");
+      <div class="mscene__grid">
+        <div class="mscene__row"><span class="mscene__lbl" data-key="time"></span><span id="ms_time_slot"></span></div>
+        <div id="ms_add_slot"></div>
+        <div class="mscene__row"><span class="mscene__lbl" data-key="scene_step"></span><select id="ms_step">${
+          [0.3, 0.5, 1, 1.5, 2].map((v) => `<option value="${v}">${v}</option>`).join("")}</select><span class="motion-unit" data-key="sec"></span></div>
+        <div class="mscene__sub"><button type="button" id="ms_append"><i class="fa-solid fa-arrow-down"></i><span data-key="scene_append"></span></button><button type="button" id="ms_delete"><i class="fa-solid fa-trash-can"></i><span data-key="scene_delete"></span></button></div>
+      </div>`;
+    const mhead = document.createElement("div"); mhead.className = "mhead";
+    mhead.innerHTML = `<label class="mhead__mirror"><input type="checkbox" id="ms_mirror" /><span data-key="scene_mirror"></span></label>
+      <span class="mhead__keys" data-key="scene_keys"></span>`;
+    mhead.prepend(document.getElementById("init_bt"));
+    sec.insertBefore(mhead, body);
+    body.after(scene);
+    const topRow = sec.querySelector(":scope > div:first-child");   // 예전 윗줄(시간·추가하기). 요소만 옮기고 숨긴다
     const timeIn = document.getElementById("m_time_val");
     scene.querySelector("#ms_time_slot").append(timeIn, topRow.querySelector(".motion-unit"));
     const addBt = document.getElementById("add_frame_bt");
     scene.querySelector("#ms_add_slot").replaceWith(addBt);
-    stage.appendChild(document.getElementById("init_bt"));    // [원래자세] 는 사진 왼쪽 위 빈 자리로
     topRow.style.display = "none";
+
+    // 사진 크기: 가운데 줄 높이·폭에 맞춘다(그림 비율 840×1145). 점은 % 자리라 따라온다
+    const fitStage = () => {
+      if (window.innerWidth <= 900 || !body.clientHeight) { stage.style.width = ""; return; }
+      const w = Math.min(body.clientHeight / 1.363, body.clientWidth - side.offsetWidth - 14, 520);
+      stage.style.width = `${Math.max(180, Math.floor(w))}px`;
+    };
+    if (window.ResizeObserver) new ResizeObserver(fitStage).observe(body);
+    window.addEventListener("resize", fitStage);
     const addIcon = addBt.querySelector("i"), addLbl = addBt.querySelector("span");
     const stepSel = scene.querySelector("#ms_step"), appendBt = scene.querySelector("#ms_append");
-    const delBt = scene.querySelector("#ms_delete"), mirror = scene.querySelector("#ms_mirror");
+    const delBt = scene.querySelector("#ms_delete"), mirror = mhead.querySelector("#ms_mirror");
     document.querySelector("#article_motion .motion-empty").dataset.key = "frames_empty_v2";
     const tr8 = () => document.querySelectorAll("#article_motion [data-key]").forEach((e) => {
       const v = translations[e.dataset.key] && translations[e.dataset.key][lang];
@@ -634,9 +651,12 @@ const getMotions = (socket) => {
     const libTools = document.createElement("div"); libTools.className = "mlib__tools";
     libTools.append(document.getElementById("export_motion_bt"), nameWrap.querySelector('label[for="v_import_motion"]'),
                     nameWrap.querySelector(".filebox"), document.getElementById("reset_motion_bt"));
-    head.append(pathBox.querySelector(".motion-saved-title"), document.getElementById("motion-path-disabled"), libTools);
+    const libTitle = pathBox.querySelector(".motion-saved-title");
+    libTitle.title = document.getElementById("motion-path-disabled").value;    // ~/mymotion.json
+    libTools.prepend(pathBox.querySelector(".motion-samples"));               // [예제 동작 ▾] — 표 위로 뜨는 목록
+    head.append(libTitle, libTools);
     const chips = document.createElement("div"); chips.className = "mlib__chips"; chips.id = "mlib_chips";
-    lib.append(head, nameWrap, chips, pathBox.querySelector(".motion-samples"));
+    lib.append(head, nameWrap, chips);
     rec.parentNode.appendChild(lib);
     Array.from(nameWrap.childNodes).forEach((n) => { if (n.nodeType === 3) n.remove(); });   // ':' 글자
     nameWrap.querySelectorAll(".pb-sep").forEach((n) => n.remove());
@@ -896,19 +916,19 @@ const getMotions = (socket) => {
     return `<a id="motion_${e}_bt" style="color:#df7e3d;cursor:pointer">${e}</a>`
   }).join(', '));
 
-  // v2: 예제 알약은 접어 둔다(펼친 상태는 기억). 펼치면 표가 그만큼 줄어든다 — 오른쪽 칸은 화면 높이에 맞춰져 있다
+  // v2: 예제 알약은 [예제 동작 N개 ▾] 를 누르면 저장 칸 위로 뜬다. 바깥을 누르거나 하나 고르면 닫힌다
   const samplesBox = document.querySelector(".motion-samples");
   const samplesToggle = document.getElementById("motion_samples_toggle");
   const setSamplesOpen = (open) => {
     if (open) samplesBox.setAttribute("data-open", ""); else samplesBox.removeAttribute("data-open");
-    try { localStorage.setItem("motion_samples_open", open ? "1" : "0"); } catch (e) {}
+    samplesToggle.setAttribute("aria-expanded", open ? "true" : "false");
   };
   window.updateSamplesToggle = () => { $("#motion_samples_toggle_txt").text(t("samples_toggle", sample_motions.length)); };
-  let samplesOpen = false;
-  try { samplesOpen = localStorage.getItem("motion_samples_open") === "1"; } catch (e) {}
-  setSamplesOpen(samplesOpen);
+  setSamplesOpen(false);
   window.updateSamplesToggle();
   samplesToggle.addEventListener("click", () => setSamplesOpen(!samplesBox.hasAttribute("data-open")));
+  document.addEventListener("click", (e) => { if (!samplesBox.contains(e.target)) setSamplesOpen(false); });
+  $("#motion_samples").on("click", "a", () => setSamplesOpen(false));
 
   for (idx in sample_motions) {
     $(`#motion_${sample_motions[idx]}_bt`).on("click", function () {
@@ -1090,22 +1110,15 @@ const getSpeech = (socket) => {
 
 };
 
-/* [동작] 왼쪽 로봇 칸은 그림을 보며 모터를 맞추는 곳이라 늘 한 화면에 다 보여야 한다.
-   v2 에서는 오른쪽(표·저장)만 스크롤되게 로봇 칸을 붙여 두고(sticky, pibo-ui.css),
-   화면 높이보다 크면 zoom 으로 줄인다. 로봇 그림 위 모터 칸이 px 로 자리 잡혀 있어 통째로 줄여야 모양이 유지된다 */
+/* [동작] v2 는 두 카드를 화면 높이(--motion-h)에 맞춘 세 줄 격자로 놓는다(pibo-ui.css '줄 맞춤').
+   사진 크기는 index.js getMotions 의 fitStage 가 가운데 줄에 맞춘다. 900px 이하(태블릿 세로)는 위아래로 쌓는다 */
 const fitRobot = () => {
   const sec = document.querySelector("#article_motion > .pibo-section");
   const pane = document.querySelector("main > div.content");
-  if (!sec || !pane) return;
-  sec.style.zoom = "";
-  if (!document.body.classList.contains("pb-v2") || !sec.offsetHeight) return;
+  if (!sec || !pane || !document.body.classList.contains("pb-v2")) return;
   const cs = getComputedStyle(pane);
   const avail = pane.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom) - 8;
-  // 오른쪽 칸(표·저장)도 이 높이에 맞춘다 — 표만 스크롤되고 위아래 버튼 줄은 늘 보이게(pibo-ui.css 의 --motion-h)
   document.getElementById("article_motion").style.setProperty("--motion-h", `${Math.floor(avail)}px`);
-  if (window.innerWidth <= 900) return;   // 태블릿 세로는 위아래로 쌓고 페이지가 스크롤된다
-  const z = Math.min(1, avail / sec.offsetHeight);
-  if (z < 1) sec.style.zoom = Math.max(0.6, z).toFixed(3);
 };
 window.addEventListener("resize", fitRobot);
 window.addEventListener("load", fitRobot);
