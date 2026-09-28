@@ -291,18 +291,43 @@ const getVisions = (socket) => {
     }
   });
 
+  // v2 화면: 비전 기능을 select 대신 타일로 고른다(select 는 그대로 두고 값만 맞춘다 — v1 은 select 그대로).
+  // 마커 길이 칸은 마커일 때만 보이게 article 에 지금 기능을 적어 둔다(data-func)
+  const V_ICON = {
+    camera: "camera", grayscale: "circle-half-stroke", canny: "pen", cartoon: "palette", sketch_rgb: "pencil",
+    detail: "magnifying-glass-plus", edgePreservingFilter: "water", qr: "qrcode", face: "face-smile",
+    face_landmark: "location-crosshairs", object: "box", hand: "hand", pose: "person-walking",
+    track: "arrows-to-dot", marker: "thumbtack"
+  };
+  const vTiles = document.getElementById("v_tiles");
+  const showVisionFunc = (v) => {
+    document.getElementById("article_vision").dataset.func = v;
+    vTiles.querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", b.dataset.v === v ? "true" : "false"));
+  };
+  $("#v_func_type option").each(function () {
+    const b = document.createElement("button");
+    b.type = "button"; b.className = "v-tile"; b.dataset.v = this.value;
+    b.innerHTML = `<i class="fa-solid fa-${V_ICON[this.value] || "eye"}"></i><span data-key="${this.dataset.key}"></span>`;
+    b.addEventListener("click", () => { $("#v_func_type").val(b.dataset.v).trigger("change"); });
+    vTiles.appendChild(b);
+  });
+  showVisionFunc($("#v_func_type").val());
+
   socket.on("disp_vision", function (data) {
     $("#v_func_type").val(data);
+    showVisionFunc(data);
   });
 
   socket.on("stream", function (data) {
     //console.log('stream', data)
     $("#v_img").prop("src", `data:image/jpeg;charset=utf-8;base64,${data["img"]}`);
+    $(".v-stage").attr("data-has", "");   // 첫 그림이 오면 '기다리는 중' 안내를 걷는다
     $("#v_result").text(data["data"]);
   });
   
   $("#v_func_type").change(function () {
     socket.emit("detect", $(this).val());
+    showVisionFunc($(this).val());
   });
 
   socket.emit("marker_length",  Number($('#marker_length').val()));
@@ -789,6 +814,22 @@ const getSpeech = (socket) => {
 
 };
 
+/* [동작] 왼쪽 로봇 칸은 그림을 보며 모터를 맞추는 곳이라 늘 한 화면에 다 보여야 한다.
+   v2 에서는 오른쪽(표·저장)만 스크롤되게 로봇 칸을 붙여 두고(sticky, pibo-ui.css),
+   화면 높이보다 크면 zoom 으로 줄인다. 로봇 그림 위 모터 칸이 px 로 자리 잡혀 있어 통째로 줄여야 모양이 유지된다 */
+const fitRobot = () => {
+  const sec = document.querySelector("#article_motion > .pibo-section");
+  const pane = document.querySelector("main > div.content");
+  if (!sec || !pane) return;
+  sec.style.zoom = "";
+  if (!document.body.classList.contains("pb-v2") || window.innerWidth <= 900 || !sec.offsetHeight) return;
+  const cs = getComputedStyle(pane);
+  const avail = pane.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom) - 8;
+  const z = Math.min(1, avail / sec.offsetHeight);
+  if (z < 1) sec.style.zoom = Math.max(0.6, z).toFixed(3);
+};
+window.addEventListener("resize", fitRobot);
+
 const handleMenu = (name) => {
   if (name === "vision") {
     $("#v_tilt_range").val($("#m5_range").val());
@@ -810,7 +851,8 @@ const handleMenu = (name) => {
   $(`button[name=${name}]`).addClass("menu-selected");
   $("article").not(`#article_${name}`).hide("slide");
   $(`main>div.content`).removeClass("modal");
-  $(`#article_${name}`).show("slide");
+  $(`#article_${name}`).show("slide", () => { if (name === "motion") fitRobot(); });
+  if (name === "motion") setTimeout(fitRobot, 0);
 };
 
 getVisions(socket);

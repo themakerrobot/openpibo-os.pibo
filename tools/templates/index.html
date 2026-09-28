@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="../static/all.min.css?ver=240110v1" type="text/css" />
     <link rel="stylesheet" href="../static/jquery.jsonview.min.css" />
     <link rel="stylesheet" href="../static/index.css?ver=260923v3" />
-  <link rel="stylesheet" href="../static/pibo-ui.css?ver=260928v3" />
+  <link rel="stylesheet" href="../static/pibo-ui.css?ver=260928v4" />
     <link rel="stylesheet" href="../static/simulator.css?ver=240110v1" />
     <link rel="shortcut icon" href="../static/icon.png" type="image/x-icon" />
 
@@ -430,8 +430,8 @@
             </section>
           </article>
           <article id="article_vision">
-            <section>
-              <div>
+            <section class="v-cam">
+              <div class="v-head">
                 <div style="float:left">
                   <h3 class="mark" data-key="camera"></h3>
                 </div>
@@ -442,8 +442,11 @@
                   </button>
                 </div>
               </div>
-              <img id="v_img" />
-              <div>
+              <div class="v-stage">
+                <img id="v_img" />
+                <div class="v-stage__empty" hidden><i class="fa-solid fa-camera"></i><span data-key="camera_waiting"></span></div>
+              </div>
+              <div class="v-pos">
                 <header><span data-key="camera_position"></span> <i class="fa-solid fa-location-crosshairs">&nbsp;<span id="v_location"></span></i></header>
                 <div style="display: flex; align-items: center; justify-content: center;">
                   <a id="v_pan_reset"><i class="fa-solid fa-arrows-left-right"></i></a>
@@ -468,14 +471,14 @@
                 </div>
               </div>
             </section>
-            <section>
+            <section class="v-fn">
               <div>
                 <h3 class="mark" data-key="vision_use"></h3>
               </div>
-              <div>
+              <div class="v-func">
                 <header data-key="function_setting"></header>
                 <select id="v_func_type">
-                  <option value="camera" data-key="category"></option>
+                  <option value="camera" data-key="v_camera"></option>
                   <option value="grayscale" data-key="v_grayscale"></option>
                   <option value="canny" data-key="v_canny"></option>
                   <option value="cartoon" data-key="v_cartoon"></option>
@@ -494,11 +497,12 @@
                   <option value="marker" data-key="v_marker"></option>
                 </select>
               </div>
-              <div>
+              <div class="v-tiles" id="v_tiles" hidden></div>
+              <div class="v-marker">
                 <span class="label" style="font-size:medium" data-key="v_marker_length"></span>: &nbsp;
                 <input type="number" id="marker_length" min="1" max="50" value="5" step="0.1" pattern="\d*" style="width:60px"/> cm
               </div>
-              <h3 class="mark" data-key="result"></h3>
+              <h3 class="mark v-result-title" data-key="result"></h3>
                 <textarea
                 name="v_result"
                 id="v_result"
@@ -510,21 +514,21 @@
             </section>
           </article>
           <article id="article_speech">
-            <section>
+            <section class="s-speak">
               <div>
                 <h3 class="mark" data-key="speak"></h3>
               </div>
               <div class="speech-input-group">
-                <span class="label" data-key="voice"></span>:
-                <input type="radio" name="s_voice_en" value="on" checked />On
-                <input type="radio" name="s_voice_en" value="off" />Off
+                <span class="label" data-key="voice"></span><span class="pb-sep">:</span>
+                <label class="s-radio"><input type="radio" name="s_voice_en" value="on" checked />On</label>
+                <label class="s-radio"><input type="radio" name="s_voice_en" value="off" />Off</label>
               </div>
               <div class="speech-input-group">
-                <span class="label" data-key="volume"></span>:
+                <span class="label" data-key="volume"></span><span class="pb-sep">:</span>
                 <input type="number" id="volume" min="0" max="100" value="80" pattern="\d*" /><i class="fa-solid fa-percent"></i>
               </div>
               <div class="speech-input-group">
-                <span class="label" data-key="voice_type"></span>:
+                <span class="label" data-key="voice_type"></span><span class="pb-sep">:</span>
                 <select name="s_voice_type">
                   <option value="espeak" data-key="espeak"></option>
                   <option value="m1" data-key="man"></option>
@@ -532,8 +536,8 @@
                 </select>
               </div>
               <div class="speech-input-group">
-                <span class="label" data-key="text"></span>:
-                <input type="text" id="s_tts_val" />
+                <span class="label" data-key="text"></span><span class="pb-sep">:</span>
+                <input type="text" id="s_tts_val" maxlength="30" />
                 <button id="s_tts_bt" style="width:120px">
                   <i class="fa-solid fa-play"></i>
                   <span data-key="execute"></span>
@@ -541,7 +545,7 @@
               </div>
             </section>
 
-            <section>
+            <section class="s-rec">
               <div>
                 <h3 class="mark" data-key="record"></h3>
               </div>
@@ -556,7 +560,7 @@
                   <i class="fa-solid fa-repeat"></i>
                   <span data-key="replay"></span>
                 </button>
-                <i class="fa-solid fa-ellipsis"></i>
+                <i class="fa-solid fa-ellipsis pb-sep"></i>
                 <span class="label" id="mic_status"></span>
               </div>
               <div id="mic_wave" class="mic-wave" hidden>
@@ -572,7 +576,7 @@
       </div>
     </main>
   </body>
-  <script src="../static/ko2en.js?ver=260928v1"></script>
+  <script src="../static/ko2en.js?ver=260928v2"></script>
   <script src="../static/pibo-ui.js?ver=260924v6"></script>
-  <script src="../static/index.js?ver=260928v1"></script>
+  <script src="../static/index.js?ver=260928v2"></script>
 </html>

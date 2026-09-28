@@ -319,7 +319,7 @@ const translations = {
     en: "Camera"
   },
   vision_use: {
-    ko: "Vision 사용하기",
+    ko: "비전 기능",
     en: "Use vision"
   },
   function_setting: {
@@ -412,7 +412,7 @@ const translations = {
   },
   camera_position: {
     ko: "카메라 위치 조정",
-    en: "Camera postion control"
+    en: "Camera position"
   },
   result: {
     ko: "결과",
@@ -736,6 +736,9 @@ const translations = {
   saved_motions: { ko: "저장된 동작", en: "Saved motions" },
   robot_ready:   { ko: "로봇 연결됨",  en: "Robot ready" },
   robot_waiting: { ko: "로봇 준비 중", en: "Starting robot" },
+  // [카메라]·[음성] 정리(260928)
+  v_camera:       { ko: "카메라",          en: "Camera" },
+  camera_waiting: { ko: "카메라 화면을 기다리는 중", en: "Waiting for the camera" },
 };
 
 // 키 → 현재 언어 문자열. 모르는 키(일반 문자열)는 그대로 반환.
