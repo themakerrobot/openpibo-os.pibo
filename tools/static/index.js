@@ -559,6 +559,7 @@ const getMotions = (socket) => {
     if (window.ResizeObserver) new ResizeObserver(fitStage).observe(body);
     window.addEventListener("resize", fitStage);
     const delBt = scene.querySelector("#ms_delete");
+    addBt.querySelector("span").dataset.key = "add_or_edit";   // 같은 시간이면 그 줄을 바꾸므로 [추가·수정] (v1 은 [추가하기] 그대로)
     document.querySelector("#article_motion .motion-empty").dataset.key = "frames_empty_v2";
     const tr8 = () => document.querySelectorAll("#article_motion [data-key]").forEach((e) => {
       const v = translations[e.dataset.key] && translations[e.dataset.key][lang];
@@ -570,6 +571,7 @@ const getMotions = (socket) => {
     // 시간 칸이 표에 있는 줄과 같으면 그 줄을 표시하고 [이 줄 지우기] 를 보인다(줄을 누르면 그렇게 된다)
     const updateScene = () => {
       const ms = timeMs(), picked = frames.includes(ms);
+      delBt.title = t("scene_delete");                // 좁은 폭에선 아이콘만 보인다
       delBt.hidden = !picked;
       document.querySelectorAll("#motor_table > tbody > tr").forEach((tr, i) => tr.toggleAttribute("data-sel", picked && frames[i] === ms));
     };

@@ -754,14 +754,15 @@ const translations = {
   // [동작] 표에 추가(260928)
   scene_title:  { ko: "지금 자세를 표에 추가", en: "Add this pose to the table" },
   scene_delete: { ko: "이 줄 지우기", en: "Delete row" },
+  add_or_edit:  { ko: "추가·수정", en: "Add / Update" },
   scene_help:   {
-    ko: "추가하면 시간이 0.5초씩 늘어나요. 표의 줄을 누르면 그 자세를 불러오고, 같은 시간으로 추가하면 그 줄을 바꿔요.",
-    en: "Each add moves the time on by 0.5 s. Click a row to load its pose; adding at the same time replaces that row."
+    ko: "누를 때마다 시간이 0.5초씩 늘어나요. 표의 줄을 누르면 그 자세를 불러오고, 같은 시간이면 그 줄을 수정해요.",
+    en: "Each press moves the time on by 0.5 s. Click a row to load its pose; the same time updates that row."
   },
-  scene_keys:   { ko: "← → 모터 · ↑ ↓ 1° (Shift 5°) · Enter 추가하기", en: "← → motor · ↑ ↓ 1° (Shift 5°) · Enter add" },
+  scene_keys:   { ko: "← → 모터 · ↑ ↓ 1° (Shift 5°) · Enter 추가·수정", en: "← → motor · ↑ ↓ 1° (Shift 5°) · Enter add/update" },
   frames_empty_v2: {
-    ko: "표가 비어 있어요. 왼쪽에서 자세를 잡고 [추가하기] 를 누르세요.",
-    en: "The table is empty. Pose the robot on the left and press [Add]."
+    ko: "표가 비어 있어요. 왼쪽에서 자세를 잡고 [추가·수정] 을 누르세요.",
+    en: "The table is empty. Pose the robot on the left and press [Add / Update]."
   },
   confirm_frame_delete: { ko: (s) => `${s} 초 줄을 지울까요?`, en: (s) => `Delete the row at ${s} s?` },
   saved_empty:  { ko: "아직 저장한 동작이 없어요", en: "No saved motions yet" },
