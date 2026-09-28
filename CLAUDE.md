@@ -651,7 +651,7 @@ OS 가 어두운 모드면 `dark` 로 시작한다.
 - **도구 [동작] (260928)**: 상단바 'off 1' → 상태 칩(`#onoff_val[data-state][data-label]`, `index.js` 의 `setRobotState`),
   모터 칸은 작은 카드 + 한글 이름(`motor_m0`~`m9`), 버튼 줄의 ⋮·`-` 는 `.pb-sep`(v2 에서 숨김),
   [등록하기] 가 유일한 꽉 찬 파랑, 지우는 버튼 둘은 판 없는 빨강이고 이름을 갈랐다(`clear_frames` 표 비우기 /
-  `remove_all_motions` 동작 모두 지우기). 표는 내용만큼(최대 42vh)이고 비면 `.motion-empty` 안내, 예제는 알약.
+  `remove_all_motions` 동작 모두 지우기). 표는 내용만큼(최대 500px, 예전 고정 높이와 같다)이고 비면 `.motion-empty` 안내, 예제는 알약.
   1200px 아래에서는 오른쪽 칸을 로봇 아래로 내린다. 새 키는 `tools/static/ko2en.js` **끝**에 붙였다(1·2행이 PH 델타)
 
 ### 검증 (컨테이너)
