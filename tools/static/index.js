@@ -439,6 +439,91 @@ const getMotions = (socket) => {
     });
   }
 
+  /* v2 [동작]: 로봇 사진 위에는 번호 점(현재 각도)만, 조작은 사진 옆 패널에서 한다.
+     예전 모터 칸 10개(#mN_value/#mN_range)는 v2 에서 숨기고 값 저장소로 그대로 쓴다 — 표 클릭·원래자세 등
+     기존 코드가 그 값을 바꾸면 아래 sync 가 읽어 온다. 로봇에 보내는 건 기존과 같은 set_motor 한 가지.
+     점 위치는 pibo_body.min.png(840×1145) 기준 %. 로봇 기준 오른쪽(M0~M3)이 화면 왼쪽이다 */
+  if (document.body.classList.contains("pb-v2")) {
+    const MDOT = [[5, 50, 12], [4, 50, 34.5], [2, 16.7, 49], [8, 83.3, 49], [3, 9.5, 63], [9, 91.7, 63],
+                  [1, 37.5, 77], [7, 62.5, 77], [0, 35, 92.5], [6, 66.7, 92.5]];
+    const sec = document.querySelector("#article_motion > .pibo-section");
+    const img = sec.querySelector(":scope > img");
+    const body = document.createElement("div"); body.className = "mbody";
+    const stage = document.createElement("div"); stage.className = "mstage";
+    img.parentNode.insertBefore(body, img); body.appendChild(stage); stage.appendChild(img);
+    const dots = {};
+    MDOT.forEach(([m, x, y]) => {
+      const d = document.createElement("button");
+      d.type = "button"; d.className = "mdot"; d.dataset.m = m;
+      d.style.left = `${x}%`; d.style.top = `${y}%`;
+      d.innerHTML = `<b>${m}</b><span class="mdot__v"></span>`;
+      d.addEventListener("click", () => select(m));
+      stage.appendChild(d); dots[m] = d;
+    });
+    const panel = document.createElement("div"); panel.className = "mpanel";
+    panel.innerHTML = `<div class="mpanel__name" id="mp_name"></div>
+      <div class="mpanel__val"><input type="number" id="mp_num" inputmode="numeric" /><span>°</span></div>
+      <input type="range" id="mp_range" />
+      <div class="mpanel__steps"><button type="button" data-d="-5">−5</button><button type="button" data-d="-1">−1</button><button type="button" data-d="1">+1</button><button type="button" data-d="5">+5</button></div>
+      <div class="mpanel__lim" id="mp_lim"></div>`;
+    body.appendChild(panel);
+    const mpNum = panel.querySelector("#mp_num"), mpRange = panel.querySelector("#mp_range");
+    const lim = (m) => [Number($(`#m${m}_range`).attr("min")), Number($(`#m${m}_range`).attr("max"))];
+    const cur = (m) => Number($(`#m${m}_value`).val()) || 0;
+    let sel = 2, dragging = false, sendTimer = 0;
+
+    const paint = () => {
+      MDOT.forEach(([m]) => {
+        dots[m].querySelector(".mdot__v").textContent = $(`#m${m}_value`).val() === "" ? "–" : cur(m);
+        dots[m].setAttribute("aria-pressed", m === sel ? "true" : "false");
+      });
+      const [lo, hi] = lim(sel);
+      panel.querySelector("#mp_name").textContent = t(`motor_m${sel}`);
+      panel.querySelector("#mp_lim").textContent = `${lo} ~ ${hi}`;
+      mpRange.min = lo; mpRange.max = hi; mpNum.min = lo; mpNum.max = hi;
+      if (!dragging) mpRange.value = cur(sel);
+      if (document.activeElement !== mpNum) mpNum.value = cur(sel);
+    };
+    const select = (m) => { sel = m; paint(); };
+    const setVal = (v) => {                       // 저장소(숨긴 칸)와 화면을 같이 바꾼다
+      $(`#m${sel}_value`).val(v); $(`#m${sel}_range`).val(v);
+      mpRange.value = v; mpNum.value = v;
+      dots[sel].querySelector(".mdot__v").textContent = v;
+    };
+    const send = (now) => {                       // [±] 를 빠르게 눌러도 서보 명령은 모아서 한 번
+      clearTimeout(sendTimer);
+      const m = sel;
+      const go = () => socket.emit("set_motor", { idx: m, pos: cur(m) });
+      if (now) go(); else sendTimer = setTimeout(go, 150);
+    };
+    mpRange.addEventListener("input", () => { dragging = true; setVal(Number(mpRange.value)); });
+    mpRange.addEventListener("change", () => { dragging = false; send(true); });
+    panel.querySelectorAll(".mpanel__steps button").forEach((b) => b.addEventListener("click", () => {
+      const [lo, hi] = lim(sel);
+      setVal(Math.max(lo, Math.min(hi, cur(sel) + Number(b.dataset.d)))); send(false);
+    }));
+    const commitNum = async () => {
+      const v = Number(mpNum.value), [lo, hi] = lim(sel);
+      if (mpNum.value === "" || isNaN(v) || v < lo || v > hi) {
+        mpNum.value = cur(sel);
+        await alert_popup(translations["range_warn"][lang](lo, hi));
+        return;
+      }
+      if (v !== cur(sel)) { setVal(v); send(true); }
+    };
+    mpNum.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); mpNum.blur(); } });
+    mpNum.addEventListener("blur", commitNum);
+    // 표 클릭·원래자세·불러오기 등이 숨긴 칸 값을 바꾸면 따라간다(이벤트 없이 .val() 로 바꾸는 코드가 많다)
+    let last = "";
+    setInterval(() => {
+      if (document.getElementById("article_motion").offsetParent === null) return;
+      const now = MDOT.map(([m]) => $(`#m${m}_value`).val()).join(",");
+      if (now !== last) { last = now; paint(); }
+    }, 300);
+    window.refreshMotorPanel = paint;
+    paint();
+  }
+
   $("#m_time_val").on("focusout keydown", async function (evt) {
     if (
       evt.type == "focusout" ||
@@ -946,6 +1031,7 @@ language.addEventListener("change", () => {
   setLanguage(lang);
   setRobotState(onoffVal.dataset.state === 'on');
   if (window.updateSamplesToggle) window.updateSamplesToggle();
+  if (window.refreshMotorPanel) window.refreshMotorPanel();
   localStorage.setItem("language", lang);
 });
 
