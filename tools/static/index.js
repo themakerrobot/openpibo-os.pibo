@@ -215,29 +215,39 @@ const onoffVal = document.getElementById('onoff_val');
 const onoffCount = document.getElementById('onoff_count'); 
 onoffVal.innerHTML = `<i class="fas fa-toggle-off fa-sm fa-fade" style="--fa-animation-duration: 2s; --fa-fade-opacity: 0.6">&nbsp;off</i>`;
 // v2 화면은 'off 1' 대신 상태 칩을 그린다(pibo-ui.css). 글자는 여기서 번역해 data-label 로 넘긴다
+// 기다리는 동안은 몇 초째인지 같이 보인다(무작정 기다리지 않게)
+let onoff_count = 0;
 const setRobotState = (on) => {
   onoffVal.dataset.state = on ? 'on' : 'off';
-  onoffVal.dataset.label = t(on ? 'robot_ready' : 'robot_waiting');
+  onoffVal.dataset.label = on ? t('robot_ready') : `${t('robot_waiting')} · ${onoff_count}${t('sec')}`;
 };
 setRobotState(false);
 
-let onoff_count = 0;
 let onoff_intv = setInterval(() => {
   onoffCount.innerHTML = `<i style="opacity:0.6">${++onoff_count}</i>`;
-}, 2000);
+  if (onoffVal.dataset.state !== 'on') setRobotState(false);
+}, 1000);
 
+// 준비될 때까지만 5초마다 묻는다. 서버는 접속하는 순간에도 알려 준다(run_tools.py 의 send_state)
+let robotOn = false;
 setInterval(() => {
-  socket.emit("onoff");
+  if (!robotOn) socket.emit("onoff");
 }, 5000);
+socket.on("disconnect", () => { robotOn = false; setRobotState(false); });
 
 socket.on("onoff", function (data) {
+  const was = robotOn;
+  robotOn = !!data;
   setRobotState(!!data);
   onoffVal.innerHTML = data?
     `<i class="fas fa-toggle-on">&nbsp;on</i>`
     : `<i class="fas fa-toggle-off fa-sm fa-fade" style="--fa-animation-duration: 2s; --fa-fade-opacity: 0.6">&nbsp;off</i>`
   console.log('onoff', data)
 
-  if (data == true) {
+  if (data == true && !was) {   // 준비 안 됨 → 됨 으로 바뀔 때 한 번만(원래자세로 모터를 보낸다)
+    // 준비 전에 [카메라] 탭을 열었으면 그때 보낸 켜기 요청은 버려졌다(서버가 아직 없었다) → 지금 탭 기준으로 다시 알린다
+    const menu = $("nav button.menu-selected").attr("name") || "";
+    socket.emit("vision_sleep", menu.split("_ds")[0] === "vision" ? "off" : "on");
     socket.emit("disp_motion");
     clearInterval(onoff_intv);
     onoffCount.innerHTML = "";
@@ -312,6 +322,33 @@ const getVisions = (socket) => {
     vTiles.appendChild(b);
   });
   showVisionFunc($("#v_func_type").val());
+
+  /* 준비 상태(260929): 서버가 [로봇 연결됨] 뒤에 카메라 → 사물·손 인식 → 얼굴 인식 순으로 올리며
+     vision_state 를 보낸다. 카메라 칸 위에 단계·막대·경과 초를 보이고, 아직 안 올라온 기능 타일에는 '준비 중' 을 단다
+     (눌러 둘 수는 있다 — 올라오면 그때부터 결과가 나온다) */
+  const NEEDS = { face: "face", face_landmark: "face", qr: "detect", object: "detect", hand: "detect", pose: "detect", track: "detect", marker: "detect" };
+  const vBoot = document.createElement("div"); vBoot.className = "v-boot"; vBoot.hidden = true;
+  vBoot.innerHTML = `<div class="v-boot__row"><i class="fa-solid fa-spinner fa-spin"></i><span class="v-boot__txt"></span><span class="v-boot__n"></span></div><div class="v-boot__bar"><i></i></div>`;
+  document.querySelector("#article_vision .v-stage").before(vBoot);
+  let vState = null, vSec = 0;
+  const paintVision = () => {
+    const s = vState;
+    if (!s) return;
+    const done = s.key === "vs_ready" && !s.error;
+    vBoot.hidden = done;
+    vBoot.dataset.kind = s.error ? "err" : "";
+    vBoot.querySelector(".v-boot__txt").textContent = s.error ? t("vs_error", s.error) : t(s.key);
+    vBoot.querySelector(".v-boot__n").textContent = s.error ? "" : `${s.step}/${s.total} · ${vSec}${t("sec")}`;
+    vBoot.querySelector(".v-boot__bar > i").style.width = `${Math.max(6, Math.round((s.step - 1) / s.total * 100))}%`;
+    vTiles.querySelectorAll("button").forEach((b) => {
+      const need = NEEDS[b.dataset.v], wait = !!(need && !s[need]);
+      b.toggleAttribute("data-wait", wait);
+      b.dataset.waitLabel = wait ? t("vs_tile_wait") : "";
+    });
+  };
+  socket.on("vision_state", (s) => { vState = s; paintVision(); });
+  setInterval(() => { if (vState && vState.key !== "vs_ready" && !vState.error) { vSec++; paintVision(); } }, 1000);
+  window.refreshVisionState = paintVision;
 
   socket.on("disp_vision", function (data) {
     $("#v_func_type").val(data);
@@ -960,12 +997,16 @@ const getSpeech = (socket) => {
     else setTtsStatus(t("tts_error", (d && d.error) || ""), "err");
   });
   $("#s_tts_stop_bt").on("click", () => socket.emit("tts_stop"));
+  // 목소리 모델은 음성 탭을 열 때 서버가 미리 올린다(handleMenu → voice_warm). 처음 한 번 몇 초 걸린다
+  let voicePrev = "", ttsPending = false;
+  socket.on("tts_status", () => { ttsPending = false; });
+  socket.on("voice_state", (st) => {
+    if (st === "loading") setTtsStatus(t("voice_loading"), "load");
+    else if (st === "ready" && voicePrev === "loading") setTtsStatus(ttsPending ? t("tts_speaking") : t("voice_ready"), ttsPending ? "" : "ok");
+    else if (st === "error" && voicePrev === "loading") setTtsStatus(t("voice_error"), "err");
+    voicePrev = st;
+  });
   $("#s_tts_bt").on("click", async function () {
-    if ($("input[name=s_voice_en]:checked").val() == "off") {
-      await alert_popup(translations["voice_enable"][lang]);
-      return;
-    }
-
     let string = $("#s_tts_val").val().trim();
     if (string == "") {
       await alert_popup(translations["text_empty"][lang]);
@@ -975,7 +1016,7 @@ const getSpeech = (socket) => {
       await alert_popup(translations["text_size_limit"][lang](max_tts_length));
       return;
     }
-    setTtsStatus(t("tts_speaking"));
+    setTtsStatus(t("tts_speaking")); ttsPending = true;
     socket.emit("tts", {
       text: string,
       voice_type: $("select[name=s_voice_type]").val(),
@@ -985,10 +1026,6 @@ const getSpeech = (socket) => {
 
   $("#s_tts_val").on("keypress", async function (evt) {
     if (evt.keyCode == 13) {
-      if ($("input[name=s_voice_en]:checked").val() == "off") {
-        await alert_popup(translations["voice_enable"][lang]);
-        return;
-      }
       let string = $("#s_tts_val").val().trim();
       if (string == "") {
         await alert_popup(translations["text_empty"][lang]);
@@ -998,7 +1035,7 @@ const getSpeech = (socket) => {
         await alert_popup(translations["text_size_limit"][lang](max_tts_length));
         return;
       }
-      setTtsStatus(t("tts_speaking"));
+      setTtsStatus(t("tts_speaking")); ttsPending = true;
       socket.emit("tts", {
         text: string,
         voice_type: $("select[name=s_voice_type]").val(),
@@ -1108,6 +1145,8 @@ const handleMenu = (name) => {
     socket.emit("disp_vision");
   } else if (name === "motion") {
     socket.emit("disp_motion");
+  } else if (name === "speech") {
+    socket.emit("voice_warm");   // 목소리 모델을 미리 올린다(이미 올라와 있으면 서버가 무시)
   }
 
   socket.emit("vision_sleep", name=="vision"?"off":"on");
@@ -1171,6 +1210,7 @@ language.addEventListener("change", () => {
   setRobotState(onoffVal.dataset.state === 'on');
   if (window.updateSamplesToggle) window.updateSamplesToggle();
   if (window.refreshMotorPanel) window.refreshMotorPanel();
+  if (window.refreshVisionState) window.refreshVisionState();
   localStorage.setItem("language", lang);
 });
 

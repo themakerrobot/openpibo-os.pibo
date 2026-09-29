@@ -1,20 +1,18 @@
 import subprocess
 import openpibo_models
-from openpibo.vision_camera import Camera
-from openpibo.vision_face import Face
-from openpibo.vision_detect import Detect
-from openpibo.vision_classify import CustomClassifier
+# 카메라·얼굴·인식(vision_camera / vision_face / vision_detect)은 무거워서(dlib·OpenVINO·MediaPipe)
+# 여기서 불러오지 않는다. 로봇 연결(모터·소리)을 먼저 알리고 vision_start 가 이어서 불러온다(260929)
 from openpibo.audio import Audio
 from openpibo.motion import Motion
 import asyncio
 import numpy as np
 import time,datetime
 import base64
-import cv2,dlib,logging
+import cv2,logging
 import os,json,shutil,csv
 from PIL import Image,ImageDraw,ImageFont,ImageOps
 from queue import Queue
-from threading import Thread, Timer
+from threading import Thread, Timer, Lock
 
 logging.basicConfig(level=logging.ERROR, format='%(asctime)s [%(levelname)s] %(message)s')
 
@@ -44,17 +42,53 @@ class Pibo:
     self.vision_type = "camera"
     self.vision_sleep = True
 
+    # 준비 순서(260929): 모터·소리 → [로봇 연결됨] → 카메라 → 사물·손 인식 → 얼굴 인식.
+    # 전엔 얼굴(dlib 모델 약 120MB·OpenVINO 3개 컴파일·MediaPipe)까지 다 올린 뒤에야 연결됨이 떠서,
+    # 동작 탭만 쓸 사람도 한참 기다렸다. 카메라 쪽은 vision_state 로 단계를 알린다(도구 [카메라] 탭에 표시)
+    self.cam = None
+    self.fac = None
+    self.det = None
+    self.frame = None
+    self.res_img = None
+    self.vision_state = {'step': 0, 'total': 3, 'key': 'vs_camera', 'camera': False, 'detect': False, 'face': False, 'error': ''}
+    self.speech_od = None   # 온디바이스 TTS. 모델이 무거워 음성 탭을 열 때(voice_warm) 또는 처음 말할 때 올린다
+    self.voice_state = 'idle'   # idle / loading / ready / error
+    self._voice_lock = Lock()
+
     self.mot = Motion()
     self.aud = Audio()
-    self.speech_od = None   # 온디바이스 TTS. 모델이 무거워 처음 쓸 때 올린다.
-    self.cam = Camera()
-    self.fac = Face()
-    self.det = Detect()
-
     self.mot.set_motors(self.motion_d, movetime=1000)
-    self.det.load_hand_gesture_model()
     asyncio.run(self.emit('onoff', True, callback=None))
-    Thread(name='vision_loop', target=self.vision_loop, args=(), daemon=True).start()
+    Thread(name='vision_start', target=self.vision_start, args=(), daemon=True).start()
+
+  def _vision_step(self, step, key, **done):
+    self.vision_state.update(step=step, key=key, **done)
+    asyncio.run(self.emit('vision_state', dict(self.vision_state), callback=None))
+
+  def vision_start(self):
+    """카메라 → 사물·손 인식 → 얼굴 인식 순으로 올린다. 카메라가 켜지면 바로 화면을 보내기 시작한다"""
+    try:
+      self._vision_step(1, 'vs_camera')
+      from openpibo.vision_camera import Camera
+      self.cam = Camera()
+      Thread(name='vision_loop', target=self.vision_loop, args=(), daemon=True).start()
+      self._vision_step(2, 'vs_detect', camera=True)
+      from openpibo.vision_detect import Detect
+      det = Detect()
+      det.load_hand_gesture_model()
+      self.det = det
+      self._vision_step(3, 'vs_face', detect=True)
+      from openpibo.vision_face import Face
+      self.fac = Face()
+      self._vision_step(3, 'vs_ready', face=True)
+    except Exception as ex:
+      logging.error(f'[vision_start] Error: {ex}')
+      self.vision_state['error'] = str(ex)
+      asyncio.run(self.emit('vision_state', dict(self.vision_state), callback=None))
+
+  # 기능마다 필요한 모델. 아직 안 올라왔으면 카메라 화면만 보낸다
+  NEEDS_FACE = ('face', 'face_landmark')
+  NEEDS_DET = ('qr', 'object', 'hand', 'pose', 'track', 'marker')
 
   def vision_loop(self):
     while True:
@@ -64,7 +98,9 @@ class Pibo:
 
       try:
         self.frame = self.cam.read()  # read the camera frame
-        if self.vision_type == 'grayscale':
+        if (self.vision_type in self.NEEDS_FACE and self.fac is None) or (self.vision_type in self.NEEDS_DET and self.det is None):
+          img, res = self.frame, ''
+        elif self.vision_type == 'grayscale':
           img, res = cv2.cvtColor(self.frame.copy(), cv2.COLOR_BGR2GRAY), ''
         elif self.vision_type == 'canny':
           img, res = cv2.Canny(cv2.cvtColor(self.frame.copy(), cv2.COLOR_BGR2GRAY), 200, 200), ''
@@ -98,6 +134,9 @@ class Pibo:
         logging.error(f'[vision_loop] Error: {ex}')
         img, res = self.frame, str(ex)
 
+      if img is None:   # 카메라가 첫 장을 못 읽었다. 스레드가 죽지 않게 다음 장을 기다린다
+        time.sleep(0.5)
+        continue
       self.res_img = img.copy()
       if self.cam:
         self.cam.putText(img, '+', (self.imgX-5,self.imgY), 0.6, (100,100,200), 3)
@@ -168,6 +207,8 @@ class Pibo:
     return im, ''
 
   def object_tracker_init(self, d):
+    if self.det is None or self.frame is None:
+      return
     im = self.frame.copy()
     if self.det.tracker is not None:
       del self.det.tracker
@@ -191,7 +232,10 @@ class Pibo:
     return im, " ".join([ f'({d["id"]})-{d["distance"]}cm' for d in res])
 
   def imwrite(self, name):
+    if self.cam is None or self.res_img is None:
+      return False
     self.cam.imwrite(name, self.res_img.copy())
+    return True
 
   def mic(self, d):
     record_time = d['time']
@@ -216,9 +260,7 @@ class Pibo:
       elif voice_type in self.OD_VOICES:
         # ONNX 모델 로딩이 무거워 처음 호출될 때만 올린다.
         # lang='na' 는 자동 판별이라 한국어·영어 양쪽 배포판에서 그대로 쓸 수 있다.
-        if self.speech_od is None:
-          from openpibo.speech import SpeechOnDevice
-          self.speech_od = SpeechOnDevice()
+        self.voice_warm()
         self.speech_od.tts(text=d['text'], filename=filename, voice=voice_type, lang='na')
       else:
         # 서버 TTS(oe-sapi)는 제거됐다
@@ -229,6 +271,22 @@ class Pibo:
       logging.error(f'[tts] Error: {ex}')
       return str(ex)
     return None
+
+  def voice_warm(self):
+    """온디바이스 목소리 모델을 올린다. 음성 탭을 열 때 미리 부르고, 말하기 전에도 부른다(한 번만 올라간다)"""
+    with self._voice_lock:
+      if self.speech_od is not None:
+        return self.voice_state
+      self.voice_state = 'loading'
+      try:
+        from openpibo.speech import SpeechOnDevice
+        self.speech_od = SpeechOnDevice()
+        self.voice_state = 'ready'
+      except Exception as ex:
+        logging.error(f'[voice_warm] Error: {ex}')
+        self.voice_state = 'error'
+        raise
+      return self.voice_state
 
   def tts_stop(self):
     self.aud.stop()

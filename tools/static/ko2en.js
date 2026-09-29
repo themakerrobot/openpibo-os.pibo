@@ -464,10 +464,6 @@ const translations = {
     ko: "먼저 모션이름을 입력하세요.",
     en: "Enter the motion name first."
   },
-  voice_enable: {
-    ko: "음성을 활성화해주세요.",
-    en: "Please activate your voice."
-  },
   text_empty: {
     ko: "문장을 입력하세요.",
     en: "Please enter a sentence."
@@ -762,6 +758,16 @@ const translations = {
     en: "The table is empty. Pose the robot on the left and press [Add / Update]."
   },
   confirm_frame_delete: { ko: (s) => `${s} 초 줄을 지울까요?`, en: (s) => `Delete the row at ${s} s?` },
+  // 준비 단계(260929): [로봇 연결됨] 뒤에 카메라 쪽을 이어서 올린다
+  vs_camera:    { ko: "카메라 켜는 중",          en: "Starting the camera" },
+  vs_detect:    { ko: "사물·손 인식 준비 중",     en: "Loading object & hand recognition" },
+  vs_face:      { ko: "얼굴 인식 준비 중",        en: "Loading face recognition" },
+  vs_ready:     { ko: "카메라 준비됐어요",        en: "Camera ready" },
+  vs_error:     { ko: (e) => `카메라를 준비하지 못했어요: ${e}`, en: (e) => `Could not start the camera: ${e}` },
+  vs_tile_wait: { ko: "준비 중", en: "Loading" },
+  voice_loading:{ ko: "목소리 준비 중… (처음 한 번만 몇 초 걸려요)", en: "Loading voices… (a few seconds, first time only)" },
+  voice_ready:  { ko: "목소리 준비됐어요", en: "Voices ready" },
+  voice_error:  { ko: "목소리를 준비하지 못했어요", en: "Could not load voices" },
   saved_empty:  { ko: "아직 저장한 동작이 없어요", en: "No saved motions yet" },
 };
 
