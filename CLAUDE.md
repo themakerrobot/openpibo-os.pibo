@@ -257,21 +257,19 @@ AP 로 넘어가 그대로 남고, 그 로봇들이 2.4GHz AP 비콘을 쏴서 �
 구현은 기존 10초 점검(`wifi_update`)에서 'IP 없음 + SSID 보임' 이 9번 연속일 때 AP. 부팅 때의 27초(3초×9) 구간은
 OLED 표시만 하고 AP 를 켜지 않으므로 그대로 둔다. 지금은 IP 가 없으면 서비스가 뜬 지 약 42초(5+27+10) 뒤 첫 점검에서 AP →
 바꾸면 SSID 가 안 보일 때는 그대로 약 42초, 보일 때는 약 2분 10초 뒤 AP.
-스캔은 **IP 가 없을 때만** 본다: 10초 점검마다 `nmcli -t -f SSID dev wifi list --rescan auto`(마지막 스캔이 30초보다 오래됐을 때만
-새로 스캔 — 끊겨 있을 때 NM 이 스스로 하는 스캔을 재사용). IP 가 있으면 안 본다. AP 모드의 자력 복귀를 넣는다면
-**AP 에 붙은 단말이 없을 때만** 1~2분마다(같은 라디오라 스캔하면 AP 가 잠깐 끊긴다).
+스캔은 **AP 로 넘어가기 전, IP 가 없을 때만** 본다: 10초 점검마다 `nmcli -t -f SSID dev wifi list --rescan auto`
+(마지막 스캔이 30초보다 오래됐을 때만 새로 스캔 — 끊겨 있을 때 NM 이 스스로 하는 스캔을 재사용). IP 가 있을 때와 AP 모드에서는 안 본다.
 **확인 필요:** 기기의 `nmcli -g ipv4.dhcp-timeout connection show pibo-wifi` (0 이면 기본값 45초)
 
-**자력 복귀**: AP 모드에서 붙은 단말이 없으면 2분마다 저장된 SSID 를 새로 스캔해, 보이면 AP 를 끄고
-`nmcli --wait 45 connection up pibo-wifi` 로 다시 붙어 본다. 실패하면(비밀번호가 바뀌었을 수도) **AP 를 바로 되살리고**
-다음 시도 간격을 두 배로(2 → 4 → 8 → 최대 10분). 태블릿이 AP 에 붙어 있으면 스캔도 복귀도 하지 않는다.
+**AP 모드는 스스로 끄지 않는다.** AP 로 계속 쓰는 수업도 있다. [인터넷 설정] 으로 학교 WiFi 를 잡아 IP 를 받거나
+재부팅하면 나온다. (AP 에 아무도 안 붙어 있으면 2분마다 학교 WiFi 로 돌아가 보는 자력 복귀를 넣었다가 같은 이유로 뺐다 — 다시 넣지 말 것)
 - 구조: 판단은 `netwatch.NetWatch.step(has_ip)` 한 곳, `booting.py` 의 `wifi_update` 는 10초마다 부르기만 한다.
-  명령(nmcli·iw·hotspot.sh)은 `ops` 로 바꿔 끼울 수 있어 기기 없이 시험했다(16개 경우: 바로 AP · 90초 · 중간에 IP ·
-  AP 사용 중 · 복귀 성공/실패·간격 두 배·최대 10분 · SSID 안 보임). `wifi_update` 는 예외가 나도 다음 점검을 이어간다(전엔 멈췄다)
-- `hotspot.sh` 는 그대로다(AP 를 켤 때 학교 연결을 내리는 것도 그대로 — 복귀는 netwatch 가 따로 올린다)
-- **기기에서 볼 것:** ① 교실처럼 IP 가 늦을 때 90초 기다리는지 ② 공유기를 끄면 약 42초 뒤 AP ③ AP 로 아무도 안 붙으면
-  2분 뒤 학교 WiFi 로 돌아오는지 ④ AP 가 켜진 상태에서 `nmcli dev wifi list --rescan yes` 가 되는지(같은 라디오)
-  ⑤ `journalctl -u booting.service | grep netwatch` 로 판단 기록 확인. PiBrain(`openpibo-os.pibrain/system/booting.py`)도
+  명령(nmcli·hotspot.sh)은 `ops` 로 바꿔 끼울 수 있어 기기 없이 시험했다(10개 경우: 바로 AP · 90초 · 중간에 IP ·
+  AP 모드 1시간 유지 · AP 에서 IP 받으면 끔 · SSID 안 보임). `wifi_update` 는 예외가 나도 다음 점검을 이어간다(전엔 멈췄다)
+- `hotspot.sh` 는 그대로다(AP 를 켤 때 학교 연결을 내리는 것도 그대로)
+- **기기에서 볼 것:** ① 교실처럼 IP 가 늦을 때 90초 기다리는지 ② 공유기를 끄면 약 42초 뒤 AP
+  ③ AP 모드가 계속 유지되고, [인터넷 설정] 으로 학교 WiFi 를 잡으면 AP 가 꺼지는지
+  ④ `journalctl -u booting.service | grep netwatch` 로 판단 기록 확인. PiBrain(`openpibo-os.pibrain/system/booting.py`)도
   같은 구조(IP 한 번 없으면 AP)지만 아직 안 옮겼다
 **확인 필요:** AP 를 켤 때 학교 연결을 내리는 게 CYW43455 의 AP+STA 같은 채널 제약 때문인지
 
