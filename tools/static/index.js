@@ -519,9 +519,19 @@ const getMotions = (socket) => {
     const cur = (m) => Number($(`#m${m}_value`).val()) || 0;
     let sel = 2, dragging = false, sendTimer = 0;
 
+    // 번호 점의 각도 링(pibo-ui.css '움직임' 3): 한쪽 끝까지 가면 한 바퀴, + 는 시계 방향·− 는 반대
+    const gauge = (m) => {
+      const v = cur(m), [lo, hi] = lim(m);
+      const f = v >= 0 ? (hi > 0 ? v / hi : 0) : (lo < 0 ? v / lo : 0);
+      const a = Math.round(Math.min(1, Math.abs(f)) * 360);
+      const b = dots[m].firstElementChild;
+      b.style.setProperty("--g-a", `${a}deg`);
+      b.style.setProperty("--g-s", `${v < 0 ? -a : 0}deg`);
+    };
     const paint = () => {
       MDOT.forEach(([m]) => {
         dots[m].querySelector(".mdot__v").textContent = $(`#m${m}_value`).val() === "" ? "–" : cur(m);
+        gauge(m);
         dots[m].setAttribute("aria-pressed", m === sel ? "true" : "false");
       });
       const [lo, hi] = lim(sel);
@@ -535,6 +545,7 @@ const getMotions = (socket) => {
     const store = (m, v) => {                     // 저장소(숨긴 칸)와 점을 같이 바꾼다
       $(`#m${m}_value`).val(v); $(`#m${m}_range`).val(v);
       dots[m].querySelector(".mdot__v").textContent = v;
+      gauge(m);
     };
     const setVal = (v) => { store(sel, v); mpRange.value = v; mpNum.value = v; };
     const send = (now) => {                       // [±] 를 빠르게 눌러도 서보 명령은 모아서 한 번
@@ -999,7 +1010,12 @@ const getSpeech = (socket) => {
   showVoice();
 
   const ttsStatus = document.getElementById("s_tts_status");
-  const setTtsStatus = (text, kind) => { ttsStatus.textContent = text; ttsStatus.dataset.kind = kind || ""; };
+  // kind 'speak' 이면 앞에 이퀄라이저 막대(pibo-ui.css '움직임' 10)를 붙인다 — 말하는 중 표시일 뿐 실제 소리 크기가 아니다
+  const setTtsStatus = (text, kind) => {
+    ttsStatus.textContent = text;
+    if (kind === "speak") ttsStatus.insertAdjacentHTML("afterbegin", '<span class="pb-eq" aria-hidden="true"><i></i><i></i><i></i><i></i></span>');
+    ttsStatus.dataset.kind = kind === "speak" ? "" : (kind || "");
+  };
   socket.on("tts_status", (d) => {
     if (d && d.stopped) setTtsStatus(t("tts_stopped"));
     else if (d && d.ok) setTtsStatus(t("tts_done"), "ok");
@@ -1011,7 +1027,7 @@ const getSpeech = (socket) => {
   socket.on("tts_status", () => { ttsPending = false; });
   socket.on("voice_state", (st) => {
     if (st === "loading") setTtsStatus(t("voice_loading"), "load");
-    else if (st === "ready" && voicePrev === "loading") setTtsStatus(ttsPending ? t("tts_speaking") : t("voice_ready"), ttsPending ? "" : "ok");
+    else if (st === "ready" && voicePrev === "loading") setTtsStatus(ttsPending ? t("tts_speaking") : t("voice_ready"), ttsPending ? "speak" : "ok");
     else if (st === "error" && voicePrev === "loading") setTtsStatus(t("voice_error"), "err");
     voicePrev = st;
   });
@@ -1025,7 +1041,7 @@ const getSpeech = (socket) => {
       await alert_popup(translations["text_size_limit"][lang](max_tts_length));
       return;
     }
-    setTtsStatus(t("tts_speaking")); ttsPending = true;
+    setTtsStatus(t("tts_speaking"), "speak"); ttsPending = true;
     socket.emit("tts", {
       text: string,
       voice_type: $("select[name=s_voice_type]").val(),
@@ -1044,7 +1060,7 @@ const getSpeech = (socket) => {
         await alert_popup(translations["text_size_limit"][lang](max_tts_length));
         return;
       }
-      setTtsStatus(t("tts_speaking")); ttsPending = true;
+      setTtsStatus(t("tts_speaking"), "speak"); ttsPending = true;
       socket.emit("tts", {
         text: string,
         voice_type: $("select[name=s_voice_type]").val(),
