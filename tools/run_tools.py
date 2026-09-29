@@ -3,6 +3,7 @@ from fastapi import FastAPI,Request,UploadFile,File,Body
 from fastapi.responses import HTMLResponse,FileResponse,JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from contextlib import asynccontextmanager
 
 import time,os,json,shutil,logging,asyncio
@@ -31,6 +32,8 @@ try:
   app.mount("/static", StaticFiles(directory="static"), name="static")
   app.mount("/webfonts", StaticFiles(directory="webfonts"), name="webfonts")
   app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
+  # IDE·분류기처럼 gzip 으로 보낸다. 도구 첫 화면 JS·CSS 500KB → 133KB (수업에서 여러 대가 한 공유기로 받는다)
+  app.add_middleware(GZipMiddleware, minimum_size=1000)
   socketio = SocketManager(app=app, cors_allowed_origins=[], mount_location="/socket.io", socketio_path="")
 except Exception as ex:
   logging.error(f'Server Error:{ex}')

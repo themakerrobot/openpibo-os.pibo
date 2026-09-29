@@ -247,7 +247,7 @@ socket.on("onoff", function (data) {
   if (data == true && !was) {   // 준비 안 됨 → 됨 으로 바뀔 때 한 번만(원래자세로 모터를 보낸다)
     // 준비 전에 [카메라] 탭을 열었으면 그때 보낸 켜기 요청은 버려졌다(서버가 아직 없었다) → 지금 탭 기준으로 다시 알린다
     const menu = $("nav button.menu-selected").attr("name") || "";
-    socket.emit("vision_sleep", menu.split("_ds")[0] === "vision" ? "off" : "on");
+    socket.emit("vision_sleep", menu.split("_ds")[0] === "vision" && !document.hidden ? "off" : "on");
     socket.emit("disp_motion");
     clearInterval(onoff_intv);
     onoffCount.innerHTML = "";
@@ -355,9 +355,18 @@ const getVisions = (socket) => {
     showVisionFunc(data);
   });
 
+  // 카메라 한 장은 JPEG 바이트로 온다(260929, 예전 서버는 base64 문자열 — 둘 다 받는다). 이전 주소는 풀어 준다
+  let streamUrl = "";
   socket.on("stream", function (data) {
-    //console.log('stream', data)
-    $("#v_img").prop("src", `data:image/jpeg;charset=utf-8;base64,${data["img"]}`);
+    const img = data["img"];
+    if (typeof img === "string") {
+      $("#v_img").prop("src", `data:image/jpeg;charset=utf-8;base64,${img}`);
+    } else {
+      const url = URL.createObjectURL(new Blob([img], { type: "image/jpeg" }));
+      $("#v_img").prop("src", url);
+      if (streamUrl) URL.revokeObjectURL(streamUrl);
+      streamUrl = url;
+    }
     $(".v-stage").attr("data-has", "");   // 첫 그림이 오면 '기다리는 중' 안내를 걷는다
     $("#v_result").text(data["data"]);
   });
@@ -1136,6 +1145,13 @@ const fitRobot = () => {
 window.addEventListener("resize", fitRobot);
 window.addEventListener("load", fitRobot);
 if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitRobot);   // 글꼴이 바뀌면 높이도 바뀐다
+
+// 탭이 가려지면(다른 탭·앱으로 전환, 태블릿 화면 꺼짐) 카메라 보내기를 멈추고, 돌아오면 지금 탭 기준으로 되살린다(260929).
+// 서비스는 끄지 않는다(beforeunload 만 끈다 — CLAUDE.md '도구 서비스 수명'). 방치된 탭이 공유기 대역을 계속 쓰던 것
+document.addEventListener("visibilitychange", () => {
+  const menu = ($("nav button.menu-selected").attr("name") || "").split("_ds")[0];
+  socket.emit("vision_sleep", !document.hidden && menu === "vision" ? "off" : "on");
+});
 
 const handleMenu = (name) => {
   if (name === "vision") {

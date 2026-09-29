@@ -7,7 +7,6 @@ from openpibo.motion import Motion
 import asyncio
 import numpy as np
 import time,datetime
-import base64
 import cv2,logging
 import os,json,shutil,csv
 from PIL import Image,ImageDraw,ImageFont,ImageOps
@@ -16,10 +15,15 @@ from threading import Thread, Timer, Lock
 
 logging.basicConfig(level=logging.ERROR, format='%(asctime)s [%(levelname)s] %(message)s')
 
-def to_base64(im):
+# 카메라 한 장: 320x240 JPEG 를 바이트 그대로 보낸다(socket.io 가 바이너리로 싣는다, 260929).
+# 전엔 base64 문자열(+33%)에 품질 80 이었다. 품질 70 은 60장 중앙값 17.8 → 13.9KB, 2 FPS 로 대당 0.39 → 0.23 Mbps.
+# 수업에서 30대가 한 공유기를 쓰므로 줄였다. 분류기(학습 입력)는 품질 80 그대로 둔다
+STREAM_JPEG_QUALITY = 70
+
+def to_jpeg(im):
   im = cv2.resize(im, (320, 240))
-  _, buffer = cv2.imencode('.jpg', im, [int(cv2.IMWRITE_JPEG_QUALITY), 80])
-  return base64.b64encode(buffer).decode('utf-8')
+  _, buffer = cv2.imencode('.jpg', im, [int(cv2.IMWRITE_JPEG_QUALITY), STREAM_JPEG_QUALITY])
+  return buffer.tobytes()
 
 class Pibo:
   def __init__(self, emit_func=None, logger=None):
@@ -140,7 +144,7 @@ class Pibo:
       self.res_img = img.copy()
       if self.cam:
         self.cam.putText(img, '+', (self.imgX-5,self.imgY), 0.6, (100,100,200), 3)
-      asyncio.run(self.emit('stream', {'img':to_base64(img), 'data':res}, callback=None))
+      asyncio.run(self.emit('stream', {'img':to_jpeg(img), 'data':res}, callback=None))
       time.sleep(0.5)
 
   def face_detect(self):
