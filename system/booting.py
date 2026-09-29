@@ -11,6 +11,7 @@ from threading import Timer, Thread
 from collections import Counter
 import json,time,os,shutil
 import wifi
+import netwatch
 import network_disp
 import uart_ctrl
 import argparse
@@ -32,6 +33,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 apmode = False
+nw = netwatch.NetWatch()   # 학교 WiFi ↔ AP 전환 판단(netwatch.py 에 규칙이 있다)
 
 templates = Jinja2Templates(directory="/home/pi/openpibo-os/docs")
 app.mount("/build", StaticFiles(directory="/home/pi/openpibo-os/docs/build"), name="build")
@@ -84,26 +86,22 @@ async def f(data: dict = Body(...)):
 
 def wifi_update():
   global winfo, apmode
-  tmp = os.popen('/home/pi/openpibo-os/system/system.sh').read().strip('\n').split(',')
-  if (tmp[6] != '' and tmp[6][0:3] != '169') or (tmp[7] != '' and tmp[7][0:3] != '169'):
-    if apmode == True:
-      #os.system("sudo ip link set ap0 down")
-      os.system("/home/pi/openpibo-os/system/hotspot.sh stop")
-      print(f'ap0 up->down')
-    apmode = False
-  else:
-    if apmode == False:
-      #os.system("sudo ip link set ap0 up")
-      os.system("/home/pi/openpibo-os/system/hotspot.sh start")
-      print(f'ap0 down->up')
-    apmode = True
-  if winfo != tmp[6:12]:
-    print(f'Network Change {winfo} -> {tmp[6:12]}')
-    network_disp.run()
-  winfo = tmp[6:12]
-  _ = Timer(10, wifi_update)
-  _.daemon = True
-  _.start()
+  try:
+    tmp = os.popen('/home/pi/openpibo-os/system/system.sh').read().strip('\n').split(',')
+    has_ip = (tmp[6] != '' and tmp[6][0:3] != '169') or (tmp[7] != '' and tmp[7][0:3] != '169')
+    # 전엔 IP 가 한 번만 없어도 바로 AP 로 넘어갔다 → 판단은 netwatch 가 한다(저장된 SSID 가 보이면 90초 기다림 등)
+    nw.step(has_ip)
+    apmode = nw.apmode
+    if winfo != tmp[6:12]:
+      print(f'Network Change {winfo} -> {tmp[6:12]}')
+      network_disp.run()
+    winfo = tmp[6:12]
+  except Exception as ex:
+    print(f'[wifi_update] Error: {ex}')   # 예외가 나도 다음 점검은 이어간다(전엔 여기서 멈췄다)
+  finally:
+    _ = Timer(10, wifi_update)
+    _.daemon = True
+    _.start()
 
 ## foot servo watchdog
 # 발 서보(0, 6번) 과열 방지: 마지막 모터 명령 후 FOOT_HOLD_SEC 동안 새 명령이 없고

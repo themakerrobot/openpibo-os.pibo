@@ -241,7 +241,7 @@ country PH: DFS-FCC
 AP 를 켜기 전에 `nmcli connection down pibo-wifi` 로 학교 WiFi 연결을 **직접 내린다** — 사용자가 내린 연결은
 NetworkManager 가 다시 붙지 않는다. 그래서 수업에서 30대가 동시에 붙어 DHCP·접속이 수십 초 밀리면 일부가
 AP 로 넘어가 그대로 남고, 그 로봇들이 2.4GHz AP 비콘을 쏴서 방이 더 붐빈다.
-개선안(보류 260929 — 실기기 시험 필요). **저장된 WiFi 는 늘 있다** — 납품할 때 현장 공유기를 `pibo` / `!pibo0314` 로
+**적용함(260929, `system/netwatch.py` — 실기기 시험 전)**. **저장된 WiFi 는 늘 있다** — 납품할 때 현장 공유기를 `pibo` / `!pibo0314` 로
 맞추고 로봇에도 그 값을 넣어서 준다. 사용자가 [인터넷 설정] 에서 다른 SSID 로 바꿀 수는 있다.
 그래서 AP 로 넘어갈지는 '**지금 저장된** SSID(기본 `pibo` 든 바꾼 것이든)가 스캔에 보이는가' 하나로 가른다
 (IP 가 없을 때만 스캔 — 붙어 있는 로봇은 건드리지 않는다):
@@ -262,7 +262,17 @@ OLED 표시만 하고 AP 를 켜지 않으므로 그대로 둔다. 지금은 IP 
 **AP 에 붙은 단말이 없을 때만** 1~2분마다(같은 라디오라 스캔하면 AP 가 잠깐 끊긴다).
 **확인 필요:** 기기의 `nmcli -g ipv4.dhcp-timeout connection show pibo-wifi` (0 이면 기본값 45초)
 
-AP 모드에서 붙은 단말이 없고 저장된 SSID 가 다시 보이면 AP 를 끄고 다시 붙어 보는 자력 복귀도 같이 검토.
+**자력 복귀**: AP 모드에서 붙은 단말이 없으면 2분마다 저장된 SSID 를 새로 스캔해, 보이면 AP 를 끄고
+`nmcli --wait 45 connection up pibo-wifi` 로 다시 붙어 본다. 실패하면(비밀번호가 바뀌었을 수도) **AP 를 바로 되살리고**
+다음 시도 간격을 두 배로(2 → 4 → 8 → 최대 10분). 태블릿이 AP 에 붙어 있으면 스캔도 복귀도 하지 않는다.
+- 구조: 판단은 `netwatch.NetWatch.step(has_ip)` 한 곳, `booting.py` 의 `wifi_update` 는 10초마다 부르기만 한다.
+  명령(nmcli·iw·hotspot.sh)은 `ops` 로 바꿔 끼울 수 있어 기기 없이 시험했다(16개 경우: 바로 AP · 90초 · 중간에 IP ·
+  AP 사용 중 · 복귀 성공/실패·간격 두 배·최대 10분 · SSID 안 보임). `wifi_update` 는 예외가 나도 다음 점검을 이어간다(전엔 멈췄다)
+- `hotspot.sh` 는 그대로다(AP 를 켤 때 학교 연결을 내리는 것도 그대로 — 복귀는 netwatch 가 따로 올린다)
+- **기기에서 볼 것:** ① 교실처럼 IP 가 늦을 때 90초 기다리는지 ② 공유기를 끄면 약 42초 뒤 AP ③ AP 로 아무도 안 붙으면
+  2분 뒤 학교 WiFi 로 돌아오는지 ④ AP 가 켜진 상태에서 `nmcli dev wifi list --rescan yes` 가 되는지(같은 라디오)
+  ⑤ `journalctl -u booting.service | grep netwatch` 로 판단 기록 확인. PiBrain(`openpibo-os.pibrain/system/booting.py`)도
+  같은 구조(IP 한 번 없으면 AP)지만 아직 안 옮겼다
 **확인 필요:** AP 를 켤 때 학교 연결을 내리는 게 CYW43455 의 AP+STA 같은 채널 제약 때문인지
 
 WiFi 절전은 `system/init` 이 부팅 때 `iw wlan0 set power_save off` 로 끈다(260929 기기 확인: off).
