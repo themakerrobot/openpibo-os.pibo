@@ -336,7 +336,7 @@ const translations = {
   },
   v_edgePreservingFilter: {
     ko: "흐리게",
-    en: "edgePreservingFilter"
+    en: "Soften"
   },
   v_cartoon: {
     ko: "만화",
@@ -348,11 +348,11 @@ const translations = {
   },
   v_sketch_rgb: {
     ko: "스케치(컬러)",
-    en: "Sketch(rgb)"
+    en: "Sketch (color)"
   },
   v_detail: {
-    ko: "선명도개선",
-    en: "Detail enhancement"
+    ko: "선명하게",
+    en: "Sharpen"
   },
   v_qr: {
     ko: "QR코드",
@@ -363,8 +363,8 @@ const translations = {
     en: "Face analysis"
   },
   v_face_landmark: {
-    ko: "얼굴분석(랜드마크)",
-    en: "Face landmark"
+    ko: "얼굴 특징점",
+    en: "Face landmarks"
   },
   v_object: {
     ko: "사물인식",
@@ -372,7 +372,7 @@ const translations = {
   },
   v_hand: {
     ko: "손동작인식",
-    en: "Hand Gesture detection"
+    en: "Hand gesture"
   },
   v_classify: {
     ko: "이미지분류",
