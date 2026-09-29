@@ -469,7 +469,7 @@ const translations = {
     en: "Please enter a sentence."
   },
   text_size_limit: {
-    ko: (max_limit) => { return `문장을 (${max_limit}자 이내로 작성해주세요.)`},
+    ko: (max_limit) => { return `문장은 ${max_limit}자 이내로 적어 주세요.`},
     en: (max_limit) => { return `Please write your sentences in ${max_limit} characters or less.`}    
   },
   oled_input_error: {

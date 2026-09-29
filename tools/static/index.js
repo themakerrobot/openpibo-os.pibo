@@ -991,7 +991,9 @@ const getMotions = (socket) => {
 };
 
 const getSpeech = (socket) => {
-  const max_tts_length = 30;
+  // 예전 서버 TTS 시절 30자였다. 지금 합성(mtts.py)은 긴 글을 한국어 120자·영어 300자 단위로 나눠 만든다(260929).
+  // 길수록 합성이 오래 걸린다 — 파이보에서 200자에 몇 초인지는 확인 필요
+  const max_tts_length = 200;
 
   // 목소리: v2 화면은 select 대신 타일(select 값은 그대로 맞춘다 — v1 은 select). PiBrain 도구와 같은 10가지 + espeak
   const voiceSel = document.querySelector("select[name=s_voice_type]");
