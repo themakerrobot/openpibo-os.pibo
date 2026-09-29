@@ -1,17 +1,37 @@
 from fastapi_socketio import SocketManager
 from fastapi import FastAPI,Request,UploadFile,File,Body
-from fastapi.responses import HTMLResponse,FileResponse,JSONResponse
+from fastapi.responses import HTMLResponse,FileResponse,JSONResponse,RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from contextlib import asynccontextmanager
 
-import time,os,json,shutil,logging,asyncio
+import time,os,re,json,shutil,logging,asyncio
 from urllib import parse
 import argparse
 from threading import Timer
 
 pibo = None
+
+# 글꼴은 IDE(80) 한 벌을 세 앱이 같이 쓴다(260929). 이 서버의 글꼴 주소는 IDE 주소로 영구 이동시킨다.
+# 브라우저 캐시는 호스트가 같으면 포트가 달라도 같이 쓰므로, 한 번 받으면 IDE·도구·분류기가 다시 받지 않는다.
+# 전엔 앱마다 사본이라 처음 열 때 앱마다 최대 1.3MB(Pretendard) + 아이콘 글꼴을 따로 받았다.
+# IDE 는 CORS 를 모두 허용한다(글꼴은 CORS 로 받는다). PIBO_IDE_PORT 는 시험용(기본 80)
+SHARED_FONT = re.compile(r'^/(static/fonts/Pretendard-[\w.-]+\.woff2|webfonts/fa-[\w.-]+\.(?:woff2|ttf))$')
+
+class SharedFonts:
+  def __init__(self, app):
+    self.app = app
+
+  async def __call__(self, scope, receive, send):
+    m = SHARED_FONT.match(scope.get('path', '')) if scope['type'] == 'http' else None
+    if m:
+      port = int(os.environ.get('PIBO_IDE_PORT', 80))
+      host = (dict(scope.get('headers') or []).get(b'host', b'').decode('latin-1').rsplit(':', 1)[0]) or '127.0.0.1'
+      url = f"http://{host}{'' if port == 80 else f':{port}'}/{m.group(1)}"
+      await RedirectResponse(url, status_code=301, headers={'Cache-Control': 'public, max-age=604800'})(scope, receive, send)
+      return
+    await self.app(scope, receive, send)
 
 def init_pibo():
   global pibo
@@ -34,6 +54,7 @@ try:
   app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
   # IDE·분류기처럼 gzip 으로 보낸다. 도구 첫 화면 JS·CSS 500KB → 133KB (수업에서 여러 대가 한 공유기로 받는다)
   app.add_middleware(GZipMiddleware, minimum_size=1000)
+  app.add_middleware(SharedFonts)
   socketio = SocketManager(app=app, cors_allowed_origins=[], mount_location="/socket.io", socketio_path="")
 except Exception as ex:
   logging.error(f'Server Error:{ex}')
