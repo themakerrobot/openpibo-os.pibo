@@ -592,10 +592,10 @@ teach-lab 과 같은 기능(이미지·손·얼굴·포즈 가르치기)을 파�
 `pip install teachlab` 으로 PC 에서도 돈다. `samples.json` 은 [이어서 배우기] 용이다.
 
 블록: `[분류기 모델 … 불러오기]`(260929 전엔 '이미지 모델 설정하기')에 폴더 `mymodel`, 이름 칸에 모델 이름.
-예전엔 이름 칸이 둘(모델·라벨)이었는데 라벨 칸을 뺐다(260930v9, 두 리포). 예전에 저장한 프로그램은 `customblock_callback.js` 끝의
+예전엔 이름 칸이 둘(모델·라벨)이었는데 라벨 칸을 뺐다(261001v1, 두 리포). 예전에 저장한 프로그램은 `customblock_callback.js` 끝의
 불러오기 감싸개가 `labelpath` 입력을 걷어내고 연다(없는 입력이 있으면 Blockly 가 `MissingConnection` 으로 멈춘다 — 없는 필드는 경고만).
 폴더 선택은 그대로 둔다(사용자). '폴더 선택'(빈 값)이면 `cf.load(''+'과일')` → `/home/pi/mymodel/과일`.
-파이썬 `CustomClassifier.load(model_path)` 도 인자 하나다(260930v9 — 예전 블록에 맞춰 두었던 안 쓰는 `label_path` 를 뺐다).
+파이썬 `CustomClassifier.load(model_path)` 도 인자 하나다(261001v1 — 예전 블록에 맞춰 두었던 안 쓰는 `label_path` 를 뺐다).
 예전 블록이 만든 파이썬을 `.py` 로 저장해 둔 경우 `load(a, b)` 는 TypeError 가 난다 — 두 번째 인자를 지우면 된다.
 **예전 `model.keras` 는 못 읽는다** (불러오면 다시 학습하라는 오류). 의도한 호환 단절이다.
 
