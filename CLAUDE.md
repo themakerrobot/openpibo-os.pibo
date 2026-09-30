@@ -904,7 +904,7 @@ RT-DETR 은 쓰지 않는다. 320 에서 정확도가 크게 떨어졌다(coco12
 
 | 확인한 것 | 결과 |
 |---|---|
-| iframe 주소를 도구 → 분류기로 바꿀 때 전체화면 | **유지된다** (안 C 를 하는 이유) |
+| iframe 주소를 도구 → 분류기로 바꿀 때 전체화면 | **유지된다** (안 C 로 얻을 수 있던 유일한 것) |
 | 숨긴 iframe(`display:none`·화면 밖)의 `document.hidden` | **`false` 그대로**, `visibilitychange` 안 옴 |
 | 숨긴 iframe 의 `requestAnimationFrame` / `setTimeout` | 60/s → **0/s** / 98/s 그대로 |
 | iframe 을 **지울 때** `beforeunload`(→ `enable=off`) | **안 뜬다.** `src` 를 바꾸거나 위 탭을 닫으면 뜬다 |
