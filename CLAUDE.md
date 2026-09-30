@@ -412,6 +412,9 @@ IDE [도움말] 은 `booting.py`(8080) 가 리포의 `docs/build` 를 그대로 
   색은 `conf.py` `html_theme_options`, 덧칠은 `source/_static/mycss.css`
   글꼴은 IDE 와 같은 Pretendard 두 벌을 `source/_static/fonts/` 에 싣는다(8080 은 IDE 글꼴을 못 받는다 — 없으면 윈도에서 맑은 고딕으로 떨어져 촌스러웠다).
   첫 화면은 카드 4개(`index.rst` 의 raw html), API 페이지 제목은 `모듈 · 한국어 설명`
+- 블록 가이드는 **블록 그림 + 그 아래 설명**이다(260930). `gen_block_guide.py` 가 IDE 와 같은 테마·렌더러·글꼴로 블록을 하나씩 그려
+  `source/blocks/img/<블록 type>.png`(배경 투명, 2배, 256색)로 저장하고 옛 그림은 지운다. `conf.py` 의 `myst_enable_extensions = ['html_image']` 가
+  `<img width=…>` 를 Sphinx 그림으로 바꿔 `_images` 로 복사한다. 표에 넣었더니 칸이 좁아 긴 블록 글자가 작아져서 표를 뺐다
 - 손으로 쓰는 페이지: `notes/piboMaker.md`(IDE·도구·분류기·대화 사용법, 캡처는 `notes/images/*`), `notes/software.md`, `notes/hardware.md`.
   화면을 크게 바꾸면 캡처도 다시 찍을 것
 - `global` 에도 같은 `docs/build` 가 간다(문서는 한국어 한 벌. 델타 아님)
