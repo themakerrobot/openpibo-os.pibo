@@ -1033,8 +1033,8 @@ const getSpeech = (socket) => {
     else if (st === "error" && voicePrev === "loading") setTtsStatus(t("voice_error"), "err");
     voicePrev = st;
   });
-  $("#s_tts_bt").on("click", async function () {
-    let string = $("#s_tts_val").val().trim();
+  async function speak() {
+    let string = $("#s_tts_val").val().replace(/\s+/g, " ").trim();   // 여러 줄 칸이라 줄바꿈은 띄어쓰기로
     if (string == "") {
       await alert_popup(translations["text_empty"][lang]);
       return;
@@ -1049,27 +1049,20 @@ const getSpeech = (socket) => {
       voice_type: $("select[name=s_voice_type]").val(),
       volume: Number($("#volume").val()),
     });
-  });
-
-  $("#s_tts_val").on("keypress", async function (evt) {
-    if (evt.keyCode == 13) {
-      let string = $("#s_tts_val").val().trim();
-      if (string == "") {
-        await alert_popup(translations["text_empty"][lang]);
-        return;
-      }
-      if (string.length > max_tts_length) {
-        await alert_popup(translations["text_size_limit"][lang](max_tts_length));
-        return;
-      }
-      setTtsStatus(t("tts_speaking"), "speak"); ttsPending = true;
-      socket.emit("tts", {
-        text: string,
-        voice_type: $("select[name=s_voice_type]").val(),
-        volume: Number($("#volume").val()),
-      });
+  }
+  $("#s_tts_bt").on("click", speak);
+  // Enter 로 말하기(Shift+Enter 는 줄바꿈). 한글 입력기 조합 중의 Enter 는 넘긴다
+  $("#s_tts_val").on("keydown", function (evt) {
+    if (evt.key === "Enter" && !evt.shiftKey && !evt.originalEvent.isComposing) {
+      evt.preventDefault();
+      speak();
     }
   });
+  // 남은 글자 수 (200자 제한)
+  const ttsCount = () => $("#s_tts_count").text(`${$("#s_tts_val").val().length} / ${max_tts_length}`)
+    .toggleClass("s-count--full", $("#s_tts_val").val().length >= max_tts_length);
+  $("#s_tts_val").on("input", ttsCount);
+  ttsCount();
 
 
   let micTimer = null;

@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="../static/all.min.css?ver=240110v1" type="text/css" />
     <link rel="stylesheet" href="../static/jquery.jsonview.min.css" />
     <link rel="stylesheet" href="../static/index.css?ver=260923v3" />
-  <link rel="stylesheet" href="../static/pibo-ui.css?ver=260930v1" />
+  <link rel="stylesheet" href="../static/pibo-ui.css?ver=260930v2" />
     <link rel="stylesheet" href="../static/simulator.css?ver=240110v1" />
     <link rel="shortcut icon" href="../static/icon.png" type="image/x-icon" />
 
@@ -537,9 +537,12 @@
                 </select>
               </div>
               <div class="s-voice-tiles" id="s_voice_tiles" hidden></div>
-              <div class="speech-input-group">
+              <div class="speech-input-group s-text-row">
                 <span class="label" data-key="text"></span><span class="pb-sep">:</span>
-                <input type="text" id="s_tts_val" maxlength="200" />
+                <textarea id="s_tts_val" maxlength="200" rows="3"></textarea>
+              </div>
+              <div class="speech-input-group s-btn-row">
+                <span class="label"></span>
                 <button id="s_tts_bt" style="width:120px">
                   <i class="fa-solid fa-play"></i>
                   <span data-key="execute"></span>
@@ -548,6 +551,7 @@
                   <i class="fa-solid fa-stop"></i>
                   <span data-key="stop"></span>
                 </button>
+                <span class="s-count" id="s_tts_count">0 / 200</span>
               </div>
               <div class="s-status" id="s_tts_status"></div>
             </section>
@@ -584,6 +588,6 @@
     </main>
   </body>
   <script src="../static/ko2en.js?ver=260929v3"></script>
-  <script src="../static/pibo-ui.js?ver=260930v1"></script>
-  <script src="../static/index.js?ver=260929v4"></script>
+  <script src="../static/pibo-ui.js?ver=260930v2"></script>
+  <script src="../static/index.js?ver=260930v1"></script>
 </html>
