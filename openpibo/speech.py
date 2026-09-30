@@ -190,6 +190,24 @@ Functions:
 # 파이보 마이크(Audio.record 와 같은 장치·형식). 파일 대신 표준출력으로 흘려받는다
 MIC_CMD = ['arecord', '-D', 'plug:dmic_sv', '-c2', '-r', '16000', '-f', 'S32_LE', '-t', 'raw', '-q']
 
+
+def _dc_block(x, px, py, r=0.995):
+  """
+  DC 를 걷어낸다(1차 고역 통과, 16kHz 에서 약 13Hz 아래를 깎음). 블록을 이어서 넣도록 상태(px, py)를 주고받는다.
+
+  파이보 마이크 소리에는 큰 DC 가 섞여 있다(260930 실측: 약 -0.37, 몇 초에 걸쳐 조금씩 변함).
+  그대로 두면 silero VAD 가 말을 못 잡는다. 인식 모델은 DC 가 있어도 받아 적었다.
+  """
+  xs = x.tolist()
+  if px is None:
+    px = xs[0] if xs else 0.0
+  out = []
+  for v in xs:
+    py = v - px + r * py
+    px = v
+    out.append(py)
+  return np.asarray(out, dtype=np.float32), px, py
+
 class SpeechToText:
   """
 Functions:
@@ -268,6 +286,7 @@ Functions:
       audio = audio.mean(axis=1)
     if len(audio) == 0:
       return ''
+    audio = audio - audio.mean()   # DC 가 있으면 아래 크기 맞추기가 틀어진다
     # 마이크 소리가 작으면 키운다(최대 20배). 인식 모델은 소리 크기에 어느 정도 민감하다
     peak = float(np.abs(audio).max())
     if 0 < peak < 0.5:
@@ -328,6 +347,7 @@ Functions:
     vad = self._vad(timeout)
     w = self._vad_cfg.silero_vad.window_size
     chunks, total, heard, quiet, rest = [], 0, False, 0, np.zeros(0, np.float32)
+    px, py, peak = None, 0.0, 0.0   # DC 필터 상태, 최근 최대 크기
     proc = subprocess.Popen(MIC_CMD, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
     try:
       while total < timeout * sr:
@@ -336,9 +356,13 @@ Functions:
           break
         data = data[:len(data) // 8 * 8]
         x = (np.frombuffer(data, dtype='<i4').reshape(-1, 2).mean(axis=1) / 2147483648.0).astype(np.float32)
+        x, px, py = _dc_block(x, px, py)
         chunks.append(x)
         total += len(x)
-        buf = np.concatenate([rest, x])
+        # VAD 는 작은 소리(최대 0.01 안팎)에서 말을 놓친다. 최근 최대 크기로 키워서 넣는다(최대 30배)
+        peak = max(peak * 0.9, float(np.abs(x).max()))
+        g = min(max(0.5 / peak, 1.0), 30.0) if peak > 0 else 1.0
+        buf = np.concatenate([rest, x * g])
         n = len(buf) // w * w
         for i in range(0, n, w):
           vad.accept_waveform(buf[i:i + w])
