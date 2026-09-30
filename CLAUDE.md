@@ -92,7 +92,7 @@ git tag -d <태그> ...           # 로컬 삭제
 | `Dialog.translate` + `modules/speech/mtranslate.py` | Google translate_a |
 | `Speech.tts` 의 gtts/e_gtts 분기 | Google translate_tts |
 
-IDE 블록 8개(`speech_stt` `speech_tts` `speech_tts_play` `vision_call_ai_img(_ext)`
+IDE 블록 8개(`speech_stt`※ `speech_tts` `speech_tts_play` `vision_call_ai_img(_ext)`
 `speech_gtts` `speech_gtts_play` `speech_translate`)와 Tools 의 번역 패널·gtts 목소리도
 같이 없앴다.
 
@@ -101,6 +101,8 @@ IDE 블록 8개(`speech_stt` `speech_tts` `speech_tts_play` `vision_call_ai_img(
 - `collect.py` — 위키백과 / 기상청 / JTBC RSS. 자사 서버가 아니고 **KR 전용**이다
   (PH 툴박스에는 Collect 카테고리가 없다)
 - `Dialog.call_llm` — `localhost:50020` (llama-server). 외부 아님
+
+※ `speech_stt` 와 `Speech.stt` 는 260930 에 **기기 안에서 도는 STT 로 되살렸다** — 아래 '음성 인식(STT)'.
 
 음성은 `SpeechOnDevice`(ONNX, `lang='na'` 자동 판별)와 espeak 로 기기 안에서 처리한다.
 `SpeechOnDevice` 는 **Supertonic 3**(supertone-inc/supertonic, 31개 언어)이다. `openpibo/modules/speech/mtts.py` 는
@@ -576,6 +578,49 @@ TensorFlow·torch 걷어내기 순서와 지울 목록은 IMAGE.md. 파이보에
 포즈는 한 화면에 여러 사람이 있으면 브라우저와 파이썬이 다른 사람을 잡을 수 있다(특징 코사인이 0.3 까지 떨어진 적 있음).
 
 ---
+
+## 음성 인식 · TTS · 메모리 (260930)
+
+### STT — `openpibo.speech.SpeechToText`, `Speech.stt`
+
+- 모델: **SenseVoiceSmall int8**(한·영·중·일·광둥어, 언어 자동 판별) + **silero VAD**, 실행은 **sherpa-onnx 1.13.8**
+  (자기 전용 onnxruntime 을 따로 싣는다 — 기기 onnxruntime 1.20.1·numpy 1.26 은 안 건드린다). 모델은 `/home/pi/.model/stt`
+- `listen(timeout, filename, end_silence=0.8)`: `arecord -D plug:dmic_sv -c2 -r 16000 -f S32_LE -t raw`(Audio.record 와 같은 장치)를
+  흘려받아 VAD 로 **말이 끝나면(0.8초 조용) 멈춘다.** `timeout` 은 최대 대기. 말이 없으면 빈 문자열. 소리가 작으면 최대 20배 키운다
+- `transcribe(audio, sr)`: 25초 넘는 소리는 VAD 로 말 단위로 잘라 받아 적는다(통째로 넣으면 글자가 뒤섞였다)
+- **`Speech.stt(filename, timeout, verbose)` 와 블록 `speech_stt` 는 예전(서버 STT) 이름·입력 그대로**다. 옛 프로그램이 그대로 열린다.
+  블록 앞의 번개(인터넷 필요) 그림만 뺐다. 모델은 처음 부를 때 한 번 올린다(파이보에서 5~12초)
+- sherpa-onnx 한국어 스트리밍 zipformer 는 쓰지 않는다(빈 결과 버그, k2-fsa/sherpa-onnx#2886). Moonshine 한국어 Tiny/Base 는
+  비상업 라이선스라 뺐다. SenseVoice 모델 라이선스(FunASR)의 상업 조건은 **확인 필요**
+- 컨테이너 시험(가짜 arecord 로 파이보 마이크 형식을 흉내): 한·영 인식, 작은 소리, 말 끝나면 멈춤, timeout 자르기, 무음 → 8/8.
+  **파이보 마이크 실제 소리 크기·서보 소음에서의 인식률은 확인 필요**
+
+### TTS 를 int8 로 (260930)
+
+`/home/pi/.model/tts/assets/onnx` 를 Supertonic 3 int8 변환본(`leeyunjai/edge-lab` 의 `tts-int8`, vocoder 만 fp32 — story-play 와 같은 것)으로
+바꿨다. 파일 이름이 같아 **코드는 그대로**다. 380MB → 178MB, 올린 메모리 약 606MB → 약 330MB, 합성 7.84초 → 6.05초(5.2초 문장).
+음질은 들어 보고 괜찮다고 판단(사용자). 변형 모델이라 `MODIFICATIONS.md`·`LICENSE-OpenRAIL-M.txt` 를 같은 폴더에 둔다(OpenRAIL-M)
+
+### 파이보 실측 (cd488e95, Pi 4 · RAM 1796MB · SD 스왑 2GB)
+
+| 올린 것 | 메모리 |
+|---|---|
+| 기본(OS + IDE + booting) | 약 250MB 사용, 여유 약 1.5GB |
+| llama-server (Gemma 3 1B Q4_K_M 806MB, `--ctx-size 2048`) | RSS 897MB (대부분 모델 파일 매핑) |
+| TTS int8 + STT 를 올린 학생 프로그램 | 약 637~725MB |
+
+- **셋(LLM·TTS·STT)을 동시에 올리면 여유가 거의 0 이다.** LLM 이 대답을 만들 때는 모델 806MB 가 전부 메모리에 있어야 해서
+  `free` 의 '여유'를 믿으면 안 된다. 측정 중 SD 스왑이 29 → 170MB 로 늘었다. **fp32 TTS 로는 안 들어간다**
+- 인식 5.2초 음성 1.33초, 합성 5.2초 문장 6.05초(int8). 대화 한 바퀴는 합성이 가장 느린 고리다 — 줄이려면 문장 단위로 쪼개 첫 문장부터 말하기
+- 실제 대화 한 바퀴(녹음 → STT → LLM 생성 → TTS → 재생)에서의 시간·스왑은 **아직 안 쟀다**
+
+### `/home/pi/.model` 과 `requirements.txt`
+
+- `/home/pi/.model` 은 리포 밖(이미지)이다. 구성과 파일별 sha256 은 그 폴더의 `VERSION`. 코드가 읽는 것: `tts/assets/{onnx,voice_styles}`,
+  `stt/`, `llm/llm-model.gguf`(링크), `object/yolo11s.onnx`, `hand/*.task`, `face/{detection,age-gender,emotion,landmark}`.
+  `classifier/`(예전 TF 가중치)는 260930 에 지웠다(아무도 안 씀)
+- 모델은 `leeyunjai/themaker`(HF)에서 손으로 받는다. **`git clone` 말고 `huggingface-cli download`** — clone 은 `.git/lfs` 에 한 벌을 더 남긴다(이번에 약 400MB)
+- `requirements.txt`(리포 맨 위): 리포 코드가 직접 import 하는 패키지만, 기기 버전으로. `test/requirements.txt` 는 260923 전체 스냅숏(TF·torch 포함)
 
 ## 사물 인식 (260924)
 

@@ -1437,6 +1437,20 @@ let toolbox = (lang) => {
         "contents": [
           {
             "kind": "block",
+            "type": "speech_stt",
+            "inputs":{
+              "timeout": {
+                "shadow": {
+                  "type": "math_number",
+                  "fields": {
+                    "NUM": "5"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "kind": "block",
             "type": "speech_otts",
             "inputs":{
               "text":{

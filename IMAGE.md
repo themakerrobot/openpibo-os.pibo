@@ -119,6 +119,34 @@ $PY -c "from bs4 import BeautifulSoup; BeautifulSoup('<a/>', 'xml'); print('lxml
 - 위 목록 밖의 작은 범용 라이브러리(`httpx` `rich` `typer` `aiofiles` `cryptography` 등)는
   지워도 얻는 게 적어서 그대로 뒀다
 
+### 파이썬 패키지 · 모델 폴더 (260930~, 이미지당 1회)
+
+```bash
+PY=/home/pi/.pyenv/bin/python3
+# 리포가 쓰는 패키지(requirements.txt). 새로 필요한 건 sherpa-onnx(STT) 둘뿐이다 — numpy·onnxruntime 을 끌고 오지 않는다
+$PY -m pip install -r /home/pi/openpibo-os/requirements.txt
+$PY -m pip check
+```
+
+`/home/pi/.model` 은 `leeyunjai/themaker`(HF)에서 받는다. **`git clone` 하지 말 것** — `.git/lfs` 에 모델이 한 벌 더 남는다.
+`huggingface-cli download leeyunjai/themaker --local-dir ...` 로 받고, 아래를 맞춘다.
+
+| 폴더 | 들어갈 것 |
+|---|---|
+| `tts/assets/onnx` | Supertonic 3 **int8** 변환본(`leeyunjai/edge-lab` `tts-int8`, vocoder 만 fp32, 약 178MB) + `tts.json` `unicode_indexer.json` |
+| `tts/assets` | `voice_styles/`(F1~F5·M1~M5) · `LICENSE` · `LICENSE-OpenRAIL-M.txt` · `MODIFICATIONS.md`(변환 고지 — 변형 모델이라 필요) |
+| `stt` | `model.int8.onnx` `tokens.txt`(sherpa-onnx `sense-voice-zh-en-ja-ko-yue-int8-2024-07-17`) · `silero_vad.onnx` · `LICENSE-SenseVoice` |
+| `llm` | `gemma-3-1b-it-Q4_K_M.gguf` + 링크 `llm-model.gguf` |
+| `object` `hand` `face` | 그대로 |
+| (지움) | `classifier/`(예전 TF 가중치), `tts/assets/{.git,audio_samples,img}`, fp32 `onnx` |
+
+```bash
+cd /home/pi/.model
+du -sh */ | sort -h            # tts 약 181M, stt 약 230M, llm 769M
+sed -n '/^## sha256/,$p' VERSION | tail -n +2 | sha256sum -c --quiet && echo "VERSION 과 같음"
+$PY -c "from openpibo.speech import SpeechToText, SpeechOnDevice; SpeechOnDevice(); SpeechToText(); print('tts·stt ok')"
+```
+
 ## 2. 뜨기 전 청소
 
 이미지에 개인 정보와 기기별 상태가 딸려간다. 전원 끄기 전에 지운다.

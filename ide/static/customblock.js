@@ -1223,6 +1223,27 @@ Blockly.defineBlocksWithJsonArray(
       helpUrl: ''
     },
     {
+      // 260930 되살림: 예전(서버 STT)과 같은 type·입력 이름이라 옛 프로그램이 그대로 열린다. 이제 기기 안에서 처리한다
+      type: 'speech_stt',
+      message0: '%{BKY_SPEECH_STT}',
+      args0:
+        [
+          {
+            "type": "field_image",
+            "src": "svg/ear-listen-solid.svg",
+            "width": 27,
+            "height": 27
+          },
+          {"type":"input_dummy"},
+          {"type": "input_value", "name": "timeout", "check":"Number"},
+        ],
+      output: 'String',
+      inputsInline: true,
+      colour: color_type["speech"],
+      tooltip: '%{BKY_SPEECH_STT_TOOLTIP}',
+      helpUrl: ''
+    },
+    {
       type: 'speech_otts',
       message0: '%{BKY_SPEECH_OTTS}',
       args0:

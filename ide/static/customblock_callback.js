@@ -371,6 +371,13 @@ Blockly.Python.forBlock['oled_clear'] = function(block) {
 }
 
 // speech
+Blockly.Python.forBlock['speech_stt'] = function(block) {
+  Blockly.Python.definitions_['from_speech_import_Speech'] = 'from openpibo.speech import Speech';
+  Blockly.Python.definitions_['assign_speech'] = 'speech = Speech()';
+
+  const timeout = Blockly.Python.valueToCode(block, 'timeout', Blockly.Python.ORDER_ATOMIC);
+  return [`speech.stt(timeout=${timeout}, verbose=False)`, Blockly.Python.ORDER_ATOMIC];
+}
 Blockly.Python.forBlock['speech_otts'] = function(block) {
   Blockly.Python.definitions_['from_speech_import_SpeechOnDevice'] = 'from openpibo.speech import SpeechOnDevice';
   Blockly.Python.definitions_['assign_speech_ondevice'] = 'speech_ondevice = SpeechOnDevice()';
