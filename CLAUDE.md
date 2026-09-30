@@ -410,6 +410,8 @@ IDE [도움말] 은 `booting.py`(8080) 가 리포의 `docs/build` 를 그대로 
   바꾼다(기기에는 다 있어서 결과가 같다). numpy·opencv 가 있는 파이썬 + `docs/requirements.txt`. 파이썬은 `PY=` 로 고른다
 - 테마는 **Furo**(MIT, 260930 — 예전 sphinx_rtd_theme). 밝게·어둡게는 브라우저를 따르고 외부 글꼴·CDN 이 없어 AP 모드에서도 된다.
   색은 `conf.py` `html_theme_options`, 덧칠은 `source/_static/mycss.css`
+  글꼴은 IDE 와 같은 Pretendard 두 벌을 `source/_static/fonts/` 에 싣는다(8080 은 IDE 글꼴을 못 받는다 — 없으면 윈도에서 맑은 고딕으로 떨어져 촌스러웠다).
+  첫 화면은 카드 4개(`index.rst` 의 raw html), API 페이지 제목은 `모듈 · 한국어 설명`
 - 손으로 쓰는 페이지: `notes/piboMaker.md`(IDE·도구·분류기·대화 사용법, 캡처는 `notes/images/*`), `notes/software.md`, `notes/hardware.md`.
   화면을 크게 바꾸면 캡처도 다시 찍을 것
 - `global` 에도 같은 `docs/build` 가 간다(문서는 한국어 한 벌. 델타 아님)
@@ -590,6 +592,8 @@ teach-lab 과 같은 기능(이미지·손·얼굴·포즈 가르치기)을 파�
 예전엔 이름 칸이 둘(모델·라벨)이었는데 라벨 칸을 뺐다(260930v9, 두 리포). 예전에 저장한 프로그램은 `customblock_callback.js` 끝의
 불러오기 감싸개가 `labelpath` 입력을 걷어내고 연다(없는 입력이 있으면 Blockly 가 `MissingConnection` 으로 멈춘다 — 없는 필드는 경고만).
 폴더 선택은 그대로 둔다(사용자). '폴더 선택'(빈 값)이면 `cf.load(''+'과일')` → `/home/pi/mymodel/과일`.
+파이썬 `CustomClassifier.load(model_path)` 도 인자 하나다(260930v9 — 예전 블록에 맞춰 두었던 안 쓰는 `label_path` 를 뺐다).
+예전 블록이 만든 파이썬을 `.py` 로 저장해 둔 경우 `load(a, b)` 는 TypeError 가 난다 — 두 번째 인자를 지우면 된다.
 **예전 `model.keras` 는 못 읽는다** (불러오면 다시 학습하라는 오류). 의도한 호환 단절이다.
 
 ### 가져온 코드 — 두 곳을 함께 고칠 것
