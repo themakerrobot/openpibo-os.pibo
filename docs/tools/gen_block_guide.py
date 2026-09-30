@@ -13,6 +13,13 @@ from playwright.async_api import async_playwright
 URL = sys.argv[1]
 OUT = sys.argv[2] if len(sys.argv) > 2 else os.path.join(os.path.dirname(__file__), '..', 'source', 'blocks', 'guide.md')
 BASIC = {'논리', '반복', '수학', '문자', '목록', '색상', '변수', '함수'}   # Blockly 기본 분류(ko 이름)
+# 제품 이름: 리포 원격 주소로 가른다(openpibo-os.pibrain → PiBrain)
+import subprocess
+try:
+    _url = subprocess.run(['git', '-C', os.path.dirname(os.path.abspath(__file__)), 'remote', 'get-url', 'origin'], capture_output=True, text=True).stdout
+except Exception:
+    _url = ''
+PRODUCT = os.environ.get('PRODUCT') or ('PiBrain' if 'pibrain' in _url.lower() else '파이보')
 
 JS = r"""async () => {
   for (let i = 0; i < 100 && !(Blockly.Msg.FLAG_EVENT && /[가-힣]/.test(Blockly.Msg.FLAG_EVENT)); i++) await new Promise(r => setTimeout(r, 50));
@@ -82,18 +89,18 @@ async def main():
     count = lambda c: '만들면 생김' if c.get('dynamic') or not c['rows'] else len(c['rows'])
 
     L = ['# 블록코딩', '',
-         '파이보 메이커는 Blockly 기반의 블록 코딩을 지원합니다. 기본 블록 외에 파이보를 쉽게 쓸 수 있도록',
+         f'{PRODUCT} 메이커는 Blockly 기반의 블록 코딩을 지원합니다. 기본 블록 외에 {PRODUCT}{"을" if PRODUCT == "PiBrain" else "를"} 쉽게 쓸 수 있도록',
          '**openpibo** 파이썬 패키지와 이어진 블록이 있습니다. 블록 코드는 [파이썬 코드] 버튼으로 파이썬으로 볼 수 있습니다.', '',
          '```{note}', '이 페이지는 IDE 툴박스에서 자동으로 만들었습니다(`docs/tools/gen_block_guide.py`). 블록 모양의 `[ ▾]` 는 고르는 칸,',
-         '`( )` 는 다른 블록이나 값을 끼우는 칸, `[ ]` 는 직접 적는 칸입니다. 모든 기능은 **파이보 안에서** 돌아가며 인터넷이 필요한 것은',
+         '`( )` 는 다른 블록이나 값을 끼우는 칸, `[ ]` 는 직접 적는 칸입니다. 모든 기능은 **' + PRODUCT + ' 안에서** 돌아가며 인터넷이 필요한 것은',
          '[수집] 분류뿐입니다.', '```', '',
          '## 블록 구성', '', '```', 'Blockly 기본 블록 (Blockly 공식 블록 — 설명은 블록에 마우스를 올리면 나옵니다)']
     for i, c in enumerate(basic):
         L.append(('└── ' if i == len(basic) - 1 else '├── ') + f"{c['name']} ({count(c)})")
-    L += ['', '파이보 전용 블록']
+    L += ['', f'{PRODUCT} 전용 블록']
     for i, c in enumerate(custom):
         L.append(('└── ' if i == len(custom) - 1 else '├── ') + f"{c['name']} ({count(c)})")
-    L += ['```', '', '## 파이보 전용 블록', '']
+    L += ['```', '', f'## {PRODUCT} 전용 블록', '']
     for c in custom:
         L += [f"### {c['name']}", '', '| 블록 | 설명 |', '|---|---|']
         for r in c['rows']:
