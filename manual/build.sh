@@ -1,12 +1,12 @@
 #!/bin/bash
 # 매뉴얼 PDF 를 만든다. 내용은 전부 리포에서 뽑으므로 손으로 옮겨 적을 게 없다.
 #
-#   ./build.sh                    # 영문판 origin/ph + 한글판 origin/main
+#   ./build.sh                    # 영문판 origin/global + 한글판 origin/main
 #   ./build.sh 260915v1-ph        # 영문판만 그 태그로. 한글판은 --ko-ref 로 따로 준다
 #   ./build.sh 260915v1-ph --ko-ref=260915v1
 #   ./build.sh --en-only | --ko-only
 #
-# 영문판은 ph(영문 배포판), 한글판은 main 에서 뽑는다. 블록 이름이 다르고
+# 영문판은 global(영문 배포판, 예전 ph), 한글판은 main 에서 뽑는다. 블록 이름이 다르고
 # main 에만 '수집' 카테고리와 collect.json 예제가 있어서 번역이 아니라 따로 뽑는다.
 #
 # 필요한 것: node, python3, Chromium (또는 CHROME 환경변수로 경로 지정)
@@ -24,7 +24,7 @@ for a in "$@"; do
     *)  EN_REF="$a" ;;
   esac
 done
-EN_REF="${EN_REF:-origin/ph}"
+EN_REF="${EN_REF:-origin/global}"
 
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
