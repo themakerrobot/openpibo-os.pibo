@@ -1,17 +1,37 @@
 from fastapi_socketio import SocketManager
 from fastapi import FastAPI,Request,UploadFile,File,Body
-from fastapi.responses import HTMLResponse,FileResponse,JSONResponse
+from fastapi.responses import HTMLResponse,FileResponse,JSONResponse,RedirectResponse
 from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from contextlib import asynccontextmanager
 
-import time,os,json,shutil,logging
+import time,os,re,json,shutil,logging,asyncio
 from urllib import parse
 import argparse
 from threading import Timer
 
 pibo = None
+
+# 글꼴은 IDE(80) 한 벌을 세 앱이 같이 쓴다(260929). 이 서버의 글꼴 주소는 IDE 주소로 영구 이동시킨다.
+# 브라우저 캐시는 호스트가 같으면 포트가 달라도 같이 쓰므로, 한 번 받으면 IDE·도구·분류기가 다시 받지 않는다.
+# 전엔 앱마다 사본이라 처음 열 때 앱마다 최대 1.3MB(Pretendard) + 아이콘 글꼴을 따로 받았다.
+# IDE 는 CORS 를 모두 허용한다(글꼴은 CORS 로 받는다). PIBO_IDE_PORT 는 시험용(기본 80)
+SHARED_FONT = re.compile(r'^/(static/fonts/Pretendard-[\w.-]+\.woff2|webfonts/fa-[\w.-]+\.(?:woff2|ttf))$')
+
+class SharedFonts:
+  def __init__(self, app):
+    self.app = app
+
+  async def __call__(self, scope, receive, send):
+    m = SHARED_FONT.match(scope.get('path', '')) if scope['type'] == 'http' else None
+    if m:
+      port = int(os.environ.get('PIBO_IDE_PORT', 80))
+      host = (dict(scope.get('headers') or []).get(b'host', b'').decode('latin-1').rsplit(':', 1)[0]) or '127.0.0.1'
+      url = f"http://{host}{'' if port == 80 else f':{port}'}/{m.group(1)}"
+      await RedirectResponse(url, status_code=301, headers={'Cache-Control': 'public, max-age=604800'})(scope, receive, send)
+      return
+    await self.app(scope, receive, send)
 
 def init_pibo():
   global pibo
@@ -32,7 +52,9 @@ try:
   app.mount("/static", StaticFiles(directory="static"), name="static")
   app.mount("/webfonts", StaticFiles(directory="webfonts"), name="webfonts")
   app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
-  templates = Jinja2Templates(directory="templates")
+  # IDE·분류기처럼 gzip 으로 보낸다. 도구 첫 화면 JS·CSS 500KB → 133KB (수업에서 여러 대가 한 공유기로 받는다)
+  app.add_middleware(GZipMiddleware, minimum_size=1000)
+  app.add_middleware(SharedFonts)
   socketio = SocketManager(app=app, cors_allowed_origins=[], mount_location="/socket.io", socketio_path="")
 except Exception as ex:
   logging.error(f'Server Error:{ex}')
@@ -41,7 +63,9 @@ except Exception as ex:
 @app.get('/', response_class=HTMLResponse)
 async def f(request:Request):
   await emit('onoff', False if pibo is None else True)
-  return templates.TemplateResponse("index.html", {"request": request})
+  # 템플릿은 Jinja 문법을 안 쓴다. 파일을 그대로 보낸다(starlette 1.0 에서 옛 TemplateResponse 호출이 500)
+  return FileResponse(os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates", "index.html"), media_type="text/html",
+                      headers={"Cache-Control": "no-cache"})
 
 @app.post('/import_motion')
 async def import_motion(data:UploadFile = File(...)):
@@ -93,10 +117,40 @@ async def export_motion(name="all"):
 
 @app.get('/download_img', response_class=FileResponse)
 async def download_img():
-  pibo.imwrite('/home/pi/capture.jpg')
+  if pibo is None or not pibo.imwrite('/home/pi/capture.jpg'):
+    return JSONResponse(content={'result': 'camera not ready'}, status_code=503)
   return FileResponse(path="/home/pi/capture.jpg", media_type="image/jpeg", filename="capture.jpg")
 
 ## socktio
+# 준비 상태(260929): 화면이 붙는 순간 지금 상태를 그 화면에만 알려 준다.
+# 전엔 초기화가 끝날 때 한 번 방송하는 게 전부라, 그 뒤에 열거나 새로 고친 화면은 [로봇 연결됨] 이 안 떴다
+# (화면이 5초마다 'onoff' 를 묻지만 받는 곳이 없었다 → 아래 onoff 가 답한다)
+async def send_state(sid):
+  await app.sio.emit('onoff', pibo is not None, to=sid)
+  if pibo is not None:
+    await app.sio.emit('vision_state', dict(pibo.vision_state), to=sid)
+    await app.sio.emit('voice_state', pibo.voice_state, to=sid)
+
+@app.sio.on('connect')
+async def on_connect(sid, *args):
+  await send_state(sid)
+
+@app.sio.on('onoff')
+async def onoff(sid, d=None):
+  await send_state(sid)
+
+# 음성 탭을 열면 목소리 모델을 미리 올린다(처음 한 번 몇 초). 끝나면 모두에게 알린다
+@app.sio.on('voice_warm')
+async def voice_warm(sid, d=None):
+  if pibo is None or pibo.voice_state in ('loading', 'ready'):
+    return
+  await emit('voice_state', 'loading')
+  try:
+    await asyncio.to_thread(pibo.voice_warm)
+  except Exception as ex:
+    logging.error(f'[voice_warm] Error: {ex}')
+  await emit('voice_state', pibo.voice_state)
+
 # vision
 @app.sio.on('disp_vision')
 async def disp_vision(sid, d=None):
@@ -147,7 +201,21 @@ async def mic_replay(sid, d=None):
 async def tts(sid, d=None):
   if pibo is None:
     return
-  pibo.tts(d)
+  # 온디바이스 합성이 1~2초 걸린다. 스레드로 돌려야 그동안 다른 화면(카메라 스트림 등)이 안 멈춘다
+  cold = pibo.voice_state != 'ready' and d and d.get('voice_type') in pibo.OD_VOICES
+  if cold:
+    await emit('voice_state', 'loading')
+  err = await asyncio.to_thread(pibo.tts, d)
+  if cold:
+    await emit('voice_state', pibo.voice_state)
+  await emit('tts_status', {'ok': err is None, 'error': err or ''})
+
+@app.sio.on('tts_stop')
+async def tts_stop(sid, d=None):
+  if pibo is None:
+    return
+  await asyncio.to_thread(pibo.tts_stop)
+  await emit('tts_status', {'ok': True, 'stopped': True, 'error': ''})
 
 # speech
 # motion
@@ -247,7 +315,7 @@ async def emit(key, data, callback=None):
 
 if __name__ == '__main__':
   parser = argparse.ArgumentParser()
-  parser.add_argument('--port', help='set port number', default=50000)
+  parser.add_argument('--port', help='set port number', type=int, default=50000)
   args = parser.parse_args()
 
   import uvicorn

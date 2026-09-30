@@ -112,6 +112,13 @@ class DeviceControl:
                 with self.sd_lock:
                     self.system_data['battery'] = response
                 logging.info(f"Battery data updated: {response}")
+                time.sleep(0.1)
+                # 어댑터(DC) 연결 상태도 같은 주기로 캐시한다. IDE 가 10초마다 묻는데
+                # 캐시가 없으면 매번 UART 왕복(최대 3초)을 기다려야 했다
+                response = self._send_raw_internal("#14:!")
+                with self.sd_lock:
+                    self.system_data['dc'] = response
+                logging.info(f"DC data updated: {response}")
                 next_battery_time = current_time + 10
                 # MCU가 명령을 처리할 시간을 주기 위해 짧은 지연 추가
                 time.sleep(0.1)

@@ -40,43 +40,122 @@ pyenv 를 새로 만들면 이 단계가 통째로 빠지니, 처음부터 이�
 
 의존성(`openpibo_models` 등)은 계속 pip 설치본을 쓴다. 지우지 말 것.
 
-### 납품 국가 설정
+### TensorFlow · torch 걷어내기 (260924~, 이미지당 1회)
 
-`system/setup_country.sh <국가코드>` 를 돌린다. 여러 번 돌려도 안전하다.
-timezone · wifi country · `cmdline.txt` 의 `cfg80211.ieee80211_regdom` ·
-`brcmfmac.conf` 잔재 제거 · 실행비트를 한 번에 맞춘다.
+분류기·사물 인식이 TensorFlow·ultralytics·torch 를 안 쓴다. 코드가 import 하지 않으므로
+**메모리는 태그만 올려도 줄어든다.** 아래는 SD 카드 용량과 이미지 크기를 줄이는 작업이다.
+
+기기(260923 기준 pip 목록)에 이미 있는 것으로 충분하다. 새로 설치할 것은 없다.
+
+| 쓰는 곳 | 패키지 (기기 버전) |
+|---|---|
+| 분류기 이미지 · movenet | `tflite-runtime` 2.14.0 |
+| 분류기 손·얼굴·포즈 · 얼굴·손 인식 | `mediapipe` 0.10.18 (jax·jaxlib·matplotlib·sentencepiece·sounddevice 를 요구한다 — 남길 것) |
+| 사물 인식 · TTS | `onnxruntime` 1.20.1 |
+| 얼굴 분석(`vision_face.py`) | `openvino` 2024.5.0 — **남길 것** (`openvino-dev` 는 지워도 된다) |
+
+컨테이너에서 위 버전 그대로(numpy 1.26.4) 분류기·사물 인식을 돌려 확인했다.
 
 ```bash
-sudo bash /home/pi/openpibo-os/system/setup_country.sh KR              # 국내
-sudo bash /home/pi/openpibo-os/system/setup_country.sh PH --regdom=KR  # 필리핀
-sudo bash /home/pi/openpibo-os/system/setup_country.sh MY              # 말레이시아
-sudo reboot
+PY=/home/pi/.pyenv/bin/python3
+SP=$($PY -c "import site; print(site.getsitepackages()[0])")
+
+# 0) 새 태그에서 먼저 확인 — 둘 다 에러 없이 끝나야 한다
+$PY -c "from openpibo.modules.teachlab import load_interpreter; print(load_interpreter())"
+#   <class 'tflite_runtime.interpreter.Interpreter'>  (tensorflow 가 나오면 멈출 것)
+$PY -c "import numpy as np; from openpibo.vision_detect import Detect; print(Detect().detect_object(np.zeros((480,640,3),'uint8')))"
+#   []
+
+# 1) 얼마나 줄어드는지
+du -sh $SP/{tensorflow,tensorflow_estimator,tensorboard,keras,tf_keras,tensorflowjs,flax,optax,chex,orbax,torch,torchvision,torchaudio,ultralytics,openvino/tools} 2>/dev/null | sort -h
+
+# 2) 1단계 — TensorFlow · torch · ultralytics 와 그것만 쓰던 것 (wheel 약 400MB)
+sudo $PY -m pip uninstall -y \
+  tensorflow tensorflow-cpu-aws tensorflow-estimator tensorflow-hub tensorflow-io-gcs-filesystem \
+  tensorboard tensorboard-data-server keras tf-keras tensorflowjs \
+  flax optax chex orbax-checkpoint \
+  ultralytics ultralytics-thop torch torchvision torchaudio openvino-dev \
+  onnx onnxslim py-cpuinfo libclang h5py gast astunparse google-pasta termcolor namex optree \
+  etils toolz msgpack nest-asyncio grpcio werkzeug markdown
+
+# 3) 2단계 — MeloTTS 시험 잔재 (wheel 약 360MB + 사전 파일)
+#    MeloTTS requirements.txt 29개가 버전까지 그대로 깔려 있다(melotts 패키지 자체는 없다).
+#    지금 TTS 는 Supertonic 3 이다(mtts.py = 원본 py/helper.py 그대로). onnxruntime·numpy·soundfile 만 쓴다.
+#    Supertonic requirements 에 librosa 가 적혀 있지만 helper.py 는 import 하지 않는다
+du -sh $SP/unidic $SP/unidic_lite $SP/mecab_ko_dic $SP/jieba $SP/gruut_lang_* 2>/dev/null   # 사전이 크다
+sudo $PY -m pip uninstall -y \
+  txtsplit cached-path transformers tokenizers huggingface-hub num2words docopt \
+  unidic-lite unidic mecab-python3 pykakasi jaconv fugashi g2p-en distance anyascii jamo \
+  gruut gruut-ipa gruut-lang-de gruut-lang-en gruut-lang-es gruut-lang-fr python-crfsuite jsonlines dateparser \
+  g2pkk g2pk python-mecab-ko python-mecab-ko-dic konlpy jpype1 nltk \
+  librosa audioread resampy numba llvmlite pooch pydub eng-to-ipa inflect unidecode \
+  pypinyin cn2an proces jieba gradio gradio-client ffmpy safehttpx semantic-version tomlkit ruff orjson \
+  langid loguru panphon munkres unicodecsv \
+  boto3 botocore s3transfer jmespath google-cloud-storage google-cloud-core google-resumable-media \
+  google-crc32c google-api-core googleapis-common-protos proto-plus google-auth google-auth-oauthlib \
+  requests-oauthlib oauthlib cachetools rsa pyasn1 pyasn1-modules \
+  tweepy twine readme-renderer nh3 rfc3986 requests-toolbelt id keyring \
+  jaraco-classes jaraco-context jaraco-functools jeepney secretstorage backports-tarfile
+
+# 4) 다시 확인
+$PY -m pip check                       # 지운 것 때문에 깨진 의존이 없어야 한다
+$PY -c "from openpibo.modules.teachlab import load_interpreter; print(load_interpreter())"
+$PY -c "import numpy as np; from openpibo.vision_detect import Detect; print(Detect().detect_object(np.zeros((480,640,3),'uint8')))"
+$PY -c "import openpibo.vision_face, openpibo.vision_classify, openpibo.speech, openpibo.collect; print('ok')"
+$PY -c "from bs4 import BeautifulSoup; BeautifulSoup('<a/>', 'xml'); print('lxml ok')"   # 뉴스 블록
 ```
 
-| 국가코드 | timezone | regdom | 배포 태그 |
-|---|---|---|---|
-| `KR` | `Asia/Seoul` | `KR` | `YYMMDDvN` (`main`) |
-| `PH` | `Asia/Manila` | **`KR` (`--regdom=KR`)** | `YYMMDDvN-ph` (`ph`) |
-| `MY` | `Asia/Kuala_Lumpur` | `MY` | `YYMMDDvN-ph` (`ph`) |
+두 목록은 기기 pip 목록(310개, `test/requirements.txt`)을 버전별 PyPI 메타데이터로 의존 그래프를
+만들어 계산했다. 131개를 지워도 남는 179개 중 **깨지는 의존은 0개**였다.
 
-**필리핀만 `--regdom=KR` 을 붙인다.** timezone 은 `Asia/Manila` 그대로고 무선 규제도메인만
-`KR` 로 간다. `PH` 로 두면 5GHz 상위 채널(149~165)이 통째로 막혀서 현장 공유기를
-36~48 로 묶어야 하는데, 이건 규제가 아니라 Raspberry Pi OS 가 까는 CLM blob 결함이다.
-배경과 실측은 `CLAUDE.md` '현장 네트워크' 참고.
+- **`lxml` 은 지우지 말 것.** `collect.py` 의 뉴스(`BeautifulSoup(..., 'xml')`)가 쓴다.
+  기기에는 `konlpy` 의 의존으로 들어와 있어서 "고아 정리" 로 딸려 나가기 쉽다
+- `tflite-runtime` 은 **지우지 말 것.** 없으면 `load_interpreter()` 가 TensorFlow 로 떨어지는데
+  그것도 지웠으면 분류기와 movenet(포즈)이 못 뜬다
+- `jax` `jaxlib` `matplotlib` `sentencepiece` `sounddevice` `ml-dtypes` `opt_einsum` `scipy` 는
+  mediapipe·jax 가 요구한다. `sympy` 는 onnxruntime 이 요구한다. 남긴다
+- `openvino` 는 `vision_face.py` 가 쓴다. 남긴다 (`openvino-dev` 만 지운다)
+- **확인 전 보류**: `pandas` `seaborn` `scikit-learn`. 리포 코드는 안 쓰지만 수업 자료에서 쓸 수 있다
+- 위 목록 밖의 작은 범용 라이브러리(`httpx` `rich` `typer` `aiofiles` `cryptography` 등)는
+  지워도 얻는 게 적어서 그대로 뒀다
 
-regdom 을 바꾸면 채널 36/40/44 출력이 17 → 20 dBm 으로 올라간다. 열리는 채널 자체는
-PH 허용 범위를 넘지 않는다.
+### 파이썬 패키지 · 모델 폴더 (260930~, 이미지당 1회)
 
-**영문 배포판은 `ph` 브랜치 하나로 필리핀·말레이시아를 같이 쓴다.** UI·예제가
-영문으로 동일하고, 국가별 차이는 이 스크립트가 이미지 만들 때 넣는 값뿐이다.
-말레이시아용 브랜치를 따로 만들지 말 것.
+```bash
+PY=/home/pi/.pyenv/bin/python3
+# 리포가 쓰는 패키지(requirements.txt). 새로 필요한 건 sherpa-onnx(STT) 둘뿐이다 — numpy·onnxruntime 을 끌고 오지 않는다
+$PY -m pip install -r /home/pi/openpibo-os/requirements.txt
+$PY -m pip check
+```
 
-등록되지 않은 국가코드를 주면 스크립트가 usage 만 찍고 멈춘다. 추가할 때는
-`timedatectl list-timezones | grep -i <도시>` 로 실제 존재하는 timezone 인지
-확인한 뒤 스크립트의 `case` 에 넣는다 — 국가코드에서 timezone 을 추측하지 말 것.
+`/home/pi/.model` 은 `leeyunjai/themaker`(HF)에서 받는다. **`git clone` 하지 말 것** — `.git/lfs` 에 모델이 한 벌 더 남는다.
+`huggingface-cli download leeyunjai/themaker --local-dir ...` 로 받고, 아래를 맞춘다.
 
-AP(핫스팟)는 국가 설정과 무관하다. `hotspot.sh` 가 2.4GHz 채널 1/6/11 중
-시리얼로 하나를 고르는데, 세 국가 모두 허용 범위 안이라 손댈 게 없다.
+| 폴더 | 들어갈 것 |
+|---|---|
+| `tts/assets/onnx` | Supertonic 3 **int8** 변환본(`leeyunjai/edge-lab` `tts-int8`, vocoder 만 fp32, 약 178MB) + `tts.json` `unicode_indexer.json` |
+| `tts/assets` | `voice_styles/`(F1~F5·M1~M5) · `LICENSE` · `LICENSE-OpenRAIL-M.txt` · `MODIFICATIONS.md`(변환 고지 — 변형 모델이라 필요) |
+| `stt` | `model.int8.onnx` `tokens.txt`(sherpa-onnx `sense-voice-zh-en-ja-ko-yue-int8-2024-07-17`) · `silero_vad.onnx` · `LICENSE-SenseVoice` |
+| `llm` | `gemma-3-1b-it-Q4_K_M.gguf` + 링크 `llm-model.gguf` |
+| `object` | `yolo11s.onnx`(Ultralytics YOLO11s, `imgsz=320` 고정 export) + **`NOTICE-yolo11s.txt`**(AGPL-3.0 고지, 리포 `system/` 에서 복사) |
+| `hand` `face` | 그대로 |
+| (지움) | `classifier/`(예전 TF 가중치), `tts/assets/{.git,audio_samples,img}`, fp32 `onnx` |
+
+```bash
+# yolo 가중치 고지(AGPL-3.0). 넣은 뒤 VERSION 의 sha256 목록을 다시 만든다
+cp /home/pi/openpibo-os/system/NOTICE-yolo11s.txt /home/pi/.model/object/
+$PY -c "import onnxruntime as o; m=o.InferenceSession('/home/pi/.model/object/yolo11s.onnx').get_modelmeta().custom_metadata_map; print(m['description'][:30], m['imgsz'], m['license'])"
+#   Ultralytics YOLO11s model trai [320, 320] AGPL-3.0 License (https://ultralytics.com/license)
+cd /home/pi/.model
+grep -vE '^[0-9a-f]{64}  ' VERSION > VERSION.new
+find . -type f ! -name VERSION ! -name VERSION.new -print0 | sort -z | xargs -0 sha256sum >> VERSION.new
+mv VERSION.new VERSION
+
+cd /home/pi/.model
+du -sh */ | sort -h            # tts 약 181M, stt 약 230M, llm 769M
+sed -n '/^## sha256/,$p' VERSION | tail -n +2 | sha256sum -c --quiet && echo "VERSION 과 같음"
+$PY -c "from openpibo.speech import SpeechToText, SpeechOnDevice; SpeechOnDevice(); SpeechToText(); print('tts·stt ok')"
+```
 
 ## 2. 뜨기 전 청소
 
