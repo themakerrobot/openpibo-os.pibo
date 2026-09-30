@@ -14,8 +14,8 @@
 
 ```bash
 cd /home/pi/openpibo-os
-git describe --tags           # YYMMDDvN 또는 YYMMDDvN-ph
-cat /home/pi/.OS_VERSION      # piBo_YYMMDDvN(-ph)
+git describe --tags           # YYMMDDvN 또는 YYMMDDvN-gl (예전 -ph)
+cat /home/pi/.OS_VERSION      # piBo_YYMMDDvN(-gl)
 ```
 
 ### openpibo 를 리포 소스에서 임포트하도록 (이미지당 1회)

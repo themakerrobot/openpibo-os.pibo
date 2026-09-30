@@ -463,9 +463,9 @@ const countText = (sel, txt) => {
 socket.on("system", (data) => {
   $("#s_serial").text(data[0]);
   $("#s_os_version").text(data[1]);
-  // 소스 링크는 기기가 돌리는 태그로 (piBo_260930v2 → 260930v2). 모르면 리포 첫 화면
+  // 소스 링크는 기기가 돌리는 태그로 (piBo_260930v2 → 260930v2, 영문판 -gl · 예전 -ph). 모르면 리포 첫 화면
   const tag = String(data[1] || '').trim().split('_').pop();
-  if (/^\d{6}v\d+(-ph)?$/.test(tag)) {
+  if (/^\d{6}v\d+(-gl|-ph)?$/.test(tag)) {
     $("#source_bt").attr("href", `https://github.com/themakerrobot/openpibo-os.pibo/tree/${tag}`);
   }
   const up = Math.floor(Number(data[2]) || 0);

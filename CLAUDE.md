@@ -12,13 +12,18 @@ Pibo 로봇 OS. Raspberry Pi(`pi` 유저, `/home/pi/openpibo-os`)에서 서비�
 | 브랜치 | 용도 | 규칙 |
 |---|---|---|
 | `main` | 국내 배포판 | **모든 개발은 여기서.** 기본 브랜치 |
-| `ph` | 필리핀 배포판 | **개발 금지.** `main`을 merge만 한다 |
+| `global` | 영문(해외) 배포판 — 필리핀·말레이시아 | **개발 금지.** `main`을 merge만 한다. 차이는 `GLOBAL_DELTA.md` |
 | `260624` | GitHub Pages 배포 운영 중 | **절대 건드리지 말 것.** push·force-push·merge 전부 금지 |
+
+`global` 은 **예전 `ph` 브랜치의 이름만 바꾼 것**이다(260930, PiBrain 과 맞춤). 히스토리는 그대로 이어져서 로그에
+`Merge branch 'main' into ph` 같은 옛 제목이 남아 있다. `ph` 브랜치는 지운다(커밋은 전부 `global` 에 들어 있다. 웹 세션은 브랜치 삭제가 403 이라 사람이 지운다).
+국가가 아니라 언어·배포 구분이라 나라 이름을 쓰지 않는다.
 
 ## 태그
 
-- 국내 `YYMMDDv1`, 필리핀 `YYMMDDv1-ph` (예: `260909v1`, `260909v1-ph`)
-- 같은 날 다시 릴리스하면 번호를 올린다 (`260909v2`, `260909v2-ph`)
+- 국내 `YYMMDDv1`, 영문 `YYMMDDv1-gl` (예: `260930v7`, `260930v7-gl`)
+  - 260930v6 까지 영문판 태그는 `-ph` 였다(`260915v1-ph` 등). **배포 이력이라 지우지 않는다.** 기기 버전 `piBo_…-ph` 도 소스 링크가 그대로 읽는다
+- 같은 날 다시 릴리스하면 번호를 올린다 (`260909v2`, `260909v2-gl`)
 - **태그는 이동하지 않는다.** 내용이 바뀌면 언제나 새 태그
 - 삭제는 **같은 날 대체된 태그만** — `260909v2` 가 나왔으면 `260909v1` 은 지워도 된다.
   배포 이력 태그(`260624v1`, `250709v*` 등)는 남긴다
@@ -26,14 +31,14 @@ Pibo 로봇 OS. Raspberry Pi(`pi` 유저, `/home/pi/openpibo-os`)에서 서비�
 
 ### 태그 지우기 전 확인
 
-`-ph` 태그의 커밋은 보통 **`ph` 브랜치에서만** 도달한다. 태그를 지운 뒤 `ph` 브랜치까지
-지우면 그 커밋들이 unreachable 이 되어 GC 로 사라진다. **`ph` 브랜치는 남겨둘 것.**
+`-gl`·`-ph` 태그의 커밋은 보통 **`global` 브랜치에서만** 도달한다. 태그를 지운 뒤 `global` 브랜치까지
+지우면 그 커밋들이 unreachable 이 되어 GC 로 사라진다. **`global` 브랜치는 남겨둘 것.**
 
 ```bash
 for t in <지울 태그들>; do
   c=$(git rev-parse $t^{commit})
   git merge-base --is-ancestor $c origin/main && echo "$t: main"
-  git merge-base --is-ancestor $c origin/ph   && echo "$t: ph"
+  git merge-base --is-ancestor $c origin/global && echo "$t: global"
 done
 git push origin :<태그> ...     # 원격 삭제
 git tag -d <태그> ...           # 로컬 삭제
@@ -43,28 +48,28 @@ git tag -d <태그> ...           # 로컬 삭제
 
 ---
 
-## PH 델타
+## 영문판(global) 델타
 
-**상세는 `ph` 브랜치의 `PH_DELTA.md`** 에 있다 (이유·검증·충돌 처리·배포 후 확인까지).
-여기 표는 요약이고, 내용이 갈리면 `PH_DELTA.md` 가 기준이다.
+**상세는 `global` 브랜치의 `GLOBAL_DELTA.md`** 에 있다 (이유·검증·충돌 처리·배포 후 확인까지. 260930 전 이름은 `PH_DELTA.md`).
+여기 표는 요약이고, 내용이 갈리면 `GLOBAL_DELTA.md` 가 기준이다.
 
-`ph`가 `main`과 다른 부분은 **아래 16개 파일뿐**이다. merge 후 반드시 유지되어야 한다.
+`global`이 `main`과 다른 부분은 **아래 16개 파일뿐**이다. merge 후 반드시 유지되어야 한다.
 
 | 파일 | 내용 |
 |---|---|
 | `ide/static/ko2en.js`<br>`tools/static/ko2en.js`<br>`classifier/static/ko2en.js` | 1·2행이<br>`const blang = 'en';`<br>`let lang = localStorage.getItem("language") \|\| blang;` |
 | `examples/*.json` (10개) | 텍스트 리터럴·변수명 영문 |
-| `examples/collect.json` | **PH에는 없다.** `Weather.region_list` 가 한국 기상청 지역코드, `News` 가 JTBC RSS라 필리핀에선 동작 불가 |
+| `examples/collect.json` | **global 에는 없다.** `Weather.region_list` 가 한국 기상청 지역코드, `News` 가 JTBC RSS라 필리핀에선 동작 불가 |
 | `ide/static/customblock_toolbox.js` | **Collect 카테고리 통째로**(wikipedia/weather/news) 미노출. 이것만 남았다 — circul.us·gtts 블록과 대화 블록 3개는 260914v6 에서 **main 에서도 제거**돼 더 이상 델타가 아니다 |
-| `PH_DELTA.md` | **PH 전용 문서.** main 으로 가져오지 않는다 |
+| `GLOBAL_DELTA.md` | **global 전용 문서.** main 으로 가져오지 않는다 |
 
-검증: `git diff --name-status <국내태그> <PH태그>` 결과가 위 16개 항목이고 **모드 차이 0줄**이어야 한다.
+검증: `git diff --name-status <국내태그> <영문태그>` 결과가 위 16개 항목이고 **모드 차이 0줄**이어야 한다.
 
 ※ `system/ph_setup.sh` 는 260914v7 까지 17번째 델타였다. `main` 의
 `system/setup_country.sh` 가 대신하면서 델타에서 빠졌다 (아래 '마스터 이미지' 참고).
 
 `ide/templates/index.html` 은 일부러 델타에 넣지 않았다. `?ver` 를 올릴 때마다 바뀌는 파일이라
-델타로 두면 릴리스마다 충돌한다. PH 전용 파일의 `?ver` 도 `main` 에서 올린다.
+델타로 두면 릴리스마다 충돌한다. 영문판 전용 파일의 `?ver` 도 `main` 에서 올린다.
 
 ### 예제 주의사항
 
@@ -336,8 +341,8 @@ Raspberry Pi Imager 의 "OS 커스터마이즈" 는 쓰지 말 것 — `custom.t
 | 국가 | 명령 | timezone | regdom | 브랜치·태그 |
 |---|---|---|---|---|
 | `KR` | `setup_country.sh KR` | `Asia/Seoul` | `KR` | `main` / `YYMMDDvN` |
-| `PH` | **`setup_country.sh PH --regdom=KR`** | `Asia/Manila` | **`KR`** | `ph` / `YYMMDDvN-ph` |
-| `MY` | `setup_country.sh MY` | `Asia/Kuala_Lumpur` | `MY` | `ph` / `YYMMDDvN-ph` |
+| `PH` | **`setup_country.sh PH --regdom=KR`** | `Asia/Manila` | **`KR`** | `global` / `YYMMDDvN-gl` |
+| `MY` | `setup_country.sh MY` | `Asia/Kuala_Lumpur` | `MY` | `global` / `YYMMDDvN-gl` |
 
 **필리핀만 regdom 을 분리한다.** timezone 은 `Asia/Manila` 그대로다.
 
@@ -355,7 +360,7 @@ timezone 만 국가를 따른다. 둘을 섞어두면 부팅 후 한쪽이 다�
 
 `MY` 는 `PH` 와 달리 blob 에 상위 채널이 살아 있어 분리가 필요 없다.
 
-**`ph` 브랜치는 '필리핀'이 아니라 '영문 배포판'이다.** 말레이시아도 UI·예제가
+**`global` 브랜치는 '영문 배포판'이다**(예전 이름 `ph` 는 필리핀만 가리키는 것처럼 보여서 바꿨다). 말레이시아도 UI·예제가
 영문으로 같으므로 같은 태그를 쓰고, 국가 차이는 위 스크립트가 이미지에 넣는 값뿐이다.
 **국가별 브랜치를 새로 만들지 말 것** — 델타가 배로 늘고 merge 대상이 늘어난다.
 UI 를 현지어(말레이어 등)로 바꿔야 할 때만 별도 논의 대상이다
@@ -390,15 +395,15 @@ git tag -a YYMMDDv1 -m "KR release YYMMDDv1"
 git push origin YYMMDDv1
 ```
 
-### 2. ph
+### 2. global
 
 ```bash
-git checkout ph && git pull
+git checkout global && git pull
 git merge main
 # 충돌 처리 (아래 참고)
-git push origin ph
-git tag -a YYMMDDv1-ph -m "PH release YYMMDDv1-ph"
-git push origin YYMMDDv1-ph
+git push origin global
+git tag -a YYMMDDv1-gl -m "Global release YYMMDDv1-gl"
+git push origin YYMMDDv1-gl
 ```
 
 ### 3. 기기 검증
@@ -428,7 +433,7 @@ ping -c2 -W3 github.com || echo "!! 인터넷 없음 (AP 모드?). WiFi/유선 �
 
 # 1) 새 위치에 먼저 받는다. 실패해도 기존 작업본은 그대로다
 cd /home/pi
-git clone --depth 1 --branch YYMMDDv1-ph \
+git clone --depth 1 --branch YYMMDDv1-gl \
   https://github.com/themakerrobot/openpibo-os.pibo.git .openpibo-os.new
 
 # 2) 받은 게 맞는지 확인. 여기서 이상하면 중단하고 .openpibo-os.new 만 지우면 된다
@@ -445,7 +450,7 @@ sudo mv /home/pi/.openpibo-os.pibo /home/pi/.openpibo-os.old
 mv /home/pi/.openpibo-os.new /home/pi/.openpibo-os.pibo
 sudo chown -R pi:pi /home/pi/.openpibo-os.pibo
 
-echo piBo_YYMMDDv1-ph > /home/pi/.OS_VERSION
+echo piBo_YYMMDDv1-gl > /home/pi/.OS_VERSION
 sudo systemctl start ide.service booting.service
 sleep 3
 systemctl is-active ide.service booting.service
@@ -468,7 +473,7 @@ sudo rm -rf /home/pi/.openpibo-os.old
 
 ```bash
 cd /home/pi/openpibo-os
-git describe --tags                                      # YYMMDDv1-ph
+git describe --tags                                      # YYMMDDv1-gl
 head -n1 ide/static/ko2en.js                             # const blang = 'en';
 ls -l system/hotspot.sh system/setup_country.sh system/booting.py   # 전부 -rwxr-xr-x
 curl -s http://localhost/static/ko2en.js | head -n1
@@ -718,7 +723,7 @@ RT-DETR 은 쓰지 않는다. 320 에서 정확도가 크게 떨어졌다(coco12
 
 - 파이보 블록: `customblock.js` 첫 줄 `color_type` 의 **색 값만** 바꿨다(사용자 승인). 한글 문자열은 그대로다
 - 기본 블록: `index.js` 테마 `blockStyles`. 전엔 `colorTertiary`(오타)라 테두리 색이 적용이 안 되고 있었다 → `colourTertiary`
-- 분류 색: `customblock_toolbox.js` 의 기본 분류 8개 `"colour"`. **이 파일은 PH 델타다** — ph 에 merge 할 때
+- 분류 색: `customblock_toolbox.js` 의 기본 분류 8개 `"colour"`. **이 파일은 영문판 델타다** — global 에 merge 할 때
   색 줄은 Collect 분류와 떨어져 있어 보통 자동으로 합쳐지지만, 충돌하면 main 쪽 색을 받을 것
 - customblock 3종은 셋 중 하나만 고쳐도 `?ver` 를 같이 올린다(지금 260929v1)
 
@@ -789,7 +794,7 @@ RT-DETR 은 쓰지 않는다. 320 에서 정확도가 크게 떨어졌다(coco12
   모터 칸은 작은 카드 + 한글 이름(`motor_m0`~`m9`), 버튼 줄의 ⋮·`-` 는 `.pb-sep`(v2 에서 숨김),
   [등록하기] 가 유일한 꽉 찬 파랑, 지우는 버튼 둘은 판 없는 빨강이고 이름을 갈랐다(`clear_frames` 표 비우기 /
   `remove_all_motions` 동작 모두 지우기). 표는 내용만큼(최대 500px, 예전 고정 높이와 같다)이고 비면 `.motion-empty` 안내, 예제는 알약.
-  새 키는 `tools/static/ko2en.js` **끝**에 붙였다(1·2행이 PH 델타)
+  새 키는 `tools/static/ko2en.js` **끝**에 붙였다(1·2행이 영문판 델타)
   - **로봇 칸은 늘 왼쪽에 고정**(그림을 보며 모터를 맞추는 화면이다). 오른쪽만 스크롤되게 `position: sticky`,
     화면 높이보다 크면 `index.js` 의 `fitRobot()` 이 `zoom` 으로 줄인다(모터 칸이 px 로 자리 잡혀 있어 통째로 줄여야
     모양이 유지된다. 1366×768 에서 0.87). 900px 이하(태블릿 세로)만 위아래로 쌓는다.
@@ -988,7 +993,7 @@ v1 전용 CSS(`index.css` `fontello.css` `cobalt.css` `duotone-light.css`), [새
 애니메이션·카메라 대기 문구뿐(바뀐 뒤끼리 다시 찍어도 같은 크기로 다름). IX 22·27항목, 편집기 테마 16, [동작] 18·11,
 준비 단계 14, 분류기 7, 스트림 7, 글꼴 공유 5 — PiBrain 도 같음. IX 27 의 '블록 바꾸면 미저장 표시(●)' 1건은 바꾸기 전 코드도 똑같이
 실패한다: 도구·대화 탭을 연 뒤라 IDE 탭이 뒤로 가 있어 0.3초 안에 안 그려질 뿐, 1.5초 뒤에는 떠 있다(테스트 대기 시간 문제).
-`ph` 로 merge 하면 PH 태그에서 영문 화면을 같이 볼 것
+`global` 로 merge 하면 `-gl` 태그에서 영문 화면을 같이 볼 것
 
 ## IDE 서버·블록 메모 (260924)
 
@@ -1009,13 +1014,13 @@ v1 전용 CSS(`index.css` `fontello.css` `cobalt.css` `duotone-light.css`), [새
 
 ## merge 충돌 처리
 
-`main` → `ph` merge에서 나는 충돌은 사실상 `ko2en.js`의 1·2행뿐이다.
+`main` → `global` merge에서 나는 충돌은 사실상 `ko2en.js`의 1·2행뿐이다.
 
 - **`classifier/static/ko2en.js` add/add 충돌** — 양쪽이 독립적으로 추가해서 발생. 차이는 1·2행뿐이므로
-  `git checkout --ours classifier/static/ko2en.js` (= PH 버전 유지)
-- `ide/static/ko2en.js`, `tools/static/ko2en.js` — 보통 자동 머지되고 PH의 1·2행이 유지된다.
+  `git checkout --ours classifier/static/ko2en.js` (= 영문판 유지)
+- `ide/static/ko2en.js`, `tools/static/ko2en.js` — 보통 자동 머지되고 영문판의 1·2행이 유지된다.
   그래도 merge 후 `head -n1` 3종을 반드시 눈으로 확인할 것
-- `--theirs`(main)를 잡으면 `blang`이 자동감지로 돌아가 **PH 요구사항이 깨진다**
+- `--theirs`(main)를 잡으면 `blang`이 자동감지로 돌아가 **영문판 요구사항이 깨진다**
 
 ---
 
@@ -1092,5 +1097,6 @@ git ls-tree -r HEAD system | grep -E "hotspot|booting|setup_country|setup_openpi
 ## Claude Code 웹 세션 제약
 
 - `refs/tags/*` push가 403으로 막힌다. **태그는 사람이 직접 만들어야 한다**
+- **원격 브랜치 삭제**(`git push origin --delete …`)도 403 이다. 새 브랜치 push 는 된다
   (로컬 CLI 또는 GitHub 웹 Releases). 브랜치 push는 정상
 - 사내망 라우팅이 없어 기기 SSH 검증은 못 한다

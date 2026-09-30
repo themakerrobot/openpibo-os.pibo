@@ -5,8 +5,8 @@
 
 | 파일 | 대상 | 기준 브랜치 | 분량 |
 |---|---|---|---|
-| `Pibo_Teachers_Guide.pdf` | 교사 (PH·MY) | `ph` | A4 28쪽 |
-| `Pibo_Setup_Administration.pdf` | 설치·관리자 (PH·MY) | `ph` | A4 13쪽 |
+| `Pibo_Teachers_Guide.pdf` | 교사 (PH·MY) | `global` | A4 28쪽 |
+| `Pibo_Setup_Administration.pdf` | 설치·관리자 (PH·MY) | `global` | A4 13쪽 |
 | `Pibo_교사용_가이드.pdf` | 교사 (국내) | `main` | A4 28쪽 |
 | `Pibo_설치_관리_가이드.pdf` | 설치·관리자 (국내) | `main` | A4 14쪽 |
 
@@ -18,7 +18,7 @@
 ## 빌드
 
 ```bash
-./build.sh                                  # 영문 origin/ph + 한글 origin/main
+./build.sh                                  # 영문 origin/global + 한글 origin/main
 ./build.sh 260915v1-ph --ko-ref=260915v1    # 태그 기준
 ./build.sh --ko-only                        # 한쪽만
 ```

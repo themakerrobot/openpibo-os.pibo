@@ -14,7 +14,7 @@
 | `examples/` | 예제 프로그램 | — |
 
 - 문서: [openpibo 가이드](https://themakerrobot.github.io/openpibo-os.pibo/build/html/index.html)
-- 배포: 기기가 태그(`YYMMDDvN`, 영문판 `YYMMDDvN-ph`)를 받아 `/home/pi/openpibo-os` 에서 그대로 실행합니다
+- 배포: 기기가 태그(`YYMMDDvN`, 영문판 `YYMMDDvN-gl`, 260930v6 까지는 `-ph`)를 받아 `/home/pi/openpibo-os` 에서 그대로 실행합니다
 - 파이썬 패키지: `requirements.txt` · 모델 파일(`/home/pi/.model`)과 이미지 만들기: `IMAGE.md`
 
 ## 라이선스
