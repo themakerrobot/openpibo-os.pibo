@@ -597,6 +597,9 @@ teach-lab 과 같은 기능(이미지·손·얼굴·포즈 가르치기)을 파�
 폴더 선택은 그대로 둔다(사용자). '폴더 선택'(빈 값)이면 `cf.load(''+'과일')` → `/home/pi/mymodel/과일`.
 파이썬 `CustomClassifier.load(model_path)` 도 인자 하나다(261001v1 — 예전 블록에 맞춰 두었던 안 쓰는 `label_path` 를 뺐다).
 예전 블록이 만든 파이썬을 `.py` 로 저장해 둔 경우 `load(a, b)` 는 TypeError 가 난다 — 두 번째 인자를 지우면 된다.
+**표시(261001v2)**: `cf.draw(img)` 또는 `cf.predict(img, draw=True)` — 바로 전 `predict` 가 본 것을 그 이미지에 그린다(손·포즈 점+뼈대, 얼굴 점,
+종류 이름·확률은 파랑 바탕 이름표, 이미지 모델은 이름표만). 손·얼굴·몸이 안 보였으면 아무것도 안 그린다. MediaPipe 결과는
+`LandmarkExtractor.detect` 를 감싸서 남긴다(teachlab 코드는 안 고침). 블록 `vision_predict_cf_vis` [이미지 … 에 분류기가 본 것 표시하기]
 **예전 `model.keras` 는 못 읽는다** (불러오면 다시 학습하라는 오류). 의도한 호환 단절이다.
 
 ### 가져온 코드 — 두 곳을 함께 고칠 것
