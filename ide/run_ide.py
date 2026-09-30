@@ -275,7 +275,7 @@ async def classifier(enable: str):
   await asyncio.sleep(2)
   return HTMLResponse(content="", status_code=200)
 
-# 하드웨어 검수 페이지(test/test.py, 8000번). systemd 유닛이 아니라 IDE 가 직접 띄운다.
+# 하드웨어 검수 페이지(test/test.py, 50050번 — PiBrain 과 같다. 260930 전엔 8000). systemd 유닛이 아니라 IDE 가 직접 띄운다.
 # 유닛 파일은 리포 밖이라 이미지 작업이 되므로, 리포 안에서 끝나게 이 방식을 썼다.
 HWTEST_DIR = '/home/pi/openpibo-os/test'
 HWTEST_PY = f'{HWTEST_DIR}/test.py'

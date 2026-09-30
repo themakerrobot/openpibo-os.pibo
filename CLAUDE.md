@@ -481,7 +481,8 @@ curl -s http://localhost/static/ko2en.js | head -n1
 ## 도구 서비스 수명
 
 `tools.service`(50000), `classify.service`(50010), `llama-server.service`(50020) 는
-**셋 중 하나만** 돈다. IDE가 하나를 켤 때 나머지를 stop 한다 (`ide/run_ide.py` 의
+**셋 중 하나만** 돈다. 포트는 PiBrain 과 같다(260930 에 PiBrain 도구 50040 → 50000, 파이보 H/W 검수 8000 → 50050 으로 맞춤).
+H/W 검수(`test/test.py`, 50050)는 유닛이 아니라 IDE 의 `/hwtest` 가 직접 띄우고, 켤 때 셋을 다 끈다. IDE가 하나를 켤 때 나머지를 stop 한다 (`ide/run_ide.py` 의
 `/tools` `/classifier` `/llm` 핸들러). 부팅 시엔 안 뜬다.
 
 **종료는 탭이 닫힐 때 브라우저가 알린다.** 각 페이지의 `beforeunload` 가

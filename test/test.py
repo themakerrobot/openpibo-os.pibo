@@ -338,7 +338,7 @@ if __name__ == "__main__":
         print("The API will run, but hardware-related endpoints may fail.")
 
     print("\nStarting OpenPibo Web Test Interface.")
-    print("Access the frontend at http://<your-robot-ip>:8000/ in your browser.")
+    print("Access the frontend at http://<your-robot-ip>:50050/ in your browser.")
     print(f"Idle watchdog: shuts down after {IDLE_TIMEOUT}s without a heartbeat.")
 
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=50050)   # PiBrain 과 같은 포트(260930 전엔 8000)

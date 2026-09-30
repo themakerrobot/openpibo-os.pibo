@@ -242,7 +242,7 @@ hwtest_bt.addEventListener("click", async function () {
   })
   .then(data => {
     setTimeout(function() {
-      window.open(`http://${location.hostname}:8000`);
+      window.open(`http://${location.hostname}:50050`);
       hwtest_bt.style.opacity = "";
       hwtest_busy = false;
     }, 3000);
