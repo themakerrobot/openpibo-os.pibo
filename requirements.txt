@@ -2,9 +2,10 @@
 #
 # 리포 코드가 직접 import 하는 것만 적었다. 버전은 기기 pip 목록(test/requirements.txt, 260923)과 같다.
 # 나머지는 이것들이 끌고 오는 의존이다. test/requirements.txt 는 TensorFlow·torch 를 걷어내기 전 전체 스냅숏이다
-# (걷어낼 목록은 IMAGE.md '1. 기준 기기 준비').
+# (걷어내기는 system/venv_prune.py — IMAGE.md '안 쓰는 패키지 걷어내기').
 #
 # 설치:  /home/pi/.pyenv/bin/python3 -m pip install -r requirements.txt
+# 정리:  sudo /home/pi/.pyenv/bin/python3 system/venv_prune.py   (안 쓰는 패키지 목록 → --apply 로 지움)
 # 확인:  /home/pi/.pyenv/bin/python3 -m pip check
 #
 # 파이썬 밖(apt 등)으로 필요한 것:
@@ -16,7 +17,7 @@
 # ── 서버 (IDE · 도구 · 분류기 · booting) ─────────────────────────
 fastapi==0.115.4
 starlette==0.41.2
-uvicorn==0.32.0
+uvicorn[standard]==0.32.0        # standard: uvloop·httptools·websockets (socket.io 웹소켓) — 기기에 이미 깔려 있다
 fastapi-socketio==0.0.10
 python-socketio==5.11.4
 python-multipart==0.0.20        # UploadFile(파일 올리기)
@@ -54,7 +55,7 @@ beautifulsoup4==4.12.3
 lxml==5.3.0                     # 뉴스 BeautifulSoup(..., 'xml')
 
 # ── 파이보 데이터 (모션·글꼴·얼굴·검출 기본 파일) ─────────────────
+# openpibo-face-models 는 안 쓴다(얼굴 모델은 /home/pi/.model/face). system/venv_prune.py 가 지운다
 openpibo-models==0.4.9
-openpibo-face-models==0.4.3
 openpibo-detect-models==0.4.4
 openpibo-dlib-models==0.4.2

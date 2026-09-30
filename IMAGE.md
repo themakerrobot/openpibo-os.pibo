@@ -40,84 +40,61 @@ pyenv 를 새로 만들면 이 단계가 통째로 빠지니, 처음부터 이�
 
 의존성(`openpibo_models` 등)은 계속 pip 설치본을 쓴다. 지우지 말 것.
 
-### TensorFlow · torch 걷어내기 (260924~, 이미지당 1회)
+### 안 쓰는 패키지 걷어내기 — `system/venv_prune.py` (260930~, 이미지당 1회)
 
-분류기·사물 인식이 TensorFlow·ultralytics·torch 를 안 쓴다. 코드가 import 하지 않으므로
-**메모리는 태그만 올려도 줄어든다.** 아래는 SD 카드 용량과 이미지 크기를 줄이는 작업이다.
-
-기기(260923 기준 pip 목록)에 이미 있는 것으로 충분하다. 새로 설치할 것은 없다.
-
-| 쓰는 곳 | 패키지 (기기 버전) |
-|---|---|
-| 분류기 이미지 · movenet | `tflite-runtime` 2.14.0 |
-| 분류기 손·얼굴·포즈 · 얼굴·손 인식 | `mediapipe` 0.10.18 (jax·jaxlib·matplotlib·sentencepiece·sounddevice 를 요구한다 — 남길 것) |
-| 사물 인식 · TTS | `onnxruntime` 1.20.1 |
-| 얼굴 분석(`vision_face.py`) | `openvino` 2024.5.0 — **남길 것** (`openvino-dev` 는 지워도 된다) |
-
-컨테이너에서 위 버전 그대로(numpy 1.26.4) 분류기·사물 인식을 돌려 확인했다.
+**새 태그에서 먼저 확인** — 둘 다 에러 없이 끝나야 한다(예전 TensorFlow·ultralytics 경로를 안 쓰는지):
 
 ```bash
 PY=/home/pi/.pyenv/bin/python3
-SP=$($PY -c "import site; print(site.getsitepackages()[0])")
-
-# 0) 새 태그에서 먼저 확인 — 둘 다 에러 없이 끝나야 한다
 $PY -c "from openpibo.modules.teachlab import load_interpreter; print(load_interpreter())"
 #   <class 'tflite_runtime.interpreter.Interpreter'>  (tensorflow 가 나오면 멈출 것)
 $PY -c "import numpy as np; from openpibo.vision_detect import Detect; print(Detect().detect_object(np.zeros((480,640,3),'uint8')))"
 #   []
-
-# 1) 얼마나 줄어드는지
-du -sh $SP/{tensorflow,tensorflow_estimator,tensorboard,keras,tf_keras,tensorflowjs,flax,optax,chex,orbax,torch,torchvision,torchaudio,ultralytics,openvino/tools} 2>/dev/null | sort -h
-
-# 2) 1단계 — TensorFlow · torch · ultralytics 와 그것만 쓰던 것 (wheel 약 400MB)
-sudo $PY -m pip uninstall -y \
-  tensorflow tensorflow-cpu-aws tensorflow-estimator tensorflow-hub tensorflow-io-gcs-filesystem \
-  tensorboard tensorboard-data-server keras tf-keras tensorflowjs \
-  flax optax chex orbax-checkpoint \
-  ultralytics ultralytics-thop torch torchvision torchaudio openvino-dev \
-  onnx onnxslim py-cpuinfo libclang h5py gast astunparse google-pasta termcolor namex optree \
-  etils toolz msgpack nest-asyncio grpcio werkzeug markdown
-
-# 3) 2단계 — MeloTTS 시험 잔재 (wheel 약 360MB + 사전 파일)
-#    MeloTTS requirements.txt 29개가 버전까지 그대로 깔려 있다(melotts 패키지 자체는 없다).
-#    지금 TTS 는 Supertonic 3 이다(mtts.py = 원본 py/helper.py 그대로). onnxruntime·numpy·soundfile 만 쓴다.
-#    Supertonic requirements 에 librosa 가 적혀 있지만 helper.py 는 import 하지 않는다
-du -sh $SP/unidic $SP/unidic_lite $SP/mecab_ko_dic $SP/jieba $SP/gruut_lang_* 2>/dev/null   # 사전이 크다
-sudo $PY -m pip uninstall -y \
-  txtsplit cached-path transformers tokenizers huggingface-hub num2words docopt \
-  unidic-lite unidic mecab-python3 pykakasi jaconv fugashi g2p-en distance anyascii jamo \
-  gruut gruut-ipa gruut-lang-de gruut-lang-en gruut-lang-es gruut-lang-fr python-crfsuite jsonlines dateparser \
-  g2pkk g2pk python-mecab-ko python-mecab-ko-dic konlpy jpype1 nltk \
-  librosa audioread resampy numba llvmlite pooch pydub eng-to-ipa inflect unidecode \
-  pypinyin cn2an proces jieba gradio gradio-client ffmpy safehttpx semantic-version tomlkit ruff orjson \
-  langid loguru panphon munkres unicodecsv \
-  boto3 botocore s3transfer jmespath google-cloud-storage google-cloud-core google-resumable-media \
-  google-crc32c google-api-core googleapis-common-protos proto-plus google-auth google-auth-oauthlib \
-  requests-oauthlib oauthlib cachetools rsa pyasn1 pyasn1-modules \
-  tweepy twine readme-renderer nh3 rfc3986 requests-toolbelt id keyring \
-  jaraco-classes jaraco-context jaraco-functools jeepney secretstorage backports-tarfile
-
-# 4) 다시 확인
-$PY -m pip check                       # 지운 것 때문에 깨진 의존이 없어야 한다
-$PY -c "from openpibo.modules.teachlab import load_interpreter; print(load_interpreter())"
-$PY -c "import numpy as np; from openpibo.vision_detect import Detect; print(Detect().detect_object(np.zeros((480,640,3),'uint8')))"
-$PY -c "import openpibo.vision_face, openpibo.vision_classify, openpibo.speech, openpibo.collect; print('ok')"
-$PY -c "from bs4 import BeautifulSoup; BeautifulSoup('<a/>', 'xml'); print('lxml ok')"   # 뉴스 블록
 ```
 
-두 목록은 기기 pip 목록(310개, `test/requirements.txt`)을 버전별 PyPI 메타데이터로 의존 그래프를
-만들어 계산했다. 131개를 지워도 남는 179개 중 **깨지는 의존은 0개**였다.
+※ 260924~260930 에는 여기에 지울 패키지 이름을 적어 두었다(260923 기기 목록 하나로 계산한 고정 목록). 기기마다 깔린 게 달라서
+스크립트가 기기에서 직접 계산하게 바꿨다.
 
-- **`lxml` 은 지우지 말 것.** `collect.py` 의 뉴스(`BeautifulSoup(..., 'xml')`)가 쓴다.
-  기기에는 `konlpy` 의 의존으로 들어와 있어서 "고아 정리" 로 딸려 나가기 쉽다
-- `tflite-runtime` 은 **지우지 말 것.** 없으면 `load_interpreter()` 가 TensorFlow 로 떨어지는데
-  그것도 지웠으면 분류기와 movenet(포즈)이 못 뜬다
-- `jax` `jaxlib` `matplotlib` `sentencepiece` `sounddevice` `ml-dtypes` `opt_einsum` `scipy` 는
-  mediapipe·jax 가 요구한다. `sympy` 는 onnxruntime 이 요구한다. 남긴다
-- `openvino` 는 `vision_face.py` 가 쓴다. 남긴다 (`openvino-dev` 만 지운다)
-- **확인 전 보류**: `pandas` `seaborn` `scikit-learn`. 리포 코드는 안 쓰지만 수업 자료에서 쓸 수 있다
-- 위 목록 밖의 작은 범용 라이브러리(`httpx` `rich` `typer` `aiofiles` `cryptography` 등)는
-  지워도 얻는 게 적어서 그대로 뒀다
+예전 OS 에서 올려 온 기기에는 지금 코드가 안 쓰는 패키지가 수 GB 남아 있다(260930 두 기기 모두 site-packages 5.5~5.6GB:
+TensorFlow·torch·ultralytics, MeloTTS 시험 잔재(gruut·unidic·mecab·jieba·transformers·gradio …), 문서 도구(sphinx) 등).
+**코드가 import 하지 않으므로 메모리는 태그만 올려도 줄어든다.** 이건 SD 카드 용량과 이미지 크기를 줄이는 작업이다.
+
+`venv_prune.py` 는 '리포 코드가 import 하는 패키지(스크립트의 `ROOTS` + `requirements.txt`)와 그것들이 요구하는 것'만 남기고
+나머지를 지울 목록으로 뽑는다. 기기에 **지금 깔린 것의 메타데이터로** 계산하므로 기기마다 목록이 달라도 된다.
+
+```bash
+PY=/home/pi/.pyenv/bin/python3
+sudo systemctl stop tools.service classify.service llama-server.service   # 도구가 떠 있으면 먼저 끈다
+
+# 1) 목록만 본다 — 아무것도 안 바꾼다. 맨 위에 개수·용량, 아래에 큰 것부터
+sudo $PY /home/pi/openpibo-os/system/venv_prune.py | head -40
+
+# 2) 지운다. 지우기 전 목록을 /home/pi/venv_backup_<날짜>.txt 로 남기고, 지운 뒤 pip check 와 import 확인을 돌린다
+sudo $PY /home/pi/openpibo-os/system/venv_prune.py --apply
+#    import 확인 끝줄이 'N/N 모듈 import 됨 · 분류기 추론기: tflite_runtime.interpreter' 여야 한다
+
+# 3) 서비스 다시 켜고 IDE·도구·분류기를 한 번씩 열어 본다
+sudo systemctl restart ide.service booting.service
+```
+
+되돌리기(인터넷 필요): `sudo $PY -m pip install -r /home/pi/venv_backup_<날짜>.txt`
+
+선택 항목 — 기본으로는 **남긴다**:
+
+| 옵션 | 지우는 것 | 이유 |
+|---|---|---|
+| `--optional` | `pandas` `scikit-learn` `seaborn` (약 140MB) | 리포 코드는 안 쓰지만 수업 자료(파이썬 모드)에서 쓸 수 있다 |
+| `--jax` | `jax` `jaxlib` `ml-dtypes` `opt-einsum` (약 265MB, `--optional` 과 같이 주면 scipy 약 130MB 도) | mediapipe 0.10.18 이 요구 목록에 적었지만 **불러오지 않는다.** jax·jaxlib·scipy 를 지우고 얼굴·손·포즈 랜드마커와 얼굴 메시(`FACEMESH_TESSELATION`)가 그대로 도는 것을 확인했다(컨테이너, mediapipe 0.10.18·numpy 1.26.4). 대신 `pip check` 가 `mediapipe requires jax` 를 알린다 — 알고 있는 것이다 |
+
+알아 둘 것:
+- **가상환경 밖은 건드리지 않는다.** `/home/pi/.pyenv` 는 시스템 패키지를 보는 가상환경이라 `gpiozero` `lgpio` `spidev` `python-apt` 등
+  apt 패키지가 목록에 같이 보이지만(크기 0) 지울 대상에서 뺀다
+- 남기는 것 중 눈여겨볼 것: `lxml`(뉴스 블록), `tflite-runtime`(분류기·movenet — 없으면 TensorFlow 를 찾는다), `openvino`(얼굴 분석),
+  `av`(picamera2 가 요구), `matplotlib`(mediapipe 가 실제로 불러온다), `sympy`(onnxruntime 이 요구), `uvicorn[standard]`(uvloop·httptools·websockets —
+  socket.io 웹소켓)
+- `openpibo-face-models`(약 90MB)는 **지운다.** 얼굴 모델은 `/home/pi/.model/face` 에서 읽는다(`vision_face.py`). 이름은 예전 `setup.py` 에만 남아 있다
+- `openpibo-detect-models`(약 80MB)는 `movenet_lightning.tflite` 하나 때문에 남는다. 그 파일을 `/home/pi/.model` 로 옮기면 뺄 수 있다(아직 안 함)
+- 새 기능이 패키지를 쓰게 되면 스크립트의 `ROOTS` 와 `requirements.txt` 에 **둘 다** 넣을 것(파이보·PiBrain 같은 파일)
 
 ### 파이썬 패키지 · 모델 폴더 (260930~, 이미지당 1회)
 

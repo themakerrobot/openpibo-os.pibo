@@ -656,6 +656,9 @@ TensorFlow·torch 걷어내기 순서와 지울 목록은 IMAGE.md. 파이보에
   `classifier/`(예전 TF 가중치)는 260930 에 지웠다(아무도 안 씀)
 - 모델은 `leeyunjai/themaker`(HF)에서 손으로 받는다. **`git clone` 말고 `huggingface-cli download`** — clone 은 `.git/lfs` 에 한 벌을 더 남긴다(이번에 약 400MB)
 - `requirements.txt`(리포 맨 위): 리포 코드가 직접 import 하는 패키지만, 기기 버전으로. `test/requirements.txt` 는 260923 전체 스냅숏(TF·torch 포함)
+- **안 쓰는 패키지 걷어내기는 `system/venv_prune.py`(260930).** 기기에서 돌리면 `ROOTS`+`requirements.txt` 와 그 의존만 남기고 나머지를 목록으로 보여 주고,
+  `--apply` 로 지운다(백업 목록·pip check·import 확인까지). 260930 두 기기 site-packages 5.5~5.6GB 의 대부분이 TF·torch·MeloTTS 잔재다.
+  mediapipe 0.10.18 은 jax 를 불러오지 않는다(지우고 확인함, `--jax`). 패키지를 새로 쓰게 되면 `ROOTS` 와 `requirements.txt` 둘 다에 넣을 것. 자세한 건 IMAGE.md
 
 ## 사물 인식 (260924)
 
