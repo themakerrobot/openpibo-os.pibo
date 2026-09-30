@@ -391,11 +391,28 @@ SSID 가 비면 실패 안내를 돌려준다(전엔 정의 안 된 `ex` 로 500
 git checkout main && git pull
 # 작업...
 chmod +x <실행파일>          # git add 전에! (아래 '자주 나는 실수' 참고)
+bash docs/build.sh [http://<IDE 주소>/]   # 태그 전에 도움말 다시 빌드 (아래 '도움말(docs)')
 git add -A && git commit -m "..."
 git push origin main
 git tag -a YYMMDDv1 -m "KR release YYMMDDv1"
 git push origin YYMMDDv1
 ```
+
+### 도움말(docs) — 태그 전에 빌드 (260930)
+
+IDE [도움말] 은 `booting.py`(8080) 가 리포의 `docs/build` 를 그대로 보여 준다. **빌드 결과가 리포에 커밋돼 있으므로
+라이브러리·블록을 고치고 빌드하지 않으면 옛 문서가 배포된다**(260914v6 빌드가 260930 까지 그대로였다 — STT·분류기가 빠지고
+없어진 번역·대화 블록이 남아 있었다).
+
+- `bash docs/build.sh` — `make clean html` + 페이지마다 API 가 비지 않았는지 확인. 인자로 IDE 주소를 주면 블록 가이드
+  (`docs/source/blocks/guide.md`)를 툴박스에서 다시 뽑는다(`docs/tools/gen_block_guide.py`, playwright 필요). 블록을 고쳤으면 주소를 줄 것
+- **기기 밖(PC·컨테이너·웹 세션)에서 빌드한다.** `conf.py` 가 설치 안 된 하드웨어 패키지(picamera2·dlib·board 등)만 autodoc 용 가짜로
+  바꾼다(기기에는 다 있어서 결과가 같다). numpy·opencv 가 있는 파이썬 + `docs/requirements.txt`. 파이썬은 `PY=` 로 고른다
+- 테마는 **Furo**(MIT, 260930 — 예전 sphinx_rtd_theme). 밝게·어둡게는 브라우저를 따르고 외부 글꼴·CDN 이 없어 AP 모드에서도 된다.
+  색은 `conf.py` `html_theme_options`, 덧칠은 `source/_static/mycss.css`
+- 손으로 쓰는 페이지: `notes/piboMaker.md`(IDE·도구·분류기·대화 사용법, 캡처는 `notes/images/*`), `notes/software.md`, `notes/hardware.md`.
+  화면을 크게 바꾸면 캡처도 다시 찍을 것
+- `global` 에도 같은 `docs/build` 가 간다(문서는 한국어 한 벌. 델타 아님)
 
 ### 2. global
 
