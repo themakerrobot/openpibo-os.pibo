@@ -1099,6 +1099,6 @@ git ls-tree -r HEAD system | grep -E "hotspot|booting|setup_country|setup_openpi
 ## Claude Code 웹 세션 제약
 
 - `refs/tags/*` push가 403으로 막힌다. **태그는 사람이 직접 만들어야 한다**
+  (로컬 CLI 또는 GitHub 웹 Releases). 태그 삭제도 같다
 - **원격 브랜치 삭제**(`git push origin --delete …`)도 403 이다. 새 브랜치 push 는 된다
-  (로컬 CLI 또는 GitHub 웹 Releases). 브랜치 push는 정상
 - 사내망 라우팅이 없어 기기 SSH 검증은 못 한다
