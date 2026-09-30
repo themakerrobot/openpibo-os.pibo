@@ -1,5 +1,5 @@
 """
-USB UART 통신을 위한 클래스 입니다.
+거북이 그래픽(turtle)처럼 선을 그리며 움직이는 그림을 화면에 그립니다.
 
 Class:
 :obj:`~openpibo.pibo_graphics.PiboGraphics`
