@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 """YOLO ONNX 를 onnxruntime 만으로 돌린다 — ultralytics · torch 없이.
 
-ultralytics 로 export 한 검출 모델(yolo11 / yolov8 / yolov5u …)을 그대로 읽는다.
+ultralytics 로 export 한 검출 모델(yolo26 / yolo11 / yolov8 / yolov5u …)을 그대로 읽는다.
+yolo26 의 end2end(NMS 가 모델 안에 든) export 도 읽는다(메타데이터 end2end=True).
 전처리·후처리는 ultralytics 의 predict 와 같은 순서로 맞췄다.
 
   전처리  레터박스(비율 유지, 가운데, 회색 114) → RGB → 0~1 → NCHW

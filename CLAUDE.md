@@ -79,6 +79,25 @@ git tag -d <태그> ...           # 로컬 삭제
 
 ---
 
+## 라이선스 (260930)
+
+**리포 전체가 AGPL-3.0 이다**(`LICENSE`, 사용자 결정). 이유는 사물 인식 가중치 `yolo11s.onnx` —
+Ultralytics 배포물이고 AGPL-3.0 이다(파일 메타데이터에도 `license = AGPL-3.0` 이 박혀 있다). Ultralytics 는
+가중치를 넣은 앱 전체를 파생물로 본다(Discussion #2127). 이 해석은 다툼이 있지만, 소스가 이미 공개돼 있으니
+리포를 AGPL 로 내놓아 어느 해석으로도 맞게 했다.
+
+- `LICENSE` — AGPL-3.0 전문(FSF 원문, sha256 `0d96a4ff…abcb0`). 고치지 말 것
+- `THIRD_PARTY_NOTICES.md` — 리포 안 남의 코드(Blockly·CodeMirror·jQuery·Font Awesome·TF.js·MediaPipe 등)와
+  `/home/pi/.model` 모델의 라이선스 표. **vendor 파일·모델을 넣거나 바꾸면 여기도 고칠 것.** 전부 AGPL 과 같이 쓸 수 있는 것만 넣는다
+  (Apache-2.0 · MIT · OFL 은 된다. 비상업·연구 전용 라이선스는 안 된다)
+- `system/NOTICE-yolo11s.txt` — 이미지 만들 때 `/home/pi/.model/object/` 에 복사(IMAGE.md)
+- IDE [더보기] → **소스 코드 · 라이선스 (AGPL-3.0)**(`#source_bt`) — AGPL §13(네트워크로 쓰는 사람에게 소스 위치 안내).
+  링크는 기기 버전(`piBo_260930v2` → 태그 `260930v2`)의 GitHub 트리. 버전 형식이 다르면 리포 첫 화면
+- 사물 인식 모델을 Apache-2.0 인 것(D-FINE 등)으로 바꾸면 yolo 고지는 빼도 되지만 **리포 라이선스는 그대로 둔다**
+- D-FINE(easydetect)은 보류(260930): 공개 가중치가 640 학습이라 320 에서 coco128 mAP50-95 가 dfine-n 0.147 · dfine-s 0.331
+  (yolo11s 0.488). 320 으로 다시 학습해 보고 유의미하면 쓴다
+- PiBrain 은 LICENSE 를 아직 안 넣었다(같은 yolo 가중치를 쓴다)
+
 ## 외부 의존
 
 **자사 서버(circul.us)를 쓰는 기능은 260914v6 에서 전부 제거했다.** 서버를 순차적으로

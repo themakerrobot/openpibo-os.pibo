@@ -137,10 +137,20 @@ $PY -m pip check
 | `tts/assets` | `voice_styles/`(F1~F5·M1~M5) · `LICENSE` · `LICENSE-OpenRAIL-M.txt` · `MODIFICATIONS.md`(변환 고지 — 변형 모델이라 필요) |
 | `stt` | `model.int8.onnx` `tokens.txt`(sherpa-onnx `sense-voice-zh-en-ja-ko-yue-int8-2024-07-17`) · `silero_vad.onnx` · `LICENSE-SenseVoice` |
 | `llm` | `gemma-3-1b-it-Q4_K_M.gguf` + 링크 `llm-model.gguf` |
-| `object` `hand` `face` | 그대로 |
+| `object` | `yolo11s.onnx`(Ultralytics YOLO11s, `imgsz=320` 고정 export) + **`NOTICE-yolo11s.txt`**(AGPL-3.0 고지, 리포 `system/` 에서 복사) |
+| `hand` `face` | 그대로 |
 | (지움) | `classifier/`(예전 TF 가중치), `tts/assets/{.git,audio_samples,img}`, fp32 `onnx` |
 
 ```bash
+# yolo 가중치 고지(AGPL-3.0). 넣은 뒤 VERSION 의 sha256 목록을 다시 만든다
+cp /home/pi/openpibo-os/system/NOTICE-yolo11s.txt /home/pi/.model/object/
+$PY -c "import onnxruntime as o; m=o.InferenceSession('/home/pi/.model/object/yolo11s.onnx').get_modelmeta().custom_metadata_map; print(m['description'][:30], m['imgsz'], m['license'])"
+#   Ultralytics YOLO11s model trai [320, 320] AGPL-3.0 License (https://ultralytics.com/license)
+cd /home/pi/.model
+grep -vE '^[0-9a-f]{64}  ' VERSION > VERSION.new
+find . -type f ! -name VERSION ! -name VERSION.new -print0 | sort -z | xargs -0 sha256sum >> VERSION.new
+mv VERSION.new VERSION
+
 cd /home/pi/.model
 du -sh */ | sort -h            # tts 약 181M, stt 약 230M, llm 769M
 sed -n '/^## sha256/,$p' VERSION | tail -n +2 | sha256sum -c --quiet && echo "VERSION 과 같음"
