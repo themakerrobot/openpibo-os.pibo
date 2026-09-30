@@ -1,14 +1,17 @@
-# 필리핀 배포판 차이점 (`ph` 브랜치 전용 문서)
+# 영문(해외) 배포판 차이점 (`global` 브랜치 전용 문서)
 
-이 파일은 **`ph` 브랜치에만 있다.** `main` 에는 없고, 합치지 않는다.
+> 260930 에 브랜치 `ph` → `global`, 태그 `-ph` → `-gl`, 이 파일 `PH_DELTA.md` → `GLOBAL_DELTA.md` 로 이름을 바꿨다(PiBrain 과 맞춤).
+> 필리핀·말레이시아가 같은 영문판을 쓰므로 나라 이름을 뺐다. 예전 `-ph` 태그는 배포 이력이라 남긴다.
 
-`ph` 는 `main` 을 merge 만 하는 브랜치다. 개발은 전부 `main` 에서 한다.
-아래 항목이 `ph` 가 `main` 과 다른 **전부**이며, merge 후 반드시 유지되어야 한다.
+이 파일은 **`global` 브랜치에만 있다.** `main` 에는 없고, 합치지 않는다.
+
+`global` 은 `main` 을 merge 만 하는 브랜치다. 개발은 전부 `main` 에서 한다.
+아래 항목이 `global` 이 `main` 과 다른 **전부**이며, merge 후 반드시 유지되어야 한다.
 
 검증:
 
 ```bash
-git diff --name-status main ph
+git diff --name-status main global
 # 아래 표와 정확히 일치해야 한다. 모드 차이(0줄 항목)가 나오면 안 된다.
 ```
 
@@ -29,7 +32,7 @@ git diff --name-status main ph
 const blang = (navigator.language || navigator.userLanguage).includes('ko')?'ko':'en';
 let lang = localStorage.getItem("language")?localStorage.getItem("language"):blang;
 
-// ph (필리핀) — 영어 고정
+// global (영문판) — 영어 고정
 const blang = 'en';
 let lang = localStorage.getItem("language") || blang;
 ```
@@ -56,9 +59,12 @@ AP 모드 IP 는 `192.168.34.1` 고정이라(`system/hotspot.sh`) 기기가 달�
 이미지 생성 시 **1회 실행**하는 스크립트. 리포에 파일이 있다고 적용된 게 아니다.
 
 ```bash
-sudo bash /home/pi/openpibo-os/system/setup_country.sh PH
+sudo bash /home/pi/openpibo-os/system/setup_country.sh PH --regdom=KR   # 필리핀. 말레이시아는 MY
 sudo reboot
 ```
+
+필리핀은 **`--regdom=KR`** 로 굽는다(무선 설정만 KR, timezone 은 Asia/Manila). 이유는 `main` CLAUDE.md '현장 네트워크 → 결정'.
+아래 '하는 일'·실측 절의 `PH` 는 그 결정 전(regdom 도 PH 로 굽던 때) 기록이다.
 
 하는 일:
 
@@ -74,10 +80,10 @@ sudo rm -f /etc/modprobe.d/brcmfmac.conf     # country=US 잔재 제거 (아래 
 
 > **260914v7 까지는 `system/ph_setup.sh` 였고, PH 델타의 17번째 파일이었다.**
 > 말레이시아도 영문으로 나가기로 하면서 국가코드만 다른 스크립트가 둘이 될 상황이라,
-> `main` 의 `setup_country.sh <국가코드>` 로 합치고 `ph` 에서는 지웠다. **델타 16개.**
+> `main` 의 `setup_country.sh <국가코드>` 로 합치고 `ph`(지금 `global`)에서는 지웠다. **델타 16개.**
 >
-> **`ph` 브랜치는 '필리핀'이 아니라 '영문 배포판'이다.** 말레이시아는 UI·예제가
-> 필리핀과 완전히 같으므로 **같은 `-ph` 태그를 쓰고**, 차이는 이 스크립트에 주는
+> **`global` 브랜치는 '영문 배포판'이다.** 말레이시아는 UI·예제가
+> 필리핀과 완전히 같으므로 **같은 `-gl` 태그를 쓰고**, 차이는 이 스크립트에 주는
 > 국가코드뿐이다. 국가별 브랜치를 새로 만들지 말 것 — 델타가 배로 늘고 릴리스마다
 > merge 대상이 하나 더 생긴다. 현지어 UI 가 필요해질 때만 별도 논의 대상이다.
 
@@ -85,7 +91,7 @@ sudo rm -f /etc/modprobe.d/brcmfmac.conf     # country=US 잔재 제거 (아래 
 
 ```bash
 timedatectl | grep -i "time zone"            # Asia/Manila
-cat /boot/firmware/cmdline.txt               # regdom=PH 가 한 번만, 파일은 한 줄
+cat /boot/firmware/cmdline.txt               # regdom 이 한 번만(필리핀 KR · 말레이시아 MY), 파일은 한 줄
 ls /etc/modprobe.d/brcmfmac.conf             # 없어야 한다
 dmesg | grep -i "unknown parameter"          # 아무것도 안 나와야 한다
 iw reg get                                   # phy#0 가 20 dBm 인지 (아래 참고)
@@ -227,7 +233,7 @@ sudo chown -R pi:pi /home/pi/examples
 
 ## 4. `examples/collect.json` — 삭제
 
-`main` 에는 있고 `ph` 에는 없다.
+`main` 에는 있고 `global` 에는 없다.
 
 - `Weather.search()` 의 `region_list` 가 **한국 기상청 지역코드 전용**
   (`전국 서울 인천 경기 부산 …`). 필리핀 도시를 넣으면 KeyError
@@ -285,13 +291,13 @@ sudo chown -R pi:pi /home/pi/examples
 
 ## merge 충돌 처리
 
-`main` → `ph` merge 에서 충돌은 사실상 `ko2en.js` 1·2행뿐이다.
+`main` → `global` merge 에서 충돌은 사실상 `ko2en.js` 1·2행뿐이다.
 
 - **`classifier/static/ko2en.js` add/add 충돌** — 양쪽이 독립적으로 추가해서 난다.
   차이가 1·2행뿐이므로 `git checkout --ours classifier/static/ko2en.js`
 - `ide/static/ko2en.js`, `tools/static/ko2en.js` 는 보통 자동 머지된다.
   그래도 merge 후 `head -n1` 3종을 **반드시 눈으로 확인**할 것
-- `--theirs`(main) 를 잡으면 `blang` 이 자동감지로 돌아가 필리핀 요구사항이 깨진다
+- `--theirs`(main) 를 잡으면 `blang` 이 자동감지로 돌아가 영문판 요구사항이 깨진다
 
 `ide/static/customblock_toolbox.js` 는 블록을 실제로 고칠 때만 충돌한다.
 그때는 `main` 쪽 변경을 받아들이고 **위 5번의 제거를 다시 적용**하면 된다.
@@ -307,18 +313,18 @@ sudo chown -R pi:pi /home/pi/examples
 
 ```bash
 cd /home/pi/openpibo-os
-git describe --tags                                            # YYMMDDvN-ph
+git describe --tags                                            # YYMMDDvN-gl
 head -n1 ide/static/ko2en.js                                   # const blang = 'en';
 ls -l system/hotspot.sh system/setup_country.sh system/booting.py   # 전부 -rwxr-xr-x
 ls /home/pi/examples/                                          # 10개, collect.json 없음
 timedatectl | grep -i "time zone"                              # Asia/Manila
-cat /boot/firmware/cmdline.txt                                 # regdom=PH 한 번만
-iw reg get | grep -A1 "^phy#0"                                 # country 99, 20 dBm
+cat /boot/firmware/cmdline.txt                                 # regdom 한 번만 (필리핀은 --regdom=KR 로 구워 KR, 말레이시아 MY)
+iw reg get | grep -A1 "^phy#0"                                 # country 99, 20 dBm (PH 로 굽던 때 값 — KR 로 구운 뒤 값은 확인 필요)
 ```
 
 브라우저:
 
 1. IDE 툴박스에 **Collect 카테고리 없음**, Speech 에 **대화 블록 3개 없음**
 2. IDE 예제 영문, `audio_record` 블록 활성
-3. tools 음성 탭 2열, Talk 없음, 목소리 5종
+3. tools 음성 탭: 목소리 10가지(Male 1~5 · Female 1~5) + espeak, Talk 없음
 4. tools 탭 닫고 → `systemctl is-active tools.service` → `inactive`
