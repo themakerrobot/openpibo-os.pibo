@@ -417,7 +417,16 @@ IDE [도움말] 은 `booting.py`(8080) 가 리포의 `docs/build` 를 그대로 
   `<img width=…>` 를 Sphinx 그림으로 바꿔 `_images` 로 복사한다. 표에 넣었더니 칸이 좁아 긴 블록 글자가 작아져서 표를 뺐다
 - 손으로 쓰는 페이지: `notes/piboMaker.md`(IDE·도구·분류기·대화 사용법, 캡처는 `notes/images/*`), `notes/software.md`, `notes/hardware.md`.
   화면을 크게 바꾸면 캡처도 다시 찍을 것
-- `global` 에도 같은 `docs/build` 가 간다(문서는 한국어 한 벌. 델타 아님)
+- **영문 도움말(261001)** — 한 리포(main)에서 한/영 두 벌을 같이 빌드한다: `docs/build/html`(한국어) · `docs/build/en`(영문). `global` 에도 같은 `docs/build` 가 간다(델타 아님)
+  - `docs/index.html` 이 `?lang=en` 이면 `build/en/`, 아니면 `build/html/` 로 보낸다. IDE [도움말] 은 `:8080/?lang=<IDE 언어>` 를 연다(`index.js` 의 `guide_bt`) —
+    영문판은 `blang='en'` 이라 처음부터 영문 도움말. 두 벌 모두 사이드바의 `English`/`한국어` 링크(`_static/langswitch.js`, 주소의 `/html/`↔`/en/`)로 서로 오간다
+  - 페이지(`index.rst`·`notes/*`·`libraries/*.rst` 제목)는 **`source_en/` 에 영문으로 따로** 있다. 한국어 페이지를 고치면 영문도 고칠 것.
+    `source_en/conf.py` 는 `source/conf.py` 를 exec 해 물려받고 언어·제목·번역 위치만 바꾼다. 영문 캡처는 `source_en/notes/images/`(영문 UI 로 찍는다), 하드웨어 사진은 한국어 쪽 것을 같이 쓴다
+  - 블록 가이드는 `gen_block_guide.py --lang=en` 이 영문 툴박스(`en.js`)로 그려 `source_en/blocks/` 에 쓴다(`build.sh` 가 주소를 받으면 한·영 둘 다). [수집] 분류에는 '국내판 전용' 안내가 붙는다
+  - **파이썬 API 설명(docstring)은 코드를 두고 `.po` 로 번역한다** — `source_en/locale/en/LC_MESSAGES/libraries/<모듈>.po`. docstring 을 고치면
+    `python3 docs/tools/update_po.py`(babel, Sphinx 와 같이 깔림)로 `.po` 를 맞추고 빈 `msgstr`·`#, fuzzy` 를 채울 것. 안 채우면 그 문단만 한국어로 나온다.
+    `build.sh` 가 끝에 빈 개수를 알려 준다. collect 의 지역·뉴스 분류 이름과 예시 결과처럼 **함수에 넘기거나 돌려받는 값이 한국어인 곳은 번역에서도 한국어로 둔다**
+  - `.po` 두 리포가 거의 같다(파이보 510 문장 중 PiBrain 과 다른 건 제목 몇 줄). 한쪽을 고치면 다른 쪽도 같은 문장을 고칠 것
 
 ### 2. global
 
@@ -597,7 +606,7 @@ teach-lab 과 같은 기능(이미지·손·얼굴·포즈 가르치기)을 파�
 폴더 선택은 그대로 둔다(사용자). '폴더 선택'(빈 값)이면 `cf.load(''+'과일')` → `/home/pi/mymodel/과일`.
 파이썬 `CustomClassifier.load(model_path)` 도 인자 하나다(261001v1 — 예전 블록에 맞춰 두었던 안 쓰는 `label_path` 를 뺐다).
 예전 블록이 만든 파이썬을 `.py` 로 저장해 둔 경우 `load(a, b)` 는 TypeError 가 난다 — 두 번째 인자를 지우면 된다.
-**표시(261001v2)**: `cf.draw(img)` 또는 `cf.predict(img, draw=True)` — 바로 전 `predict` 가 본 것을 그 이미지에 그린다(손·포즈 점+뼈대, 얼굴 점,
+**표시(261001v1)**: `cf.draw(img)` 또는 `cf.predict(img, draw=True)` — 바로 전 `predict` 가 본 것을 그 이미지에 그린다(손·포즈 점+뼈대, 얼굴 점,
 종류 이름·확률은 파랑 바탕 이름표, 이미지 모델은 이름표만). 손·얼굴·몸이 안 보였으면 아무것도 안 그린다. MediaPipe 결과는
 `LandmarkExtractor.detect` 를 감싸서 남긴다(teachlab 코드는 안 고침). 블록 `vision_predict_cf_vis` [이미지 … 에 분류기가 본 것 표시하기]
 **예전 `model.keras` 는 못 읽는다** (불러오면 다시 학습하라는 오류). 의도한 호환 단절이다.
