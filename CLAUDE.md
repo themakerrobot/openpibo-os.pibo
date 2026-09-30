@@ -96,7 +96,7 @@ Ultralytics 배포물이고 AGPL-3.0 이다(파일 메타데이터에도 `licens
 - 사물 인식 모델을 Apache-2.0 인 것(D-FINE 등)으로 바꾸면 yolo 고지는 빼도 되지만 **리포 라이선스는 그대로 둔다**
 - D-FINE(easydetect)은 보류(260930): 공개 가중치가 640 학습이라 320 에서 coco128 mAP50-95 가 dfine-n 0.147 · dfine-s 0.331
   (yolo11s 0.488). 320 으로 다시 학습해 보고 유의미하면 쓴다
-- PiBrain 은 LICENSE 를 아직 안 넣었다(같은 yolo 가중치를 쓴다)
+- PiBrain 도 같은 LICENSE·고지·소스 링크를 넣었다(260930, 태그 형식 `YYMMDDvN` / `-gl`)
 
 ## 외부 의존
 
