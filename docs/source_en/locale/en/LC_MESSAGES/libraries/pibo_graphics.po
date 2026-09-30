@@ -1,0 +1,57 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2026 THEMAKER. All rights reserved. openpibo-python-0.9.4.0
+# This file is distributed under the same license as the OPENPIBO package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: OPENPIBO \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-09-30 23:52+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: en\n"
+"Language-Team: en <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+msgid "pibo_graphics · Turtle graphics"
+msgstr ""
+
+msgid "거북이 그래픽(turtle)처럼 선을 그리며 움직이는 그림을 화면에 그립니다."
+msgstr "Draws pictures on the screen by moving and drawing lines, like turtle graphics (turtle)."
+
+msgid "Class: :obj:`~openpibo.pibo_graphics.PiboGraphics`"
+msgstr ""
+
+msgid "Clears screen and history, resets state."
+msgstr ""
+
+msgid "Clears drawing area (history), redraws icon, shows."
+msgstr ""
+
+msgid "Sets background color and clears screen/history."
+msgstr ""
+
+msgid "Moves forward step-by-step, adding to history if pen down."
+msgstr ""
+
+msgid "Turns left step-by-step, updating icon display."
+msgstr ""
+
+msgid "Sets absolute heading instantly, updates display."
+msgstr ""
+
+msgid "Goes instantly, adds line to history if pen down."
+msgstr ""
+
+msgid "Adds circle/arc to history if pen down."
+msgstr ""
+
+msgid "Adds dot to history."
+msgstr ""
+
