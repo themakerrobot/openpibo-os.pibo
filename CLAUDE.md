@@ -881,7 +881,7 @@ RT-DETR 은 쓰지 않는다. 320 에서 정확도가 크게 떨어졌다(coco12
 
 **탭을 바꾸면 브라우저가 전체화면을 푼다. 막을 수 없다**(브라우저 규칙). 다시 켜는 것도 사용자 동작(누르기) 안에서만 된다.
 그래서 IDE 에서 [도구] 를 누르면 IDE 의 전체화면이 풀리고, 새 탭은 보통 화면으로 뜬다. 한 번 누르면 돌아오게 했다(안 A).
-끊김 없이 한 화면으로 쓰려면 도구·분류기를 IDE 안(iframe)에 넣어야 한다 — 따로 할 일(안 C, 보류).
+끊김 없이 한 화면으로 쓰려면 도구·분류기를 IDE 안(iframe)에 넣어야 한다 — 안 C, 보류. 걸리는 것은 바로 아래 절.
 
 - 코드는 키트 한 곳(`design/pibo-ui.js` '전체화면' 절). 각 앱의 예전 전체화면 코드(IDE `index.js` 맨 위, Pibo 도구 `index.js`, 분류기 `app.js`)는 지웠다
 - 버튼: `#fullscreen_bt`(또는 `[data-pb-fs]`), 아이콘 칸 `#fullscreen_txt`(또는 `<i data-pb-fs-icon>`). 키트가 클릭·아이콘(`fa-maximize`/`fa-minimize`)을 맡는다.
@@ -893,6 +893,50 @@ RT-DETR 은 쓰지 않는다. 320 에서 정확도가 크게 떨어졌다(coco12
 - 대화(llama.cpp UI)에는 키트가 없어 이 동작이 없다
 - 확인(컨테이너 Chromium): 세 화면 × Pibo·PiBrain 34/34 — 버튼·아이콘 전환·쿠키 기억/지움·안내·한 번 눌러 복귀·포트 간 쿠키 공유·pageerror 0,
   IDE 에서 [도구] 를 눌러 풀려도 쿠키 유지, IDE 상단바 820~1920 한/영 넘침 0. **실제 태블릿·학교 노트북 브라우저로는 아직 안 봤다**
+
+### iframe 으로 합치기(안 C) — 보류, 걸리는 것 (260930 조사)
+
+도구·분류기를 IDE 안 iframe 으로 띄우면 탭이 하나라 전체화면이 안 풀린다. 그 대신 아래가 걸린다.
+**재 본 것**(컨테이너 Chromium, IDE 80 페이지에 도구 50000 을 iframe 으로):
+
+| 확인한 것 | 결과 |
+|---|---|
+| iframe 주소를 도구 → 분류기로 바꿀 때 전체화면 | **유지된다** (안 C 를 하는 이유) |
+| 숨긴 iframe(`display:none`·화면 밖)의 `document.hidden` | **`false` 그대로**, `visibilitychange` 안 옴 |
+| 숨긴 iframe 의 `requestAnimationFrame` / `setTimeout` | 60/s → **0/s** / 98/s 그대로 |
+| iframe 을 **지울 때** `beforeunload`(→ `enable=off`) | **안 뜬다.** `src` 를 바꾸거나 위 탭을 닫으면 뜬다 |
+| 위 창에서 iframe DOM 접근 | 안 된다(포트가 달라 교차 출처) → `postMessage` 로만 |
+| iframe 안 `confirm()` | 뜬다 |
+
+걸리는 것 (위 측정과 코드에서):
+
+1. **카메라가 안 멈춘다.** 도구 `vision_sleep`·분류기 `camera_visible` 은 `document.hidden` 만 본다. IDE 화면으로 돌아가
+   iframe 을 숨겨도 `false` 라 계속 보낸다(대당 0.23~0.29 Mbps × 30대 — '현장 네트워크' 대역폭 표). IDE 가 `postMessage` 로
+   '가려짐/보임'을 알리고 두 앱이 그것도 봐야 한다
+2. **분류기 학습이 멈춘다.** `tl/trainer.js` 가 에포크마다 `tf.nextFrame()` 을 기다리는데 tfjs 는 이걸 `requestAnimationFrame` 으로
+   한다(`vendor/tfjs/tf.min.js` 확인). 숨긴 iframe 은 0/s 이므로 학습 중 IDE 로 넘어가면 멈췄다가 돌아오면 잇는다(추정 —
+   실제 학습을 걸고 재 보진 않음). 학습 중에는 전환을 막거나 안내해야 한다
+3. **서비스 끄기.** iframe 을 DOM 에서 지우면 `beforeunload` 가 안 떠서 서비스가 안 꺼진다. 끌 땐 `src='about:blank'` 로 바꾸거나
+   IDE 가 직접 `enable=off` 를 보낼 것. 숨겨 두기만 하면 서비스는 계속 돈다(지금의 '백그라운드면 살려 둔다' 와 같다).
+   코드 실행이 세 서비스를 끄는 건 그대로라, IDE 에서 실행하고 돌아오면 iframe 에 [다시 켜기] 배너가 떠 있다
+4. **머리줄 두 겹, [IDE] 버튼.** 도구·분류기는 제 노랑 상단바가 있다. 그 [IDE](`backToIDE`)는 `window.close()` 가 iframe 에선
+   안 되므로 IDE 주소로 이동한다 → **iframe 안에 IDE 가 한 번 더 뜬다.** 끼워 넣을 때용 모드(예: `?embed=1` — 상단바 숨김,
+   [IDE] 는 `postMessage`)가 네 앱(파이보·PiBrain × 도구·분류기)에 필요하다
+5. **설정이 실시간으로 안 넘어간다.** 밝기는 쿠키라 새로 열면 맞지만 이미 열린 iframe 에는 안 간다. 언어는 앱마다
+   localStorage 키가 다르다(PiBrain `tools_language`·`classifier_language`). 넘기려면 `postMessage`
+6. **한 탭에 다 올라간다.** 분류기(MediaPipe wasm 11.2MB·TF.js WebGL·모델)와 IDE(Blockly)가 한 탭이다. 오래된 태블릿에서
+   메모리가 모자라 탭이 죽으면 **저장 안 한 IDE 코드도 같이 날아간다**(지금은 분류기 탭만 죽는다). 실제 태블릿 메모리는 **확인 필요**
+7. **키보드.** 도구 [동작] 의 화살표·Enter 는 iframe 에 포커스가 있을 때만 먹는다(전환 뒤 한 번 눌러야 함). 반대로 iframe 안에선
+   IDE 단축키가 안 먹는다
+8. **새로 고침·주소.** 주소가 IDE 하나라 새로 고치면 도구도 처음부터(서비스 끔 → 켬, [로봇 준비 중] 다시). 주소에 `#tools` 처럼
+   남겨야 제자리로 온다
+9. **대화(llama.cpp UI)** 는 우리 코드를 못 넣는다. llama-server 가 `X-Frame-Options`·CSP 로 끼워 넣기를 막는지 **확인 필요**.
+   막지 않아도 1~8 을 손댈 수 없으니 대화는 새 탭으로 두는 게 현실적이다
+10. 다운로드(`a[download]`: 캡처·모션·모델 zip)·파일 올리기 — Chromium 은 iframe 안에서도 된다. iPad Safari 는 **확인 필요**
+
+하게 되면 순서: ① 네 앱에 embed 모드 ② IDE 셸(전환 버튼, `postMessage` 약속: 가려짐·밝기·언어·IDE 로) ③ 카메라 가려짐 처리
+④ 학습 중 전환 막기 ⑤ 끌 때 `about:blank` ⑥ 대화는 새 탭. '도구 서비스 수명' 의 남은 문제(탭 두 개 중 하나만 닫아도 서비스가 죽음)도
+같이 다룬다. 측정 스크립트는 남기지 않았다 — 위 표의 방법대로 IDE 주소에 가짜 위 페이지를 띄워 재면 된다.
 
 ### 움직임 (260929)
 
