@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: OPENPIBO \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-30 23:52+0000\n"
+"POT-Creation-Date: 2026-10-01 00:04+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -148,17 +148,8 @@ msgstr "Sets the font used by the ``draw_text`` method."
 msgid "폰트 파일 경로  폰트 확장자는 **ttf** 와 **otf** 모두 지원합니다."
 msgstr "Font file path  Both **ttf** and **otf** font formats are supported."
 
-msgid "폰트 파일 경로"
-msgstr "Font file path"
-
-msgid "폰트 확장자는 **ttf** 와 **otf** 모두 지원합니다."
-msgstr "Both **ttf** and **otf** font formats are supported."
-
 msgid "폰트 사이즈  단위는 픽셀 입니다. (default 10)"
 msgstr "Font size  The unit is pixels. (default 10)"
-
-msgid "단위는 픽셀 입니다. (default 10)"
-msgstr "The unit is pixels. (default 10)"
 
 msgid "문자를 그립니다.(한글, 영어 지원)"
 msgstr "Draws text. (supports Korean and English)"
@@ -204,4 +195,13 @@ msgstr "Draws an image file."
 
 msgid "이미지 데이터(cv2)를 그립니다."
 msgstr "Draws image data (cv2)."
+
+#~ msgid "폰트 파일 경로"
+#~ msgstr "Font file path"
+
+#~ msgid "폰트 확장자는 **ttf** 와 **otf** 모두 지원합니다."
+#~ msgstr "Both **ttf** and **otf** font formats are supported."
+
+#~ msgid "단위는 픽셀 입니다. (default 10)"
+#~ msgstr "The unit is pixels. (default 10)"
 
