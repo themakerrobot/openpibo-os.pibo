@@ -42,7 +42,6 @@ Details of the parts inside piBo.
    ![](../../source/notes/images/servo.png)
 
    - A servo motor that moves up to 180 degrees
-   - Controlled with a PWM signal.
 
 - OLED
 
