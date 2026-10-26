@@ -622,6 +622,9 @@ IDE [대화] 는 llama-server 기본 웹 화면이 아니라 **우리 대화 웹
 - **[소리로 말하기]**(체크, 목소리 남성 1~5·여성 1~5, 브라우저에 기억): 켤 때 목소리 모델을 올리고(`/api/voice/warm`, 약 330MB·몇 초),
   대답이 끝나면 `SpeechOnDevice.tts(lang='na')` → `Audio.play`. 새 말을 보내거나 [그만 말하기]·[새 대화] 면 `Audio.stop`.
   LLM(Qwen3.5 0.8B 약 515MB) + TTS int8 약 330MB 가 같이 올라간다 — 기기 메모리 **확인 필요**
+- **볼륨**: 대화 화면의 막대(0~100, 기본 80, 브라우저에 기억)를 `Audio.play(volume=)` 로 넘긴다. `Audio.play` 는 틀 때마다 PCM 을 직접 바꾼다
+  (`amixer sset PCM`). 그 식이 `/2+40` 이라 최대 90% 였다 → **261026 에 `40 + v*60//100`(40~100%)으로 고쳤다**(두 리포 `openpibo/audio.py`).
+  40% 아래는 소리가 너무 작아 하한을 둔 것이 원래 의도였다(사용자). 블록·도구 소리도 같이 조금 커진다(기본 80: 80% → 88%)
 - **띄우기**: H/W 검수처럼 IDE 가 직접 띄운다(`run_ide.py` 의 `/llm` → `llama-server.service` 시작 + `chat_proc`). 유닛 파일이 리포 밖이라서다.
   끄는 곳: `/llm?enable=off`(탭 닫기 `beforeunload`, `keepalive`) · [도구][분류기][H/W 검수] 켜기 · 코드 실행 · [정지] — 전부 `stop_chat()`.
   `--device` 는 받기만 한다(도구를 뺀 뒤로 기기 차이 없음)
