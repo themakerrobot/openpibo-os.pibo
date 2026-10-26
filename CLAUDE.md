@@ -599,43 +599,47 @@ IDE 의 [도구][대화][분류기] 는 누르는 **그 순간** 이름 붙인 �
 
 ## 대화 웹 (261026) — IDE [대화]
 
-IDE [대화] 는 이제 llama-server 기본 웹 화면이 아니라 **우리 대화 웹**(`chat/`, 50030)을 연다. 기본 화면은 시스템 글과
-도구 목록을 보내지 않아 도구(춤·눈 색·사물 찾기 등)가 절대 안 됐다. 대화 웹이 붙여 보내고, 모델이 부른 도구를 openpibo 로 실행한다.
-**파이보·PiBrain 같은 코드**다(원본은 파이보 리포, PiBrain 에 통째로 복사). 음성(STT·TTS)은 일부러 넣지 않았다(사용자 결정, 글자 대화만).
+IDE [대화] 는 llama-server 기본 웹 화면이 아니라 **우리 대화 웹**(`chat/`, 50030)을 연다. **도구 없이 글자 대화만** 하고,
+대답은 만들어지는 대로 흘려 보여 주며, [소리로 말하기] 를 켜면 로봇이 대답을 말한다. **파이보·PiBrain 같은 코드**다(원본은 파이보 리포).
 
 ```
-브라우저 ── POST /api/chat ──▶ chat/run_chat.py :50030 ── /v1/chat/completions ──▶ llama-server :50020
-                                └ 도구 호출 → openpibo 로 실행 → 결과를 다시 모델에
+브라우저 ── POST /api/chat ──▶ chat/run_chat.py :50030 ── /v1/chat/completions (stream) ──▶ llama-server :50020
+         ◀── 한 줄씩 JSON ────┘  └ [소리로 말하기] 면 SpeechOnDevice → Audio.play (로봇 스피커)
 ```
 
-| 파일 | 무엇 |
-|---|---|
-| `chat/pibo_chat.py` · `chat/tools.py` | 학습 PC(`openpibo-chat`)의 파일 **그대로**. 시스템 글·도구 목록이 학습 때와 글자까지 같아야 하므로 **고치지 말고 PC 쪽 새 판으로 통째로 바꿀 것** |
-| `chat/run_chat.py` | 웹 서버. `pibo_chat.run_tool`·`find_objects` 를 바꿔 끼운다(파일은 안 고침). 기기 차이는 `--device pibo|pibrain` |
-| `chat/templates/index.html` · `static/chat.js` · `chat.css` | 화면. 키트(`pibo-ui.*`, `design/sync.sh` 가 복사)와 v2 색 |
+**도구(함수 호출)는 뺐다(261026, 사용자 결정).** 처음엔 학습 PC 의 `pibo_chat.py`·`tools.py`(도구 6개)를 붙였는데, 파이보에서
+도구 한 번에 15 → 25 → 44초로 차례마다 늘었다(기기 로그). 한 차례에 모델을 두 번 부르고(도구 판단 → 결과로 다시 묻기), 매번 도구 목록
+약 1천 토큰을 붙이고, 두 요청의 앞부분이 달라 자리 하나(`-np 1`)의 캐시를 서로 덮어써서 지난 대화를 매번 다시 읽었다(읽기 초당 약 14토큰:
+19 → 179 → 295토큰). 지금은 한 차례 한 번, 요청 모양이 늘 같아(시스템 글 + 대화가 뒤에만 붙음) 서버가 새로 한 말만 읽는다.
+동작·눈 색이 필요해지면 **도구 호출 대신 대답 앞 짧은 표시(`[dance] 춤출게요!`)를 앱이 떼어 실행하는 방식**으로 다시 학습하기로 이야기했다(미정).
 
+- `run_chat.py` — `SYSTEM` 은 학습 때 시스템 글과 **글자까지 같게** 둔다(학습 PC `tools.SYSTEM`). 모델을 다시 학습하면(모델 이름 등) 같이 바꿀 것.
+  기억은 주고받기 6번(`MAX_TURNS`), 넘으면 **앞쪽 절반을 한꺼번에** 버린다(하나씩 밀면 매 차례 앞부분이 바뀌어 대화 전체를 다시 읽는다)
+- **흘려 보내기**: `StreamingResponse` + 한 줄 JSON(`{"d":조각}` … `{"done":…}`). starlette `GZipMiddleware` 가 흘려 보내는 응답을 모아 버려서
+  `/api/chat` 만 압축에서 뺀다(`GZipExceptStream`, PiBrain 도구 버튼과 같은 원인). 생각(`reasoning_content`)은 보내지 않는다
+- **[멈추기]**: 받는 중엔 [보내기] 가 [멈추기]. 브라우저가 끊으면 starlette 가 `chat_async` 를 취소 → llama-server 연결을 닫아 생성을 멈추고
+  잠금을 푼다(그러지 않으면 모델이 끝까지 만들어 다음 말이 늦다). 끊긴 대답은 기억하지 않는다
+- **[소리로 말하기]**(체크, 목소리 남성 1~5·여성 1~5, 브라우저에 기억): 켤 때 목소리 모델을 올리고(`/api/voice/warm`, 약 330MB·몇 초),
+  대답이 끝나면 `SpeechOnDevice.tts(lang='na')` → `Audio.play`. 새 말을 보내거나 [그만 말하기]·[새 대화] 면 `Audio.stop`.
+  LLM(Qwen3.5 0.8B 약 515MB) + TTS int8 약 330MB 가 같이 올라간다 — 기기 메모리 **확인 필요**
 - **띄우기**: H/W 검수처럼 IDE 가 직접 띄운다(`run_ide.py` 의 `/llm` → `llama-server.service` 시작 + `chat_proc`). 유닛 파일이 리포 밖이라서다.
-  끄는 곳: `/llm?enable=off`(탭 닫기 `beforeunload`, `keepalive`) · [도구][분류기][H/W 검수] 켜기 · 코드 실행 · [정지] — 전부 `stop_chat()`
-- **대기 페이지**(`launch.html`)는 50030 이 열리면 바로 넘어가고, 모델 준비(서버 올리기 + 도구 목록 약 1천 토큰 미리 읽기, 파이보 40~70초)는
-  대화 화면 위 상태 줄이 보여 준다. `LAUNCH_VER` 261026v1
+  끄는 곳: `/llm?enable=off`(탭 닫기 `beforeunload`, `keepalive`) · [도구][분류기][H/W 검수] 켜기 · 코드 실행 · [정지] — 전부 `stop_chat()`.
+  `--device` 는 받기만 한다(도구를 뺀 뒤로 기기 차이 없음)
+- **대기 페이지**(`launch.html`)는 50030 이 열리면 바로 넘어가고, 모델 준비는 대화 화면 위 상태 줄이 보여 준다. `LAUNCH_VER` 261026v1
+- **서비스가 죽으면**(`systemctl is-failed llama-server`) 상태 줄에 '켜지 못했어요' + [다시 켜기](`/api/llm/restart` → `reset-failed` + `start`).
+  261026v1 기기에서 실제로 났다: 손으로 띄운 서버가 50020 을 쥔 채 [대화] 를 누르니 서비스가 18ms 만에 죽고 화면은 '켜는 중…' 에서 멈췄다.
+  서비스는 `--log-disable` 이라 이유가 로그에 안 남는다 — 로그 없이 같은 명령을 직접 돌려 볼 것(`| head` 로 자르면 서버가 뒤에 남는다)
 - **문구는 IDE 의 `ko2en.js` 를 같이 읽는다**(`chat_*` 키, 파일 끝). 대화 화면이 `http://<IP>:80/static/ko2en.js` 를 싣는다 → **영문판 델타 파일이 늘지 않는다**.
   IDE 가 죽어 있으면 키 이름이 그대로 보인다(글꼴과 같은 전제). 시험할 땐 `?ide=<포트>`
-- **기기 차이**(`run_tool`): 파이보는 `pibo_chat.run_tool` 그대로. PiBrain 은 `eye_on/off` → `DeviceByPiBrain.led_on/led_off`,
-  `set_motion`·`get_battery` 는 실행하지 않고 **모델에 다시 묻지 않고** 정해진 말(`NO_TOOL`). 실패 결과를 모델에 넘기면 학습한 적 없는 상황이라서다.
-  `set_motion(stop)`("멈춰")은 PiBrain 에서 할 일이 없어 '완료'
-- **`find_objects` 는 카메라·검출기를 한 번 열어 계속 쓴다.** `pibo_chat.find_objects` 는 부를 때마다 `Camera()`·`Detect()` 를 새로 만들어
-  Picamera2 두 번째 열기에서 실패한다. 대화 웹이 카메라를 쥐므로 [도구][분류기]를 켜면 대화 웹을 끈다
-- **도구를 거절하는 서버**(옛 llama.cpp, `--jinja` 없음)면 미리 읽기에서 HTTP 오류 → 도구 없이 대화만 하고 상태 줄에 안내, [움직이기] 숨김.
-  지금 기기의 `llama-server.service` 가 젬마3 1B · 옛 llama.cpp 라 **서비스를 새 모델로 바꾸기 전에는 이 상태다**(서비스 전환은 이미지 작업, 사용자 확인 뒤)
-- [움직이기] 스위치 = 말로 "대화만 하자 / 이제 움직여도 돼"(`pibo_chat.tool_switch`). 끈 동안 모델이 부른 도구는 실행하지 않는다. "멈춰"는 모델 없이 바로 stop
-- **서비스가 죽으면**(`systemctl is-failed llama-server`) 상태 줄에 '켜지 못했어요' + [다시 켜기](`/api/llm/restart` → `reset-failed` + `start`).
-  261026v1 기기에서 실제로 났다: 지시서대로 손으로 띄운 Qwen 서버가 50020 을 쥔 채 [대화] 를 누르니 서비스가 18ms 만에 죽고(5번 재시도 후 포기)
-  화면은 '켜는 중…' 에서 멈췄다. 서비스는 `--log-disable` 이라 이유가 로그에 안 남는다 — 로그 없이 같은 명령을 직접 돌려 볼 것
-- 한 번에 한 대화(`turn_lock`). 대답 중에 또 보내면 '앞의 대답을 만드는 중' 안내. 기록은 서버 하나에 하나(로봇이 하나라서)
-- **모델 이름(261026, 사용자 결정)**: 파이보·PiBrain 공통 모델로 가려고 대화 모델에 **기기와 별개인 이름**을 붙이고, 자기소개에서 몸 정보(키 등)를 뺀다.
-  `tools.py` 의 `SYSTEM`·도구 설명의 '파이보'도 뺀다. **PC 세션 재학습 일**이고 이름은 아직 미정. 받으면 `pibo_chat.py`·`tools.py` 를 통째로 교체
-- 확인(컨테이너, 가짜 llama-server — 스트리밍 도구 호출·`type: function` 검사 포함): 화면 22/22(도구 칩, 움직이기 끄고 켜기, 새 대화, 한/영,
-  1366·1024·768·390 가로 넘침 0, 밝게·어둡게, PiBrain 미지원 도구, 도구 없는 서버, pageerror 0). **파이보·PiBrain 실기기·새 모델로는 아직 안 봤다**
+- 한 번에 한 대화(`turn_lock`). 기록은 서버 하나에 하나(로봇이 하나라서)
+- **기기 서비스 전환(261026, 파이보 cd488e95 에서 함)**: `/etc/systemd/system/llama-server.service` 의 ExecStart 를 새 llama.cpp
+  (`/home/pi/llama.cpp-new`, Qwen3.5 를 읽는 빌드)로, **`WorkingDirectory` 도 새 빌드 폴더로**(옛 폴더면 30ms 만에 죽었다), 모델 링크
+  `/home/pi/.model/llm/llm-model.gguf` → `pibo-qwen3.5-0.8b-school-small-Q4_K_M.gguf`(젬마 파일은 남겨 둠). 백업 `/home/pi/llama-server.service.gemma.bak`.
+  **이미지 작업**이라 다른 기기·새 이미지에도 같은 변경이 필요하다(IMAGE.md 에 아직 안 옮김). 도구를 뺐으니 `--jinja` 는 없어도 된다
+- **모델 이름(261026, 사용자 결정)**: 파이보·PiBrain 공통 모델로 가려고 기기와 별개인 이름을 붙이고 자기소개에서 몸 정보(키 등)를 뺀다. PC 재학습 일, 이름 미정
+- 확인(컨테이너, 가짜 llama-server·가짜 TTS): 23/23 — 흘려 받기(중간 글자), [멈추기] → 모델 연결 끊김·다시 보내기, 소리 끔이면 안 말함,
+  고른 목소리로 말하기·[그만 말하기], 체크·목소리 기억, 새 대화, 한/영, 1366·1024·768·390 넘침 0, 어둡게, pageerror 0.
+  **실기기로는 흘려 받기·말하기 아직 안 봤다**(도구 판은 파이보에서 돌려 봤다 — 위 시간)
 
 ---
 
