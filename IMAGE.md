@@ -131,16 +131,15 @@ $PY -m pip check
 | `tts/assets` | `voice_styles/`(F1~F5·M1~M5) · `LICENSE` · `LICENSE-OpenRAIL-M.txt` · `MODIFICATIONS.md`(변환 고지 — 변형 모델이라 필요) |
 | `stt` | `model.int8.onnx` `tokens.txt`(sherpa-onnx `sense-voice-zh-en-ja-ko-yue-int8-2024-07-17`) · `silero_vad.onnx` · `LICENSE-SenseVoice` |
 | `llm` | `gemma-3-1b-it-Q4_K_M.gguf` + 링크 `llm-model.gguf` |
-| `object` | **`dfine-s-320/`**(D-FINE-S COCO, `model.onnx` `labels.txt` `model.json` `detect.py`, HF `.model/object/dfine-s-320/`). 예전 사물 인식 가중치와 그 고지 파일은 **지운다**(261026) |
+| `object` | **`ed-s-320.onnx`** 하나(easydetect ed-s COCO, 이름·conf 는 파일 안 메타데이터, HF `.model/object/ed-s-320.onnx`). 예전 사물 인식 가중치와 그 고지 파일은 **지운다**(261026) |
 | `hand` `face` | 그대로 |
 | (지움) | `classifier/`(예전 TF 가중치), `tts/assets/{.git,audio_samples,img}`, fp32 `onnx` |
 
 ```bash
-# 사물 인식 모델 폴더(D-FINE). 예전 가중치·고지(object/ 바로 아래 .onnx·NOTICE-*.txt)는 지운다. 넣은 뒤 VERSION 의 sha256 목록을 다시 만든다
-ls /home/pi/.model/object/dfine-s-320/          # detect.py labels.txt model.json model.onnx
-find /home/pi/.model/object -maxdepth 1 -type f  # 아무것도 안 나와야 한다
-$PY -c "import onnxruntime as o; s=o.InferenceSession('/home/pi/.model/object/dfine-s-320/model.onnx'); print([(i.name,i.shape) for i in s.get_inputs()+s.get_outputs()])"
-#   [('images', [1, 3, 320, 320]), ('boxes', [1, 100, 4]), ('scores', [1, 100, 80])]   ← 쿼리·클래스 수는 model.json 과 같아야 한다
+# 사물 인식 모델(easydetect ed). object/ 에는 ed-s-320.onnx 하나만 둔다(예전 가중치·고지 파일은 지운다). 넣은 뒤 VERSION 의 sha256 목록을 다시 만든다
+ls -la /home/pi/.model/object/                   # ed-s-320.onnx 하나
+$PY -c "import onnxruntime as o; s=o.InferenceSession('/home/pi/.model/object/ed-s-320.onnx'); m=s.get_modelmeta().custom_metadata_map; print(s.get_inputs()[0].shape, [x.name for x in s.get_outputs()], m.get('easydetect.conf'), m['easydetect.names'][:40])"
+#   [1, 3, 320, 320] ['boxes', 'scores'] None {"0": "person", "1": "bicycle", ...
 cd /home/pi/.model
 grep -vE '^[0-9a-f]{64}  ' VERSION > VERSION.new
 find . -type f ! -name VERSION ! -name VERSION.new -print0 | sort -z | xargs -0 sha256sum >> VERSION.new
