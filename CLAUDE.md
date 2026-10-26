@@ -781,6 +781,31 @@ YOLO ONNX 를 돌린다(`openpibo/modules/yolo_onnx.py`). 기본 모델은 그�
 RT-DETR 은 쓰지 않는다. 320 에서 정확도가 크게 떨어졌다(coco128 mAP50-95 0.275 vs yolo11s 0.488).
 공개 가중치가 640 으로 학습돼 있어서다. 쓸 일이 생기면 320 으로 학습·export 한다.
 
+### easydetect 모델 폴더 (261026)
+
+easydetect-lab 지시서(`docs/pibo-integration.md`)대로 **사물 인식 모델을 폴더로도 고를 수 있다.** 기본값은 그대로 yolo11s.
+파이보·PiBrain **같은 코드**(`openpibo/modules/object_model.py` 는 두 리포가 같은 파일, `vision_detect.py` 는 같은 부분을 같이 고칠 것).
+
+- 폴더 = lab 의 'Pibo로 보내기' zip 을 푼 것, 또는 COCO D-FINE 폴더: `model.onnx`(opset 17, 고정 320) · `labels.txt`(한글일 수 있음) ·
+  `model.json`(`conf`, null 이면 0.5) · `detect.py` · `README.txt`. **폴더 안 `detect.py` 를 그대로 불러 쓴다** — 전처리(letterbox 없이 resize)·
+  후처리(NMS 없음, 겹침 제거 iou 0.7)를 여기서 다시 만들지 말 것. 폴더 형식·`detect.py` 도 고치지 않는다(고칠 게 있으면 easydetect-lab 쪽)
+- `open_detector(경로)`: 폴더면 `Detector(model.onnx, threads=4, conf='auto', iou=0.7)`, `.onnx` 파일이면 `YoloOnnx`. 둘 다
+  `det(img, conf=0.5, iou=0.4)` → `(boxes, scores, classes)` + `name_of()` 로 불린다(코드에서 확인). 폴더 모델은 conf·iou 가 Detector 에 고정돼
+  openpibo 가 넘기는 0.5·0.4 는 안 쓰인다(D-FINE 에 iou 0.4 는 실제로 겹친 다른 물체를 지운다)
+- `detect.py` 는 폴더마다 다른 모듈 이름으로 불러온다(`sys.path` + `import detect` 로 하면 두 번째 폴더부터 첫 폴더 것이 쓰인다)
+- 고르는 법: `Detect(object_model=폴더)` · `detect.load_object_model(폴더)` · `load_object_model()`(기본으로) · IDE 블록 [사물 인식 모델 불러오기]
+  (블록은 `폴더+이름+'.onnx'` 를 넘긴다 — `<이름>.onnx` 파일이 없고 `<이름>` 폴더가 있으면 폴더로 읽는다. 그래서 블록·JS 는 안 고쳤다)
+- **기본값 바꾸기는 `vision_detect.py` 의 `OBJECT_MODEL` 한 줄** → `'/home/pi/.model/object/dfine-s-320'`. 코드는 더 안 고친다.
+  그때 `THIRD_PARTY_NOTICES.md` 의 `/home/pi/.model` 표에 D-FINE(Apache-2.0)·`detect.py`(Apache-2.0)를 넣을 것. yolo11s 코드·파일은 지우지 않는다(되돌릴 곳)
+- 못 쓰면(폴더·파일 없음, onnxruntime 1.13 미만, 읽기 실패) 로그(`openpibo.object_model`)와 print 로 이유를 남기고 `FALLBACK`(yolo11s)으로 돌아간다
+- 모델을 바꿀 때 이전 ONNX Runtime 세션을 먼저 놓는다(`release`)
+- **점수(%)는 반올림**(`int(round(round(score, 2) * 100))`) — lab·`detect.py` 의 `:.2f` 와 같게. 전엔 버림이라 절반쯤 1 작았다(yolo 도 같이 바뀜, ±1)
+- 한글 이름 그리기: `detect_object_vis` 는 원래 PIL. 파이보 도구 [카메라] 사물 인식(`tools/lib.py` `object_detect`)은 `cv2.putText` 였어서 PIL(KDL.ttf 22)로 바꿨다.
+  PiBrain 도구는 `detect_object_vis` 를 써서 그대로
+- 확인(컨테이너, onnxruntime 1.20.1 = 기기 버전, 가짜 D-FINE 모양 ONNX + lab 의 `pibo/detect.py` 원본): 두 리포 19/19 — 기본 yolo, 폴더 경로 네 모양,
+  `detect.py` 직접 실행과 이름·점수·상자 일치, conf 0.45 고정, `OBJECT_MODEL` 한 줄 교체, 없는 폴더·onnxruntime 1.12·깨진 onnx → yolo + 로그,
+  폴더마다 detect.py 따로, 열 번 바꿔도 RSS 그대로, 한글 그리기. **lab 에서 실제 학습한 zip·파이보 실측(`python3 detect.py 0 --every 10`)은 확인 필요**
+
 ---
 
 ## 화면 v2 (260924) — 시안 B, **유일한 화면**
