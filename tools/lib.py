@@ -173,15 +173,31 @@ class Pibo:
     items = self.det.detect_object(im)
     res = ''
 
+    colors = (100,100,200)
     for obj in items:
       x1,y1,x2,y2 = obj['box']
-      colors = (100,100,200)
       self.cam.rectangle(im, (x1,y1), (x2, y2),colors,3)
-      (text_width, text_height), baseline = cv2.getTextSize(f'{obj["name"]} {obj["score"]}', cv2.FONT_HERSHEY_SIMPLEX, 0.5, 2)
-      cv2.rectangle(im, (x1, y1 - text_height - baseline), (x1 + text_width, y1), colors, -1)
-      self.cam.putText(im, f'{obj["name"]} {obj["score"]}', (x1, y1 - baseline), 0.5, (255,255,255),2)
       res += '[{}-({},{})] '.format(obj['name'], x1, y1)
+    if items:
+      # 이름표는 PIL 로 그린다 — easydetect 모델은 이름이 한글일 수 있고 cv2.putText 는 한글을 못 그린다(261026)
+      pil = Image.fromarray(im)
+      draw = ImageDraw.Draw(pil)
+      font = self.label_font()
+      for obj in items:
+        x1,y1,_,_ = obj['box']
+        text = f'{obj["name"]} {obj["score"]}'
+        l, t, r, b = draw.textbbox((0, 0), text, font=font)
+        w, h = r - l + 8, b - t + 6
+        top = y1 - h if y1 - h >= 0 else y1
+        draw.rectangle((x1, top, x1 + w, top + h), fill=colors)
+        draw.text((x1 + 4 - l, top + 3 - t), text, font=font, fill=(255,255,255))
+      im[:] = np.array(pil)
     return im, res
+
+  def label_font(self):
+    if getattr(self, '_label_font', None) is None:
+      self._label_font = ImageFont.truetype(openpibo_models.filepath("KDL.ttf"), 22)
+    return self._label_font
 
   def hand_detect(self):
     im = self.frame.copy()
