@@ -101,21 +101,17 @@ git tag -d <태그> ...           # 로컬 삭제
 
 ## 라이선스 (260930)
 
-**리포 전체가 AGPL-3.0 이다**(`LICENSE`, 사용자 결정). 이유는 사물 인식 가중치 `yolo11s.onnx` —
-Ultralytics 배포물이고 AGPL-3.0 이다(파일 메타데이터에도 `license = AGPL-3.0` 이 박혀 있다). Ultralytics 는
-가중치를 넣은 앱 전체를 파생물로 본다(Discussion #2127). 이 해석은 다툼이 있지만, 소스가 이미 공개돼 있으니
-리포를 AGPL 로 내놓아 어느 해석으로도 맞게 했다.
+**리포 전체가 AGPL-3.0 이다**(`LICENSE`, 사용자 결정). 260930 에 정했을 때 이유는 그때의 사물 인식 가중치(Ultralytics 배포물, AGPL-3.0 —
+가중치를 넣은 앱 전체를 파생물로 본다, Discussion #2127)였다. **261026 에 사물 인식을 D-FINE(Apache-2.0)으로 바꾸고 예전 모델의 코드·파일·고지를
+모두 지웠지만 리포 라이선스는 그대로 둔다**(사용자 결정, 260930).
 
 - `LICENSE` — AGPL-3.0 전문(FSF 원문, sha256 `0d96a4ff…abcb0`). 고치지 말 것
 - `THIRD_PARTY_NOTICES.md` — 리포 안 남의 코드(Blockly·CodeMirror·jQuery·Font Awesome·TF.js·MediaPipe 등)와
   `/home/pi/.model` 모델의 라이선스 표. **vendor 파일·모델을 넣거나 바꾸면 여기도 고칠 것.** 전부 AGPL 과 같이 쓸 수 있는 것만 넣는다
   (Apache-2.0 · MIT · OFL 은 된다. 비상업·연구 전용 라이선스는 안 된다)
-- `system/NOTICE-yolo11s.txt` — 이미지 만들 때 `/home/pi/.model/object/` 에 복사(IMAGE.md)
 - IDE [더보기] → **소스 코드 · 라이선스 (AGPL-3.0)**(`#source_bt`) — AGPL §13(네트워크로 쓰는 사람에게 소스 위치 안내).
   링크는 기기 버전(`piBo_260930v2` → 태그 `260930v2`)의 GitHub 트리. 버전 형식이 다르면 리포 첫 화면
-- 사물 인식 모델을 Apache-2.0 인 것(D-FINE 등)으로 바꾸면 yolo 고지는 빼도 되지만 **리포 라이선스는 그대로 둔다**
-- D-FINE(easydetect)은 보류(260930): 공개 가중치가 640 학습이라 320 에서 coco128 mAP50-95 가 dfine-n 0.147 · dfine-s 0.331
-  (yolo11s 0.488). 320 으로 다시 학습해 보고 유의미하면 쓴다
+- 사물 인식 모델은 D-FINE(easydetect, Apache-2.0)이다 — 아래 '사물 인식'. 기본 COCO 가중치의 라이선스는 HF 모델 카드로 **확인 필요**
 - PiBrain 도 같은 LICENSE·고지·소스 링크를 넣었다(260930, 태그 형식 `YYMMDDvN` / `-gl`)
 
 ## 외부 의존
@@ -752,7 +748,7 @@ TensorFlow·torch 걷어내기 순서와 지울 목록은 IMAGE.md. 파이보에
 ### `/home/pi/.model` 과 `requirements.txt`
 
 - `/home/pi/.model` 은 리포 밖(이미지)이다. 구성과 파일별 sha256 은 그 폴더의 `VERSION`. 코드가 읽는 것: `tts/assets/{onnx,voice_styles}`,
-  `stt/`, `llm/llm-model.gguf`(링크), `object/yolo11s.onnx`, `hand/*.task`, `face/{detection,age-gender,emotion,landmark}`.
+  `stt/`, `llm/llm-model.gguf`(링크), `object/dfine-s-320/`, `hand/*.task`, `face/{detection,age-gender,emotion,landmark}`.
   `classifier/`(예전 TF 가중치)는 260930 에 지웠다(아무도 안 씀)
 - 모델은 `leeyunjai/themaker`(HF)에서 손으로 받는다. **`git clone` 말고 `huggingface-cli download`** — clone 은 `.git/lfs` 에 한 벌을 더 남긴다(이번에 약 400MB)
 - `requirements.txt`(리포 맨 위): 리포 코드가 직접 import 하는 패키지만, 기기 버전으로. `test/requirements.txt` 는 260923 전체 스냅숏(TF·torch 포함)
@@ -760,51 +756,35 @@ TensorFlow·torch 걷어내기 순서와 지울 목록은 IMAGE.md. 파이보에
   `--apply` 로 지운다(백업 목록·pip check·import 확인까지). 260930 두 기기 site-packages 5.5~5.6GB 의 대부분이 TF·torch·MeloTTS 잔재다.
   mediapipe 0.10.18 은 jax 를 불러오지 않는다(지우고 확인함, `--jax`). 패키지를 새로 쓰게 되면 `ROOTS` 와 `requirements.txt` 둘 다에 넣을 것. 자세한 건 IMAGE.md
 
-## 사물 인식 (260924)
+## 사물 인식 (261026) — D-FINE 모델 폴더
 
-`openpibo.vision_detect.Detect.detect_object` 는 **ultralytics·torch 없이** onnxruntime 으로
-YOLO ONNX 를 돌린다(`openpibo/modules/yolo_onnx.py`). 기본 모델은 그대로
-`/home/pi/.model/object/yolo11s.onnx`.
+`openpibo.vision_detect.Detect.detect_object` 는 **D-FINE ONNX 모델 폴더**를 onnxruntime 으로 돌린다(`openpibo/modules/dfine_onnx.py` 의 `DfineOnnx`).
+easydetect-lab 지시서(`docs/pibo-integration.md`) 그대로다. **예전 사물 인식 모델(Ultralytics)의 코드·가중치·고지는 261026 에 다 지웠다 — 되돌릴 길을 남기지 않는다**(지시서).
+파이보·PiBrain **같은 코드**(`dfine_onnx.py` 는 같은 파일, `vision_detect.py` 는 같은 부분을 같이 고칠 것).
 
-- ultralytics `predict(conf=0.5, iou=0.4, imgsz=320)` 와 **같은 결과**다. coco128 128장에서
-  `detect_object` 반환값이 예전 코드와 128/128 같았다(320 고정 · 동적 · 640 고정 모델 모두)
-- 입력 크기: 모델에 고정돼 있으면 그 크기, 동적이면 320(`OBJECT_IMGSZ`). 동적 모델은 ultralytics 처럼
-  32 배수까지만 채운다(640×480 → 320×256). 이걸 정사각형으로 채우면 결과가 달라진다
-- 클래스 이름: ONNX 메타데이터 `names`(ultralytics export 가 넣는다) → 없으면 모델 옆 `labels.txt`.
-  그래서 `load_object_model` 블록으로 올리던 사용자 YOLO 모델도 그대로 읽힌다
-- 모델은 처음 `detect_object` 를 부를 때 올린다. `Detect()` 만 만들고 QR·마커만 쓰면 메모리를 안 쓴다
-- mediapipe 도 `load_hand_gesture_model` 에서 처음 import 한다. 손 제스처를 안 쓰면 안 올라온다
-  (기기 버전 0.10.18 기준 +87MB). 포즈는 MoveNet 그대로 — MediaPipe Pose Lite 보다 7배 빠르고 모델 메모리가 1/4
-- 컨테이너 x86 4코어, 320: 예전(ultralytics) 최대 838MB · 53ms → 지금 194MB · 27ms.
-  torch import 가 대부분이었다. **파이보 실측은 아직**
-
-RT-DETR 은 쓰지 않는다. 320 에서 정확도가 크게 떨어졌다(coco128 mAP50-95 0.275 vs yolo11s 0.488).
-공개 가중치가 640 으로 학습돼 있어서다. 쓸 일이 생기면 320 으로 학습·export 한다.
-
-### easydetect 모델 폴더 (261026)
-
-easydetect-lab 지시서(`docs/pibo-integration.md`)대로 **사물 인식 모델을 폴더로도 고를 수 있다.** 기본값은 그대로 yolo11s.
-파이보·PiBrain **같은 코드**(`openpibo/modules/object_model.py` 는 두 리포가 같은 파일, `vision_detect.py` 는 같은 부분을 같이 고칠 것).
-
-- 폴더 = lab 의 'Pibo로 보내기' zip 을 푼 것, 또는 COCO D-FINE 폴더: `model.onnx`(opset 17, 고정 320) · `labels.txt`(한글일 수 있음) ·
-  `model.json`(`conf`, null 이면 0.5) · `detect.py` · `README.txt`. **폴더 안 `detect.py` 를 그대로 불러 쓴다** — 전처리(letterbox 없이 resize)·
-  후처리(NMS 없음, 겹침 제거 iou 0.7)를 여기서 다시 만들지 말 것. 폴더 형식·`detect.py` 도 고치지 않는다(고칠 게 있으면 easydetect-lab 쪽)
-- `open_detector(경로)`: 폴더면 `Detector(model.onnx, threads=4, conf='auto', iou=0.7)`, `.onnx` 파일이면 `YoloOnnx`. 둘 다
-  `det(img, conf=0.5, iou=0.4)` → `(boxes, scores, classes)` + `name_of()` 로 불린다(코드에서 확인). 폴더 모델은 conf·iou 가 Detector 에 고정돼
-  openpibo 가 넘기는 0.5·0.4 는 안 쓰인다(D-FINE 에 iou 0.4 는 실제로 겹친 다른 물체를 지운다)
-- `detect.py` 는 폴더마다 다른 모듈 이름으로 불러온다(`sys.path` + `import detect` 로 하면 두 번째 폴더부터 첫 폴더 것이 쓰인다)
-- 고르는 법: `Detect(object_model=폴더)` · `detect.load_object_model(폴더)` · `load_object_model()`(기본으로) · IDE 블록 [사물 인식 모델 불러오기]
-  (블록은 `폴더+이름+'.onnx'` 를 넘긴다 — `<이름>.onnx` 파일이 없고 `<이름>` 폴더가 있으면 폴더로 읽는다. 그래서 블록·JS 는 안 고쳤다)
-- **기본값 바꾸기는 `vision_detect.py` 의 `OBJECT_MODEL` 한 줄** → `'/home/pi/.model/object/dfine-s-320'`. 코드는 더 안 고친다.
-  그때 `THIRD_PARTY_NOTICES.md` 의 `/home/pi/.model` 표에 D-FINE(Apache-2.0)·`detect.py`(Apache-2.0)를 넣을 것. yolo11s 코드·파일은 지우지 않는다(되돌릴 곳)
-- 못 쓰면(폴더·파일 없음, onnxruntime 1.13 미만, 읽기 실패) 로그(`openpibo.object_model`)와 print 로 이유를 남기고 `FALLBACK`(yolo11s)으로 돌아간다
-- 모델을 바꿀 때 이전 ONNX Runtime 세션을 먼저 놓는다(`release`)
-- **점수(%)는 반올림**(`int(round(round(score, 2) * 100))`) — lab·`detect.py` 의 `:.2f` 와 같게. 전엔 버림이라 절반쯤 1 작았다(yolo 도 같이 바뀜, ±1)
-- 한글 이름 그리기: `detect_object_vis` 는 원래 PIL. 파이보 도구 [카메라] 사물 인식(`tools/lib.py` `object_detect`)은 `cv2.putText` 였어서 PIL(KDL.ttf 22)로 바꿨다.
-  PiBrain 도구는 `detect_object_vis` 를 써서 그대로
-- 확인(컨테이너, onnxruntime 1.20.1 = 기기 버전, 가짜 D-FINE 모양 ONNX + lab 의 `pibo/detect.py` 원본): 두 리포 19/19 — 기본 yolo, 폴더 경로 네 모양,
-  `detect.py` 직접 실행과 이름·점수·상자 일치, conf 0.45 고정, `OBJECT_MODEL` 한 줄 교체, 없는 폴더·onnxruntime 1.12·깨진 onnx → yolo + 로그,
-  폴더마다 detect.py 따로, 열 번 바꿔도 RSS 그대로, 한글 그리기. **lab 에서 실제 학습한 zip·파이보 실측(`python3 detect.py 0 --every 10`)은 확인 필요**
+- **모델 폴더**: `model.onnx`(opset 17, 입력 고정 보통 320) · `labels.txt`(이름, 한 줄에 하나, 한글 가능) · `model.json`(`conf`, null 이면 0.5) · `detect.py`.
+  기본은 `/home/pi/.model/object/dfine-s-320/`(COCO 80, HF `leeyunjai/themaker` 의 `.model/object/dfine-s-320/`) — `vision_detect.py` 의 `OBJECT_MODEL` 한 줄.
+  lab 의 'Pibo로 보내기' zip 을 푼 폴더도 같은 형식이다
+- **폴더의 `detect.py` 는 불러오지도 실행하지도 않는다**(받은 폴더의 코드를 root 로 실행하는 셈이라서). `model.onnx`·`labels.txt`·`model.json` 만 읽는다.
+  `detect.py` 는 openpibo 없이 돌려 보는 용도이자 **비교 기준**이다 — `DfineOnnx` 의 `preprocess`·`postprocess`·`drop_duplicates` 는 그 파일과 같은 계산이다.
+  easydetect-lab `pibo/detect.py` 가 바뀌면 같이 맞출 것(지시서 5절: letterbox 없이 resize, sigmoid 는 로짓일 때 한 번만, NMS 없음, 클래스 상관없이 IoU 0.7 겹침 제거)
+- 출력 둘(boxes `(1,Q,4)` cxcywh 0~1, scores `(1,Q,C)`)은 마지막 차원으로 가른다. **클래스가 4개면 둘 다 4라 못 가르므로 출력 이름 `boxes` 를 쓴다**
+  (`detect.py` 는 먼저 나온 것을 상자로 본다 — lab export 는 `boxes` 가 먼저라 결과는 같다)
+- conf 는 `model.json`(없으면 0.5), iou 는 0.7 — 부를 때 넘기는 값(openpibo 는 늘 0.5·0.4)보다 우선한다. iou 0.4 는 말 위의 사람처럼 실제로 겹친 다른 물체를 지운다
+- **점수(%)는 반올림**(`int(round(round(score, 2) * 100))`) — lab·`detect.py` 의 `:.2f` 와 같게(전엔 버림)
+- 고르는 법: `Detect(object_model=폴더)` · `detect.load_object_model(폴더)` · `load_object_model()`(기본으로) · IDE 블록 [사물인식 모델 [폴더] (이름).onnx 불러오기]
+  — 블록은 `폴더+이름+'.onnx'` 를 넘긴다. `<이름>.onnx` 파일이 없고 `<이름>` 폴더가 있으면 그 폴더를 읽는다. 폴더 안 `model.onnx` 경로도 된다(이름표·model.json 은 같은 폴더에서)
+- **못 쓰면 오류를 낸다**(다른 모델로 몰래 바꾸지 않는다): 폴더·`model.onnx` 없음 → `FileNotFoundError`, onnxruntime 1.13 미만·읽기 실패 → `RuntimeError`(이유·버전 포함).
+  실패하면 경로는 바뀐 채로 두어 다음 `detect_object` 도 같은 오류를 낸다(예전 모델로 조용히 돌지 않게)
+- 모델을 바꿀 때 이전 세션을 놓는다(`DfineOnnx.close`). 모델은 처음 `detect_object` 를 부를 때 올린다(QR·마커만 쓰면 메모리 안 씀)
+- 이름표 그리기는 PIL: `detect_object_vis`, 파이보 도구 [카메라](`tools/lib.py` `object_detect`, KDL.ttf 22). `cv2.putText` 는 한글을 못 그린다
+- **기본 폴더가 기기에 없으면 사물 인식이 오류로 멈춘다.** 이 코드를 기기에 올리기 전에 `/home/pi/.model/object/dfine-s-320/` 을 먼저 넣을 것(IMAGE.md).
+  261026 현재 HF 에 아직 안 올라와 있다(학습 중)
+- 확인(컨테이너, onnxruntime 1.20.1 = 기기 버전): 두 리포 21/21 — lab 에서 30에폭 학습한 실제 zip(D-FINE-n, `빨간 공`·`파란 상자`, conf 0.45) 사진 12장 · 상자 17개가
+  `detect.py` 와 이름·점수·상자(차 0px) 같음, 가짜 폴더(로짓·확률·클래스 4개) 같음, 확률 출력에 sigmoid 두 번 안 함, 경로 네 모양, 오류 다섯 가지, 폴더의 `detect.py` 를 실행 안 함,
+  열 번 바꿔도 RSS 그대로, 한글 그리기. lab 화면(torch, best.pt)과는 17개 중 16개 — 하나는 0.6150(torch)·0.61501(ONNX)로 반올림 경계였고 `detect.py` 도 같은 차이.
+  **COCO `dfine-s-320` 폴더(사람·컵)와 파이보 실측(`python3 detect.py 0 --every 10`)은 확인 필요**
+- 포즈는 MoveNet 그대로, mediapipe 는 `load_hand_gesture_model` 에서 처음 import 한다(손 제스처를 안 쓰면 안 올라온다)
 
 ---
 

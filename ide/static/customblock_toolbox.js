@@ -2140,7 +2140,7 @@ let toolbox = (lang) => {
                 "shadow": {
                   "type": "text",
                   "fields": {
-                    "TEXT": "yolo11s"
+                    "TEXT": "model"
                   }
                 }
               },
