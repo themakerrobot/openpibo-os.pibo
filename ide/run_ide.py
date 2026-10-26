@@ -241,6 +241,7 @@ async def classifier(enable: str):
     subprocess.Popen(['systemctl', 'stop', 'classify.service'])
     subprocess.Popen(['systemctl', 'stop', 'llama-server.service'])
     stop_hwtest()   # 검수 서버가 카메라·시리얼을 쥐고 있으면 tools 가 실패한다
+    stop_chat()     # 대화 웹이 카메라를 쥐고 있을 수 있다(find_objects)
     subprocess.Popen(['systemctl', 'start', 'tools.service'])
   elif enable == "off":
     subprocess.Popen(['systemctl', 'stop', 'tools.service'])
@@ -255,22 +256,45 @@ async def classifier(enable: str):
     subprocess.Popen(['systemctl', 'stop', 'tools.service'])
     subprocess.Popen(['systemctl', 'stop', 'llama-server.service'])
     stop_hwtest()   # 〃 (classifier 는 카메라를 직접 쓴다)
+    stop_chat()     # 〃
     subprocess.Popen(['systemctl', 'start', 'classify.service'])
   elif enable == "off":
     subprocess.Popen(['systemctl', 'stop', 'classify.service'])
   return HTMLResponse(content="", status_code=200)
 
+# [대화] = llama-server(50020) + 대화 웹(chat/run_chat.py, 50030, 261026).
+# llama-server 기본 웹 화면은 시스템 글·도구 목록을 보내지 않아 도구가 안 됐다. 대화 웹이 붙여서 보낸다.
+# 대화 웹은 H/W 검수처럼 IDE 가 직접 띄운다(유닛 파일은 리포 밖이라)
+CHAT_DIR = '/home/pi/openpibo-os/chat'
+CHAT_PY = f'{CHAT_DIR}/run_chat.py'
+CHAT_DEVICE = 'pibo'
+chat_proc = None
+
+def stop_chat():
+  """대화 웹을 내린다. 여러 번 불러도 안전하다."""
+  global chat_proc
+  if chat_proc is not None and chat_proc.poll() is None:
+    chat_proc.terminate()
+    try:
+      chat_proc.wait(timeout=5)
+    except subprocess.TimeoutExpired:
+      chat_proc.kill()
+  chat_proc = None
+  # 핸들을 잃은 경우(IDE 재시작)까지 정리한다. 전체 경로로 띄우므로 cmdline 에 CHAT_PY 가 그대로 들어간다
+  subprocess.Popen(['pkill', '-f', CHAT_PY])
+
 @app.get('/llm')
-async def classifier(enable: str):
-  # print("Eanable llm:", enable)
-  if False:
-    return HTMLResponse(content="", status_code=200)
+async def llm(enable: str):
+  global chat_proc
   if enable == "on":
     subprocess.Popen(['systemctl', 'stop', 'tools.service'])
     subprocess.Popen(['systemctl', 'stop', 'classify.service'])
     stop_hwtest()   # 〃
     subprocess.Popen(['systemctl', 'start', 'llama-server.service'])
+    if chat_proc is None or chat_proc.poll() is not None:
+      chat_proc = subprocess.Popen([f'{ENV_PATH}/python3', CHAT_PY, '--device', CHAT_DEVICE], cwd=CHAT_DIR)
   elif enable == "off":
+    stop_chat()
     subprocess.Popen(['systemctl', 'stop', 'llama-server.service'])
   await asyncio.sleep(2)
   return HTMLResponse(content="", status_code=200)
@@ -303,6 +327,7 @@ async def hwtest(enable: str):
     subprocess.Popen(['systemctl', 'stop', 'tools.service'])
     subprocess.Popen(['systemctl', 'stop', 'classify.service'])
     subprocess.Popen(['systemctl', 'stop', 'llama-server.service'])
+    stop_chat()
     if hwtest_proc is None or hwtest_proc.poll() is not None:
       hwtest_proc = subprocess.Popen([f'{ENV_PATH}/python3', HWTEST_PY], cwd=HWTEST_DIR)
     await asyncio.sleep(3)
@@ -579,6 +604,7 @@ async def handle_execute(sid, d):
   subprocess.Popen(['systemctl', 'stop', 'classify.service'])
   subprocess.Popen(['systemctl', 'stop', 'llama-server.service'])
   stop_hwtest()
+  stop_chat()
   try:
     if is_protect(d['codepath']) or is_protect(os.path.dirname(d['codepath'])):
       await app.sio.emit('update', {'dialog': 'err_run_protected', 'exit': True})
@@ -604,6 +630,7 @@ async def handle_executeb(sid, d):
   subprocess.Popen(['systemctl', 'stop', 'classify.service'])
   subprocess.Popen(['systemctl', 'stop', 'llama-server.service'])
   stop_hwtest()
+  stop_chat()
   try:
     if ps and ps.returncode is None:
       ps.kill()
@@ -622,6 +649,7 @@ async def handle_stop(sid):
   global ps
   subprocess.Popen(['pkill', 'play'])
   subprocess.Popen(['pkill', 'llama-server'])
+  stop_chat()
   subprocess.Popen(['servo', 'init'])
   if ps and ps.returncode is None:
     ps.kill()

@@ -533,7 +533,7 @@ curl -s http://localhost/static/ko2en.js | head -n1
 
 `tools.service`(50000), `classify.service`(50010), `llama-server.service`(50020) 는
 **셋 중 하나만** 돈다. 포트는 PiBrain 과 같다(260930 에 PiBrain 도구 50040 → 50000, 파이보 H/W 검수 8000 → 50050 으로 맞춤).
-H/W 검수(`test/test.py`, 50050)는 유닛이 아니라 IDE 의 `/hwtest` 가 직접 띄우고, 켤 때 셋을 다 끈다. IDE가 하나를 켤 때 나머지를 stop 한다 (`ide/run_ide.py` 의
+H/W 검수(`test/test.py`, 50050)는 유닛이 아니라 IDE 의 `/hwtest` 가 직접 띄우고, 켤 때 셋을 다 끈다. 대화 웹(`chat/run_chat.py`, 50030, 261026)도 IDE 가 `/llm` 때 llama-server 와 같이 띄운다('대화 웹' 절). IDE가 하나를 켤 때 나머지를 stop 한다 (`ide/run_ide.py` 의
 `/tools` `/classifier` `/llm` 핸들러). 부팅 시엔 안 뜬다.
 
 **종료는 탭이 닫힐 때 브라우저가 알린다.** 각 페이지의 `beforeunload` 가
@@ -579,13 +579,13 @@ IDE 의 [도구][대화][분류기] 는 누르는 **그 순간** 이름 붙인 �
 스스로 서비스 주소로 이동한다(`location.replace`).
 
 - 도구·분류기: 포트가 열렸는지를 `fetch(..., {mode:'no-cors'})` 로 본다(CORS 헤더 불필요)
-- 대화: llama-server `/health` 가 모델 로딩 중 503, 준비되면 200. 포트만 보면 로딩 중에 들어가 버린다
+- 대화: 261026 부터 대화 웹(50030) 포트만 본다. 모델 준비는 대화 화면이 보여 준다('대화 웹' 절). 전엔 llama-server `/health`(로딩 중 503)를 기다렸다
 - 켜기 요청을 5초마다 다시 보낸다. 같은 탭에서 떠나는 이전 도구 페이지의 `enable=off` 가
   늦게 도착해도 결국 켜진 상태로 끝나게 하려는 것이다
 - 전에는 무조건 3초 뒤 `window.open` 했다 — 클릭에서 3초가 지나 팝업으로 막힐 수 있었고,
   대화 모델은 3초 안에 안 떠서 빈 화면이 먼저 떴고, 실패하면 스피너가 계속 돌았다
 - 도구·분류기 헤더의 [IDE] 는 스크립트로 연 탭이면 `window.close()`, 아니면 IDE 로 이동.
-  둘 다 `beforeunload` 가 서비스를 끈다. 대화(llama.cpp UI)에는 이 버튼을 넣을 수 없다
+  둘 다 `beforeunload` 가 서비스를 끈다. 대화 웹(261026)에도 같은 버튼이 있다
 - 서비스가 꺼지면(다른 도구 켜기·코드 실행) 그 탭의 소켓이 끊기고 배너가 [다시 켜기] 를 준다
 
 남은 문제: **탭 두 개 중 하나만 닫아도 서비스가 죽는다.** 이름 붙인 탭으로 IDE 버튼을 여러 번
@@ -594,6 +594,45 @@ IDE 의 [도구][대화][분류기] 는 누르는 **그 순간** 이름 붙인 �
 
 참고: `@app.sio.on('connect')` / `('disconnect')` 는 `fastapi_socketio` 에서 정상 동작한다(검증함).
 `ide/run_ide.py` 의 `@app.sio.on('connection')` 은 Node.js 이벤트 이름이라 **한 번도 안 불린다.**
+
+---
+
+## 대화 웹 (261026) — IDE [대화]
+
+IDE [대화] 는 이제 llama-server 기본 웹 화면이 아니라 **우리 대화 웹**(`chat/`, 50030)을 연다. 기본 화면은 시스템 글과
+도구 목록을 보내지 않아 도구(춤·눈 색·사물 찾기 등)가 절대 안 됐다. 대화 웹이 붙여 보내고, 모델이 부른 도구를 openpibo 로 실행한다.
+**파이보·PiBrain 같은 코드**다(원본은 파이보 리포, PiBrain 에 통째로 복사). 음성(STT·TTS)은 일부러 넣지 않았다(사용자 결정, 글자 대화만).
+
+```
+브라우저 ── POST /api/chat ──▶ chat/run_chat.py :50030 ── /v1/chat/completions ──▶ llama-server :50020
+                                └ 도구 호출 → openpibo 로 실행 → 결과를 다시 모델에
+```
+
+| 파일 | 무엇 |
+|---|---|
+| `chat/pibo_chat.py` · `chat/tools.py` | 학습 PC(`openpibo-chat`)의 파일 **그대로**. 시스템 글·도구 목록이 학습 때와 글자까지 같아야 하므로 **고치지 말고 PC 쪽 새 판으로 통째로 바꿀 것** |
+| `chat/run_chat.py` | 웹 서버. `pibo_chat.run_tool`·`find_objects` 를 바꿔 끼운다(파일은 안 고침). 기기 차이는 `--device pibo|pibrain` |
+| `chat/templates/index.html` · `static/chat.js` · `chat.css` | 화면. 키트(`pibo-ui.*`, `design/sync.sh` 가 복사)와 v2 색 |
+
+- **띄우기**: H/W 검수처럼 IDE 가 직접 띄운다(`run_ide.py` 의 `/llm` → `llama-server.service` 시작 + `chat_proc`). 유닛 파일이 리포 밖이라서다.
+  끄는 곳: `/llm?enable=off`(탭 닫기 `beforeunload`, `keepalive`) · [도구][분류기][H/W 검수] 켜기 · 코드 실행 · [정지] — 전부 `stop_chat()`
+- **대기 페이지**(`launch.html`)는 50030 이 열리면 바로 넘어가고, 모델 준비(서버 올리기 + 도구 목록 약 1천 토큰 미리 읽기, 파이보 40~70초)는
+  대화 화면 위 상태 줄이 보여 준다. `LAUNCH_VER` 261026v1
+- **문구는 IDE 의 `ko2en.js` 를 같이 읽는다**(`chat_*` 키, 파일 끝). 대화 화면이 `http://<IP>:80/static/ko2en.js` 를 싣는다 → **영문판 델타 파일이 늘지 않는다**.
+  IDE 가 죽어 있으면 키 이름이 그대로 보인다(글꼴과 같은 전제). 시험할 땐 `?ide=<포트>`
+- **기기 차이**(`run_tool`): 파이보는 `pibo_chat.run_tool` 그대로. PiBrain 은 `eye_on/off` → `DeviceByPiBrain.led_on/led_off`,
+  `set_motion`·`get_battery` 는 실행하지 않고 **모델에 다시 묻지 않고** 정해진 말(`NO_TOOL`). 실패 결과를 모델에 넘기면 학습한 적 없는 상황이라서다.
+  `set_motion(stop)`("멈춰")은 PiBrain 에서 할 일이 없어 '완료'
+- **`find_objects` 는 카메라·검출기를 한 번 열어 계속 쓴다.** `pibo_chat.find_objects` 는 부를 때마다 `Camera()`·`Detect()` 를 새로 만들어
+  Picamera2 두 번째 열기에서 실패한다. 대화 웹이 카메라를 쥐므로 [도구][분류기]를 켜면 대화 웹을 끈다
+- **도구를 거절하는 서버**(옛 llama.cpp, `--jinja` 없음)면 미리 읽기에서 HTTP 오류 → 도구 없이 대화만 하고 상태 줄에 안내, [움직이기] 숨김.
+  지금 기기의 `llama-server.service` 가 젬마3 1B · 옛 llama.cpp 라 **서비스를 새 모델로 바꾸기 전에는 이 상태다**(서비스 전환은 이미지 작업, 사용자 확인 뒤)
+- [움직이기] 스위치 = 말로 "대화만 하자 / 이제 움직여도 돼"(`pibo_chat.tool_switch`). 끈 동안 모델이 부른 도구는 실행하지 않는다. "멈춰"는 모델 없이 바로 stop
+- 한 번에 한 대화(`turn_lock`). 대답 중에 또 보내면 '앞의 대답을 만드는 중' 안내. 기록은 서버 하나에 하나(로봇이 하나라서)
+- **모델 이름(261026, 사용자 결정)**: 파이보·PiBrain 공통 모델로 가려고 대화 모델에 **기기와 별개인 이름**을 붙이고, 자기소개에서 몸 정보(키 등)를 뺀다.
+  `tools.py` 의 `SYSTEM`·도구 설명의 '파이보'도 뺀다. **PC 세션 재학습 일**이고 이름은 아직 미정. 받으면 `pibo_chat.py`·`tools.py` 를 통째로 교체
+- 확인(컨테이너, 가짜 llama-server — 스트리밍 도구 호출·`type: function` 검사 포함): 화면 22/22(도구 칩, 움직이기 끄고 켜기, 새 대화, 한/영,
+  1366·1024·768·390 가로 넘침 0, 밝게·어둡게, PiBrain 미지원 도구, 도구 없는 서버, pageerror 0). **파이보·PiBrain 실기기·새 모델로는 아직 안 봤다**
 
 ---
 
@@ -954,7 +993,7 @@ RT-DETR 은 쓰지 않는다. 320 에서 정확도가 크게 떨어졌다(coco12
   탭을 바꾸거나 [도구][대화][분류기] 를 눌러 풀린 건 끈 게 아니므로 남긴다(`openService` 가 `fsLeaving` 을 찍고, 풀린 뒤 400ms 에 화면이 가려져 있으면 남김)
 - 쿠키가 있고 전체화면이 아니면: 화면이 보일 때 안내(`fs_tap` '화면을 한 번 누르면 전체화면으로 돌아가요'), **아무 곳이나 처음 누를 때**
   `pointerdown` 에서 다시 켠다(누른 동작은 그대로 된다). 전체화면 버튼을 누른 건 제외(켜자마자 꺼지므로)
-- 대화(llama.cpp UI)에는 키트가 없어 이 동작이 없다
+- 대화 웹(261026)도 키트를 써서 같은 버튼이 있다(예전 llama.cpp 화면에는 없었다)
 - 확인(컨테이너 Chromium): 세 화면 × Pibo·PiBrain 34/34 — 버튼·아이콘 전환·쿠키 기억/지움·안내·한 번 눌러 복귀·포트 간 쿠키 공유·pageerror 0,
   IDE 에서 [도구] 를 눌러 풀려도 쿠키 유지, IDE 상단바 820~1920 한/영 넘침 0. **실제 태블릿·학교 노트북 브라우저로는 아직 안 봤다**
 
