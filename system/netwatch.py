@@ -21,7 +21,11 @@ DHCP 가 밀리면 일부가 AP 로 넘어가 그대로 갇혔다(재부팅 말�
 ※ AP 모드에서 아무도 안 붙어 있으면 2분마다 학교 WiFi 로 돌아가 보는 자력 복귀를 넣었다가 뺐다(260929) —
   AP 로 계속 쓰는 경우가 있어 로봇이 스스로 AP 를 끄면 안 된다
 
-실행하는 명령은 ops 로 바꿔 끼울 수 있다(기기 없이 시험하려고).
+hotspot.sh 가 실패로 끝나면(set -e 라 중간 명령 하나가 실패하면 멈춘다 — nmcli connection up, dnsmasq 재시작 등)
+AP 를 켠 것으로 치지 않고 다음 점검(10초 뒤)에 바로 다시 켜 본다(261027). hotspot.sh 는 AP 를 켜기 전에 학교 WiFi 를
+먼저 내리므로, 전처럼 'AP 켰음' 으로만 적어 두면 학교 WiFi 도 AP 도 없이 재부팅 전까지 접속할 길이 없었다.
+
+실행하는 명령은 ops 로 바꿔 끼울 수 있다(기기 없이 시험하려고). ops['hotspot'] 이 False 를 돌려주면 실패로 본다.
 """
 import subprocess
 
@@ -54,7 +58,12 @@ def visible_ssids(force=False):
 
 
 def hotspot(cmd):
-  _run([HOTSPOT, cmd], 120)
+  """hotspot.sh 를 돌리고 성공했는지 돌려준다(끝 코드 0)"""
+  r = _run([HOTSPOT, cmd], 120)
+  if r is not None and r.returncode != 0:
+    tail = (r.stderr or r.stdout or '').strip().splitlines()[-3:]
+    print(f'[netwatch] hotspot.sh {cmd} 실패(끝 코드 {r.returncode}): {" / ".join(tail)}', flush=True)
+  return r is not None and r.returncode == 0
 
 
 DEFAULT_OPS = {
@@ -69,12 +78,17 @@ class NetWatch:
     self.ops = dict(DEFAULT_OPS, **(ops or {}))
     self.apmode = False
     self.miss = 0                   # 'IP 없음 + SSID 보임' 연속 횟수
+    self.ap_retry = False           # AP 켜기가 실패했다 — 다음 점검에서 바로 다시 켠다
 
   def _ap_on(self, why):
     print(f'[netwatch] AP 켬: {why}', flush=True)
-    self.ops['hotspot']('start')
-    self.apmode = True
+    ok = self.ops['hotspot']('start') is not False
     self.miss = 0
+    self.apmode = ok
+    self.ap_retry = not ok
+    if not ok:
+      print('[netwatch] AP 를 켜지 못함 → 다음 점검에서 다시 켬', flush=True)
+    return ok
 
   def step(self, has_ip):
     """10초마다 한 번. 무엇을 했는지 짧은 문자열로 돌려준다(로그·시험용)"""
@@ -85,19 +99,22 @@ class NetWatch:
         self.ops['hotspot']('stop')
         done = 'ap_off'
       self.apmode = False
+      self.ap_retry = False
       self.miss = 0
       return done
 
     if self.apmode:
       return 'ap'           # AP 는 스스로 끄지 않는다(IP 를 받거나 재부팅할 때만)
 
+    if self.ap_retry:       # 지난번 AP 켜기가 실패했다. 학교 WiFi 는 hotspot.sh 가 이미 내렸으니 기다리지 않고 다시 켠다
+      return 'ap_on_retry' if self._ap_on('지난번 AP 켜기 실패 — 다시 시도') else 'ap_fail'
+
     ssid = self.ops['saved_ssid']()
     if not ssid or ssid not in self.ops['visible_ssids'](False):
-      self._ap_on(f'저장된 SSID {ssid!r} 가 안 보임')
-      return 'ap_on_absent'
+      return 'ap_on_absent' if self._ap_on(f'저장된 SSID {ssid!r} 가 안 보임') else 'ap_fail'
     self.miss += 1
     if self.miss >= AP_WAIT_CHECKS:
-      self._ap_on(f'{ssid!r} 는 보이는데 {self.miss * 10}초 동안 IP 를 못 받음')
-      return 'ap_on_timeout'
+      waited = self.miss * 10
+      return 'ap_on_timeout' if self._ap_on(f'{ssid!r} 는 보이는데 {waited}초 동안 IP 를 못 받음') else 'ap_fail'
     print(f'[netwatch] IP 없음, {ssid!r} 보임 → 기다림 {self.miss}/{AP_WAIT_CHECKS}', flush=True)
     return 'wait'

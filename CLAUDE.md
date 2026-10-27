@@ -306,6 +306,8 @@ AP 는 스스로 끄지 않으므로 스캔해서 판단할 게 없을 뿐이다
   명령(nmcli·hotspot.sh)은 `ops` 로 바꿔 끼울 수 있어 기기 없이 시험했다(10개 경우: 바로 AP · 90초 · 중간에 IP ·
   AP 모드 1시간 유지 · AP 에서 IP 받으면 끔 · SSID 안 보임). `wifi_update` 는 예외가 나도 다음 점검을 이어간다(전엔 멈췄다)
 - `hotspot.sh` 는 그대로다(AP 를 켤 때 학교 연결을 내리는 것도 그대로)
+- **hotspot.sh 가 실패로 끝나면(끝 코드 ≠ 0) AP 를 켠 것으로 치지 않고 다음 점검(10초 뒤)에 바로 다시 켠다(261027).** `set -e` 라 `nmcli connection up`·dnsmasq 재시작 하나만 실패해도 멈추는데,
+  학교 WiFi 는 이미 내린 뒤라 전엔 둘 다 없이 재부팅 전까지 접속 불가였다. 실패 이유는 `[netwatch] hotspot.sh start 실패` 로그에 남는다
 - **기기에서 볼 것:** ① 교실처럼 IP 가 늦을 때 90초 기다리는지 ② 공유기를 끄면 약 42초 뒤 AP
   ③ AP 모드가 계속 유지되고, [인터넷 설정] 으로 학교 WiFi 를 잡으면 AP 가 꺼지는지
   ④ `journalctl -u booting.service | grep netwatch` 로 판단 기록 확인. PiBrain(`openpibo-os.pibrain/system/booting.py`)도
@@ -457,6 +459,7 @@ git push origin YYMMDDv1-gl
 - 클론이 **shallow(`grafted`)** 다. `git fetch origin --tags` 로는 새 태그를 못 받으므로
   태그를 콕 집어 받아야 한다: `git fetch --depth=1 origin tag <태그>`
 - 서비스가 작업본을 직접 실행한다. 기기를 `git checkout main` 상태로 두지 말 것
+- **기기 파이썬은 가상환경 `sudo /home/pi/.pyenv/bin/python3`**(사용자, 261027). 시스템 `python3` 에는 onnxruntime 등 패키지가 없다 — 기기에서 돌릴 명령은 늘 이걸로 줄 것(PiBrain 도 같은 경로)
 
 재클론이 가장 확실하다 (shallow fetch 꼬임 없음).
 
@@ -630,7 +633,8 @@ IDE [대화] 는 llama-server 기본 웹 화면이 아니라 **우리 대화 웹
   서비스는 `--log-disable` 이라 이유가 로그에 안 남는다 — 로그 없이 같은 명령을 직접 돌려 볼 것(`| head` 로 자르면 서버가 뒤에 남는다)
 - **문구는 IDE 의 `ko2en.js` 를 같이 읽는다**(`chat_*` 키, 파일 끝). 대화 화면이 `http://<IP>:80/static/ko2en.js` 를 싣는다 → **영문판 델타 파일이 늘지 않는다**.
   IDE 가 죽어 있으면 키 이름이 그대로 보인다(글꼴과 같은 전제). 시험할 땐 `?ide=<포트>`
-- 한 번에 한 대화(`turn_lock`). 기록은 서버 하나에 하나(로봇이 하나라서)
+- 한 번에 한 대화(`turn_lock`). 기록은 서버 하나에 하나(로봇이 하나라서). **잠금은 응답 객체(`TurnStream`)가 끝날 때 반드시 푼다(261027)** —
+  보내자마자 브라우저가 끊기면 starlette 가 대답 생성기를 한 번도 안 돌려 생성기 안의 finally 가 안 돌았고, 잠금이 남아 이후 모든 말이 409 였다(컨테이너 starlette 1.10 에서 재현)
 - **기기 서비스 전환(261026, 파이보 cd488e95 에서 함)**: `/etc/systemd/system/llama-server.service` 의 ExecStart 를 새 llama.cpp
   (`/home/pi/llama.cpp-new`, Qwen3.5 를 읽는 빌드)로, **`WorkingDirectory` 도 새 빌드 폴더로**(옛 폴더면 30ms 만에 죽었다), 모델 링크
   `/home/pi/.model/llm/llm-model.gguf` → `pibo-qwen3.5-0.8b-school-small-Q4_K_M.gguf`(젬마 파일은 남겨 둠). 백업 `/home/pi/llama-server.service.gemma.bak`.
@@ -1202,6 +1206,10 @@ git ls-tree -r HEAD system | grep -E "hotspot|booting|setup_country|setup_openpi
   ② stderr 가 약 1MB 쌓이면 프로그램이 멈췄다(실측: 20초 넘게 안 끝남 → 지금 0.2초). 줄 단위(`readline`)도 버렸다 —
   64KB 넘는 한 줄(`print('x'*100000)`)에서 예외로 실행이 끊겼고, 줄바꿈 없는 `input('이름? ')` 안내문이 안 보였다
 - **학생 코드는 root 로 돈다 — 의도한 것이다.** GPIO 등 하드웨어 접근 때문. `pi` 권한으로 내리지 말 것
+- **학생 프로그램은 자기 프로세스 묶음으로 띄운다(`start_new_session`, 261027).** [정지]·다시 실행은 `kill_run()` 이 묶음 전체를 끈다(`os.killpg`).
+  전엔 본체만 껐고, 출력이 끝날 때(EOF)까지 기다려서 배경 소리(`Audio.play` 기본 배경)·`os.system('… &')` 같은 하위 프로세스가 출력 통로를 쥐고 있으면
+  프로그램이 끝나도 '실행 중' 으로 남고 다음 실행이 그 하위 프로세스가 끝날 때까지 막혔다(재현: 0.2초에 끝난 프로그램이 8초 뒤 [exit]).
+  지금은 본체가 끝나면 `EXIT_DRAIN_SEC`(0.3초) 동안 더 나온 출력만 받고 끝낸다(약 0.8초 안에 [exit]). 배경 소리는 프로그램이 끝나도 계속 나고, [정지]·다시 실행 때 같이 꺼진다
 
 `periodic_system_update`(10초 주기)의 `system.sh`·`requests` 는 `run_blocking()` 으로
 스레드에서 돈다. 코루틴 안에서 직접 부르면 그동안 IDE 전체(실행 출력·저장)가 멈춘다.
