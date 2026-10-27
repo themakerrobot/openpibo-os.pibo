@@ -457,6 +457,7 @@ git push origin YYMMDDv1-gl
 - 클론이 **shallow(`grafted`)** 다. `git fetch origin --tags` 로는 새 태그를 못 받으므로
   태그를 콕 집어 받아야 한다: `git fetch --depth=1 origin tag <태그>`
 - 서비스가 작업본을 직접 실행한다. 기기를 `git checkout main` 상태로 두지 말 것
+- **기기 파이썬은 가상환경 `sudo /home/pi/.pyenv/bin/python3`**(사용자, 261027). 시스템 `python3` 에는 onnxruntime 등 패키지가 없다 — 기기에서 돌릴 명령은 늘 이걸로 줄 것(PiBrain 도 같은 경로)
 
 재클론이 가장 확실하다 (shallow fetch 꼬임 없음).
 
