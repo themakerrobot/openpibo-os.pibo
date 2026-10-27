@@ -146,7 +146,7 @@ find . -type f ! -name VERSION ! -name VERSION.new -print0 | sort -z | xargs -0 
 mv VERSION.new VERSION
 
 cd /home/pi/.model
-du -sh */ | sort -h            # tts 약 181M, stt 약 230M, llm 약 515M(Qwen3.5 0.8B — 확인 필요)
+du -sh */ | sort -h            # tts 약 181M, stt 약 230M, llm 약 324M(Qwen3.5 0.8B Q4_K_M 339,212,576 바이트, 261026 판)
 sed -n '/^## sha256/,$p' VERSION | tail -n +2 | sha256sum -c --quiet && echo "VERSION 과 같음"
 $PY -c "from openpibo.speech import SpeechToText, SpeechOnDevice; SpeechOnDevice(); SpeechToText(); print('tts·stt ok')"
 ```
