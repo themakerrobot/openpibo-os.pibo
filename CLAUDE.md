@@ -99,20 +99,21 @@ git tag -d <태그> ...           # 로컬 삭제
 
 ---
 
-## 라이선스 (260930)
+## 라이선스 (261027 — Apache-2.0)
 
-**리포 전체가 AGPL-3.0 이다**(`LICENSE`, 사용자 결정). 260930 에 정했을 때 이유는 그때의 사물 인식 가중치(Ultralytics 배포물, AGPL-3.0 —
-가중치를 넣은 앱 전체를 파생물로 본다, Discussion #2127)였다. **261026 에 사물 인식을 easydetect ed(D-FINE 계열, Apache-2.0)로 바꾸고 예전 모델의 코드·파일·고지를
-모두 지웠지만 리포 라이선스는 그대로 둔다**(사용자 결정, 260930).
+**리포 전체가 Apache-2.0 이다**(`LICENSE`, 사용자 결정 261027v6). 260930~261027v5 는 AGPL-3.0 이었다 — 그때 이유는 사물 인식 가중치
+(Ultralytics 배포물, AGPL-3.0, Discussion #2127)였는데 261026 에 easydetect ed(Apache-2.0)로 바꾸고 예전 모델의 코드·파일·고지를 모두 지워
+이유가 없어졌다. **이미 나간 태그(`261027v5` 까지)는 AGPL 그대로**이고 `261027v6` 부터 Apache-2.0 이다.
 
-- `LICENSE` — AGPL-3.0 전문(FSF 원문, sha256 `0d96a4ff…abcb0`). 고치지 말 것
+- `LICENSE` — Apache License 2.0 원문(apache.org `LICENSE-2.0.txt`, sha256 `cfc7749b…23d30`). 고치지 말 것
 - `THIRD_PARTY_NOTICES.md` — 리포 안 남의 코드(Blockly·CodeMirror·jQuery·Font Awesome·TF.js·MediaPipe 등)와
-  `/home/pi/.model` 모델의 라이선스 표. **vendor 파일·모델을 넣거나 바꾸면 여기도 고칠 것.** 전부 AGPL 과 같이 쓸 수 있는 것만 넣는다
-  (Apache-2.0 · MIT · OFL 은 된다. 비상업·연구 전용 라이선스는 안 된다)
-- IDE [더보기] → **소스 코드 · 라이선스 (AGPL-3.0)**(`#source_bt`) — AGPL §13(네트워크로 쓰는 사람에게 소스 위치 안내).
+  `/home/pi/.model` 모델의 라이선스 표. **vendor 파일·모델을 넣거나 바꾸면 여기도 고칠 것.** 넣을 수 있는 건 Apache-2.0 · MIT · BSD · OFL 같은
+  허용형뿐이다. **GPL·AGPL 코드를 넣으면 리포 전체를 다시 GPL 로 내야 한다** — 넣지 말 것. 비상업·연구 전용 라이선스도 안 된다
+- IDE [더보기] → **소스 코드 · 라이선스 (Apache-2.0)**(`#source_bt`). Apache-2.0 은 소스 공개 의무가 없지만 링크는 그대로 둔다(사용자).
   링크는 기기 버전(`piBo_260930v2` → 태그 `260930v2`)의 GitHub 트리. 버전 형식이 다르면 리포 첫 화면
-- 사물 인식 모델은 easydetect ed(Apache-2.0)다 — 아래 '사물 인식'. 기본 COCO 가중치의 라이선스는 HF 모델 카드로 **확인 필요**
-- PiBrain 도 같은 LICENSE·고지·소스 링크를 넣었다(260930, 태그 형식 `YYMMDDvN` / `-gl`)
+- 사물 인식 모델은 easydetect ed(Apache-2.0)다 — 아래 '사물 인식'. 기본 COCO 가중치의 라이선스는 HF 모델 카드로 **확인 필요**.
+  대화 모델(Qwen3.5 0.8B 미세조정)의 기반 모델 라이선스도 **확인 필요**(모델은 리포 밖이라 리포 라이선스와는 별개)
+- PiBrain 도 같은 LICENSE·고지·소스 링크다(태그 형식 `YYMMDDvN` / `-gl`)
 
 ## 외부 의존
 

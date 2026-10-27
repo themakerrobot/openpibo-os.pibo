@@ -1,7 +1,7 @@
 # Software
 
 piBo's features are used through the **openpibo** Python package. Blocks also turn into Python code that calls this package
-(see it with the [Python code] button). The source is on [GitHub](https://github.com/themakerrobot/openpibo-os.pibo) (AGPL-3.0).
+(see it with the [Python code] button). The source is on [GitHub](https://github.com/themakerrobot/openpibo-os.pibo) (Apache-2.0).
 
 ## Package layout
 
