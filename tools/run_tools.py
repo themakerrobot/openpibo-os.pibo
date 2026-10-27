@@ -281,6 +281,27 @@ async def mic(sid, d=None):
   await emit('mic', '')
   pibo.aud.play("/home/pi/myaudio/mic.wav", volume_of(d))
 
+# 음성 인식 — [음성] 의 [말해 보기]. 마이크를 녹음과 같이 쓰므로 같은 잠금(동시에 못 쓴다).
+# 모델을 처음 올릴 때 stt_state loading → 듣기 시작하면 listening → 결과 stt_result {ok, text | error}
+@app.sio.on('stt')
+async def stt(sid, d=None):
+  if pibo is None:
+    return
+  if mic_lock.locked():   # 녹음·듣기 중에 또 누름
+    return
+  sec = to_num(d.get('time'), 1, 30) if isinstance(d, dict) else None
+  async with mic_lock:
+    try:
+      if pibo.stt_state != 'ready':
+        await emit('stt_state', 'loading')
+        await asyncio.to_thread(pibo.stt_warm)
+      await emit('stt_state', 'listening')
+      text = await asyncio.to_thread(pibo.stt, sec or 10)
+      await emit('stt_result', {'ok': True, 'text': str(text or '').strip()})
+    except Exception as ex:
+      logging.error(f'[stt] Error: {ex}')
+      await emit('stt_result', {'ok': False, 'error': 'stt_error'})
+
 @app.sio.on('mic_replay')
 async def mic_replay(sid, d=None):
   if pibo is None:

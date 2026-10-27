@@ -1054,6 +1054,7 @@ const getSpeech = (socket) => {
     //console.log('mic', d)
     $("#mic_status").text(d);
     micIndicatorStop();
+    $("#stt_bt").prop("disabled", false);   // 녹음이 끝나면 [말해 보기] 를 다시 쓸 수 있다(같은 마이크)
   });
 
   /* 녹음 중 표시.
@@ -1111,6 +1112,7 @@ const getSpeech = (socket) => {
     }
 
     $("#mic_status").html(`<i class='fa-solid fa-fade'>${t("recording")}</i>`);
+    $("#stt_bt").prop("disabled", true);
     micIndicator(val);
     socket.emit("mic", {
       time: val,
@@ -1120,6 +1122,44 @@ const getSpeech = (socket) => {
 
   $("#mic_replay_bt").on("click", function () {
     socket.emit("mic_replay", { volume: Number($("#volume").val()) });
+  });
+
+  // 음성 인식(261027) — [말해 보기] → 서버가 모델을 처음 한 번 올리고(stt_state loading) 듣는다(listening).
+  // 말이 끝나면 stt_result. 녹음과 같은 마이크라 듣는 동안 [녹음] 도 잠근다
+  const sttBt = document.getElementById("stt_bt");
+  const sttToTts = document.getElementById("stt_to_tts_bt");
+  const sttResult = document.getElementById("stt_result");
+  const sttStatus = document.getElementById("stt_status");
+  const setSttStatus = (text, kind) => {
+    sttStatus.textContent = text;
+    if (kind === "listen") sttStatus.insertAdjacentHTML("afterbegin", '<span class="pb-eq" aria-hidden="true"><i></i><i></i><i></i><i></i></span>');
+    sttStatus.dataset.kind = kind === "listen" ? "load" : (kind || "");
+  };
+  const sttBusy = (on) => { sttBt.disabled = on; document.getElementById("mic_bt").disabled = on; };
+  let sttText = "";
+  sttBt.addEventListener("click", () => {
+    sttBusy(true);
+    setSttStatus(t("stt_listening"), "listen");
+    socket.emit("stt", { time: 10 });
+  });
+  socket.on("stt_state", (st) => {
+    if (st === "loading") setSttStatus(t("stt_loading"), "load");
+    else if (st === "listening") setSttStatus(t("stt_listening"), "listen");
+  });
+  socket.on("stt_result", (d) => {
+    sttBusy(false);
+    if (!d || !d.ok) { setSttStatus(t((d && d.error) || "stt_error"), "err"); return; }
+    sttText = d.text || "";
+    if (!sttText) { setSttStatus(t("stt_none"), "err"); return; }
+    sttResult.textContent = sttText;           // 안내 문구(span)를 들은 글자로 바꾼다
+    sttResult.removeAttribute("data-empty");
+    sttToTts.disabled = false;
+    setSttStatus(t("stt_done"), "ok");
+  });
+  // 들은 말을 왼쪽 [말하기] 칸에 넣는다(200자까지) — 인식 → 합성을 바로 해 볼 수 있게
+  sttToTts.addEventListener("click", () => {
+    if (!sttText) return;
+    $("#s_tts_val").val(sttText.slice(0, max_tts_length)).trigger("input").focus();
   });
 
 

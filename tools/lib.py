@@ -58,6 +58,9 @@ class Pibo:
     self.speech_od = None   # 온디바이스 TTS. 모델이 무거워 음성 탭을 열 때(voice_warm) 또는 처음 말할 때 올린다
     self.voice_state = 'idle'   # idle / loading / ready / error
     self._voice_lock = Lock()
+    self.stt_obj = None     # 기기 안 음성 인식(SenseVoice, 약 240MB). [음성] 의 [말해 보기] 를 처음 누를 때 올린다
+    self.stt_state = 'idle'   # idle / loading / ready / error
+    self._stt_lock = Lock()
 
     self.mot = Motion()
     self.aud = Audio()
@@ -316,6 +319,27 @@ class Pibo:
 
   def tts_stop(self):
     self.aud.stop()
+
+  def stt_warm(self):
+    """음성 인식 모델을 올린다(한 번만, 파이보에서 약 5초). 두 번 불러도 한 번만 올라간다"""
+    with self._stt_lock:
+      if self.stt_obj is not None:
+        return self.stt_state
+      self.stt_state = 'loading'
+      try:
+        from openpibo.speech import SpeechToText
+        self.stt_obj = SpeechToText()
+        self.stt_state = 'ready'
+      except Exception as ex:
+        logging.error(f'[stt_warm] Error: {ex}')
+        self.stt_state = 'error'
+        raise
+      return self.stt_state
+
+  def stt(self, timeout):
+    """마이크로 듣고 글자로 바꾼다. 말이 끝나면(0.8초 조용) 멈추고, 최대 timeout 초. 말이 없으면 빈 글자"""
+    self.stt_warm()
+    return self.stt_obj.listen(timeout=timeout)
 
   ## motion
   def make_raw(self):

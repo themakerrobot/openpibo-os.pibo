@@ -557,8 +557,24 @@
 
             <section class="s-rec">
               <div>
-                <h3 class="mark" data-key="record"></h3>
+                <h3 class="mark" data-key="listen_title"></h3>
               </div>
+              <!-- 음성 인식(261027): 말이 끝나면 저절로 멈추고 글자로 보여 준다. 글자는 왼쪽 [말하기] 칸에 넣을 수 있다 -->
+              <div class="speech-input-group stt-row">
+                <button id="stt_bt">
+                  <i class="fa-solid fa-ear-listen"></i>
+                  <span data-key="stt_listen"></span>
+                </button>
+                <span class="s-status" id="stt_status"></span>
+              </div>
+              <div class="stt-result" id="stt_result" data-empty><span data-key="stt_result_ph"></span></div>
+              <div class="speech-input-group stt-row">
+                <button id="stt_to_tts_bt" disabled>
+                  <i class="fa-solid fa-arrow-left"></i>
+                  <span data-key="stt_to_tts"></span>
+                </button>
+              </div>
+              <div class="s-rec-sub pb-label" data-key="record"></div>
               <div class="speech-input-group record-row">
                 <input type="number" name="mic_time_val" id="mic_time_val" value="5" min="1" max="30" pattern="\d*" />
                 <span class="label" data-key="second"></span>

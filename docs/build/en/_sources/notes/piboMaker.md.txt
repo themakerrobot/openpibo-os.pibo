@@ -52,7 +52,9 @@ Try piBo's features one at a time, without code. Pick [Motion], [Camera] or [Spe
 ![Tools: Speech](images/tools_speech.png)
 
 - **Speech**: pick one of ten voices (Male 1–5, Female 1–5) or the robot voice (espeak) and let piBo say your text. Korean and English are
-  detected automatically. [Speak] says it. [Record] records piBo's microphone and [Play again] plays it back
+  detected automatically. [Speak] says it. Under [Listen], press [Try speaking] and talk: piBo stops by itself when you finish and shows
+  what it heard as text (up to 10 seconds, processed on piBo). [Use as text to speak] puts that text into the box on the left so piBo can say it back.
+  The first time takes a few seconds while speech recognition loads. [Record] records piBo's microphone and [Play again] plays it back
 
 ## Classifier
 

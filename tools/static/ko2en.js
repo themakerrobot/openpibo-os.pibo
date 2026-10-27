@@ -146,6 +146,16 @@ const translations = {
   camera_not_ready:   { ko: "카메라가 아직 준비되지 않았어요.", en: "The camera is not ready yet." },
   download_failed:    { ko: "내려받지 못했어요.", en: "Could not download." },
   language:           { ko: "언어", en: "Language" },
+  // 261027 — 음성 인식(도구 [음성] 듣기 카드)
+  listen_title:   { ko: "듣기", en: "Listen" },
+  stt_listen:     { ko: "말해 보기", en: "Try speaking" },
+  stt_loading:    { ko: "음성 인식 준비 중… (처음 한 번 몇 초 걸려요)", en: "Loading speech recognition… (a few seconds the first time)" },
+  stt_listening:  { ko: "듣는 중… 말해 보세요.", en: "Listening… say something." },
+  stt_done:       { ko: "다 들었어요.", en: "Done." },
+  stt_none:       { ko: "들은 말이 없어요. 조금 더 크게 말해 보세요.", en: "I didn't hear anything. Try speaking a little louder." },
+  stt_error:      { ko: "음성 인식을 하지 못했어요.", en: "Could not recognize speech." },
+  stt_result_ph:  { ko: "[말해 보기]를 누르고 말하면 여기에 글자로 나와요.", en: "Press [Try speaking] and talk. Your words show up here." },
+  stt_to_tts:     { ko: "말할 글자로 넣기", en: "Use as text to speak" },
 };
 
 // 키 → 현재 언어 문자열. 모르는 키(일반 문자열)는 그대로 반환.
