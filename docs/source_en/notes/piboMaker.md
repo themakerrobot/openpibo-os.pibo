@@ -20,10 +20,10 @@ Everything runs **inside piBo** (voices, speech recognition, chat and the classi
 
 ![IDE with blocks](images/ide_block.png)
 
-- **Top bar**: switch the editor with [Block | Python]. On the right are Tools, Chat, Classifier, Guide, Full screen and [⋯] More
-  (brightness · font size · Python editor theme · language · reset · power · source code and license)
+- **Top bar**: switch the editor with [Blocks | Python]. On the right are Tools, Chat, Classifier, Guide, Full screen and [⋯] More
+  (brightness · font size · Python editor theme · language · factory reset · power off · source code and license)
 - **Left panel**: **[Run] [Stop]** at the bottom are always visible.
-  - [piBo] — screen output (pictures sent with the `Display image variable … on IDE` block), status (WiFi, temperature, battery, memory, uptime, version), program output, sending input to the program
+  - [piBo] — screen output (pictures sent with the `Display image variable … on IDE` block), status (WiFi settings, temperature, battery, memory, uptime, version), program output, sending input to the program
   - [Files] — the file list, new file / new folder / upload, and a preview for pictures and sounds
 - **Blocks**: drag blocks out of the categories on the left. Type a word such as "sound" or "face" into **Search blocks** at the top
   to find blocks. [Python code] shows the Python code your blocks make. See **Blocks** on the left for every block.
@@ -40,8 +40,8 @@ Try piBo's features one at a time, without code. Pick [Motion], [Camera] or [Spe
 
 ![Tools: Motion](images/tools_motion.jpg)
 
-- **Motion**: tap a number on the photo to pick a motor, set its angle in the panel next to it and press **[Add / Update]** to add a row
-  to the table on the right (the time goes up by 0.5 s each time). [Execute] plays the table; give it a name and press **[Register]**
+- **Motion**: tap a number on the photo to pick a motor, set its angle in the panel next to it and press **[Add or update]** to add a row
+  to the table on the right (the time goes up by 0.5 s each time). [Run] plays the table; type a name and press **[Save]**
   to use it later with the `Execute my motion … times` block. On a laptop: ←→ picks the motor, ↑↓ changes the angle, Enter adds or updates
 
 ![Tools: Camera](images/tools_vision.jpg)
@@ -52,7 +52,7 @@ Try piBo's features one at a time, without code. Pick [Motion], [Camera] or [Spe
 ![Tools: Speech](images/tools_speech.png)
 
 - **Speech**: pick one of ten voices (Male 1–5, Female 1–5) or the robot voice (espeak) and let piBo say your text. Korean and English are
-  detected automatically. [Record] records piBo's microphone and [Replay] plays it back
+  detected automatically. [Speak] says it. [Record] records piBo's microphone and [Play again] plays it back
 
 ## Classifier
 
@@ -61,8 +61,8 @@ Try piBo's features one at a time, without code. Pick [Motion], [Camera] or [Spe
 Collect examples with the camera and teach the AI, for example "this is a cat, this is food".
 
 1. **What should it learn from?** — Image (the whole picture) · Hand (hand shape) · Face (expression) · Pose (body posture)
-2. Name each **class** and keep pressing **[Hold to record]** to collect examples. You can also upload files with [Photos]
-3. **[Train]** — the tablet or laptop browser learns in a few seconds and shows the accuracy, a confusion table and live scores
+2. Name each **class** and keep pressing **[Hold to collect]** to collect examples. You can also upload files with [Photos]
+3. **[Teach the AI]** — the tablet or laptop browser learns in a few seconds and shows the accuracy, a confusion table and live scores
 4. **[Save]** (under Save to piBo) — saved on piBo in `/home/pi/mymodel/<model name>`
 5. In the IDE use `Load classifier model (mymodel) (model name)` → `Classify (image) with classifier model`.
    `Draw what the classifier saw on image` draws the hand, face or body points and the class name on the picture

@@ -1,6 +1,7 @@
 <!DOCTYPE html>
+<html lang="ko" data-product="piBo">
   <head>
-    <title>piBo Tools</title>
+    <title data-key="nav_tools_title">도구</title>
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
@@ -11,8 +12,8 @@
     <link rel="stylesheet" href="../static/all.min.css?ver=240110v1" type="text/css" />
     <link rel="stylesheet" href="../static/jquery.jsonview.min.css" />
     <link rel="stylesheet" href="../static/index.css?ver=260923v3" />
-  <link rel="stylesheet" href="../static/pibo-ui.css?ver=260930v3" />
-    <link rel="stylesheet" href="../static/simulator.css?ver=240110v1" />
+  <link rel="stylesheet" href="../static/pibo-ui.css?ver=261028v1" />
+    <link rel="stylesheet" href="../static/simulator.css?ver=261028v1" />
     <link rel="shortcut icon" href="../static/icon.png" type="image/x-icon" />
 
     <script src="../static/jquery-3.7.1.min.js"></script>
@@ -24,12 +25,12 @@
   (function () { try { var m = document.cookie.match(/(?:^|;\s*)pibo_theme=(light|soft|dark)/);
     document.documentElement.setAttribute('data-theme', m ? m[1] : 'soft'); } catch (e) {} })();</script>
     <header class="pb-header">
-      <span class="pb-header__brand"><i class="fa-solid fa-microchip"></i>&nbsp;<span data-key="nav_tools_title"></span>
+      <span class="pb-header__brand"><i class="fa-solid fa-robot"></i><b>piBo</b><span class="pb-header__app" data-key="nav_tools_title"></span>
         <span id="state"></span> <span id="onoff_val"></span> <span id="onoff_count"></span></span>
       <div class="pb-iconbar">
         <button type="button" class="pb-iconbtn" id="ide_bt" title="IDE"><i class="fa-solid fa-code"></i><span class="pb-iconbtn__label">IDE</span></button>
-        <a class="pb-iconbtn" id="fullscreen_bt" title="Full Screen"><span id="fullscreen_txt"></span><span class="pb-iconbtn__label" data-key="nav_fullscreen"></span></a>
-        <select class="pb-field pb-field--sm" id="language" aria-label="language">
+        <a class="pb-iconbtn" id="fullscreen_bt" data-title-key="nav_fullscreen"><span id="fullscreen_txt"></span><span class="pb-iconbtn__label" data-key="nav_fullscreen"></span></a>
+        <select class="pb-field pb-field--sm" id="language" aria-label="Language" data-aria-key="language">
           <option value="ko">한국어</option>
           <option value="en">English</option>
         </select>
@@ -70,9 +71,9 @@
     <main>
       <nav>
         <ul>
-          <li><button name="motion"><span class="pb-navlabel" data-key="nav_motion"></span></button></li>
-          <li><button name="vision"><span class="pb-navlabel" data-key="nav_vision"></span></button></li>
-          <li><button name="speech"><span class="pb-navlabel" data-key="nav_speech"></span></button></li>
+          <li><button name="motion"><i class="fa-solid fa-person-walking" aria-hidden="true"></i><span class="pb-navlabel" data-key="nav_motion"></span></button></li>
+          <li><button name="vision"><i class="fa-solid fa-camera" aria-hidden="true"></i><span class="pb-navlabel" data-key="nav_vision"></span></button></li>
+          <li><button name="speech"><i class="fa-solid fa-comment-dots" aria-hidden="true"></i><span class="pb-navlabel" data-key="nav_speech"></span></button></li>
         </ul>
       </nav>
 
@@ -324,7 +325,7 @@
             <section>
               <div class="motion-record">
                 <div>
-                  <span data-key="play_cycle"></span>:
+                  <span data-key="play_cycle"></span>
                   <input
                     type="number"
                     name="play_cycle_val"
@@ -368,7 +369,7 @@
                     </thead>
                     <tbody></tbody>
                   </table>
-                  <div class="motion-empty" data-key="frames_empty" hidden></div>
+                  <div class="motion-empty" data-key="frames_empty_v2" hidden></div>
                 </div>
                 <div class="motion-name-wrap">
                   <span data-key="motion_name"></span>:
@@ -545,7 +546,7 @@
                 <span class="label"></span>
                 <button id="s_tts_bt" style="width:120px">
                   <i class="fa-solid fa-play"></i>
-                  <span data-key="execute"></span>
+                  <span data-key="speak"></span>
                 </button>
                 <button id="s_tts_stop_bt">
                   <i class="fa-solid fa-stop"></i>
@@ -587,7 +588,12 @@
       </div>
     </main>
   </body>
-  <script src="../static/ko2en.js?ver=261027v3"></script>
-  <script src="../static/pibo-ui.js?ver=261026v1"></script>
-  <script src="../static/index.js?ver=261027v3"></script>
+  <script src="../static/ko2en.js?ver=261028v1"></script>
+  <script src="../static/pibo-ui.js?ver=261028v1"></script>
+  <script src="../static/index.js?ver=261028v1"></script>
+  <script>/* [동작] 표가 비면 안내를 보인다(pibo-ui.css 의 .motion-table-wrap[data-empty]). :has() 를 안 쓰려고 tbody 를 지켜본다 */
+  (function () { var tb = document.querySelector('#motor_table > tbody'), wrap = tb && tb.closest('.motion-table-wrap');
+    if (!tb || !wrap || !window.MutationObserver) return;
+    function sync() { if (tb.children.length) wrap.removeAttribute('data-empty'); else wrap.setAttribute('data-empty', ''); }
+    new MutationObserver(sync).observe(tb, { childList: true }); sync(); })();</script>
 </html>
