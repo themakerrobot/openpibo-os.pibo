@@ -126,17 +126,17 @@ Retrieve list of available motions. *returns a value*
 
 Retrieve list of custom motions. *returns a value*
 
-<img src="img/motion_set_motion_dropdown.png" alt="Execute motion [Select motion ▾] ([1]) times" width="490" class="blk">
+<img src="img/motion_set_motion_dropdown.png" alt="Run motion [Select motion ▾] ([1]) times" width="451" class="blk">
 
-Execute a chosen motion a specified number of times.
+Run a chosen motion a specified number of times.
 
-<img src="img/motion_set_motion.png" alt="Execute motion ([wave1]) ([1]) times" width="463" class="blk">
+<img src="img/motion_set_motion.png" alt="Run motion ([wave1]) ([1]) times" width="423" class="blk">
 
-Execute an entered motion a specified number of times.
+Run an entered motion a specified number of times.
 
-<img src="img/motion_set_mymotion.png" alt="Execute my motion ([My motion]) ([1]) times" width="538" class="blk">
+<img src="img/motion_set_mymotion.png" alt="Run my motion ([my motion]) ([1]) times" width="498" class="blk">
 
-Execute a custom motion.
+Run one of my motions.
 
 <img src="img/motion_init_motion.png" alt="Initialize motion" width="207" class="blk">
 

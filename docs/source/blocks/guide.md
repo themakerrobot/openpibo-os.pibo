@@ -130,7 +130,7 @@ Blockly 기본 블록 (Blockly 공식 블록 — 설명은 블록에 마우스�
 
 입력한 동작을 정해진 횟수만큼 실행합니다.
 
-<img src="img/motion_set_mymotion.png" alt="내 동작 ([나의 모션]) ([1]) 번 실행하기" width="441" class="blk">
+<img src="img/motion_set_mymotion.png" alt="내 동작 ([내 동작]) ([1]) 번 실행하기" width="423" class="blk">
 
 사용자가 만든 동작을 정해진 횟수만큼 실행합니다.
 

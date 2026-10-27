@@ -430,7 +430,7 @@ IDE [도움말] 은 `booting.py`(8080) 가 리포의 `docs/build` 를 그대로 
   화면을 크게 바꾸면 캡처도 다시 찍을 것
 - **영문 도움말(261001)** — 한 리포(main)에서 한/영 두 벌을 같이 빌드한다: `docs/build/html`(한국어) · `docs/build/en`(영문). `global` 에도 같은 `docs/build` 가 간다(델타 아님)
   - `docs/index.html` 이 `?lang=en` 이면 `build/en/`, 아니면 `build/html/` 로 보낸다. IDE [도움말] 은 `:8080/?lang=<IDE 언어>` 를 연다(`index.js` 의 `guide_bt`) —
-    영문판은 `blang='en'` 이라 처음부터 영문 도움말. 두 벌 모두 사이드바의 `English`/`한국어` 링크(`_static/langswitch.js`, 주소의 `/html/`↔`/en/`)로 서로 오간다
+    영문판은 `blang='en'` 이라 처음부터 영문 도움말. 두 벌 모두 상단바의 언어 select(`_static/langswitch.js`, 주소의 `/html/`↔`/en/`)로 서로 오간다
   - 페이지(`index.rst`·`notes/*`·`libraries/*.rst` 제목)는 **`source_en/` 에 영문으로 따로** 있다. 한국어 페이지를 고치면 영문도 고칠 것.
     `source_en/conf.py` 는 `source/conf.py` 를 exec 해 물려받고 언어·제목·번역 위치만 바꾼다. 영문 캡처는 `source_en/notes/images/`(영문 UI 로 찍는다), 하드웨어 사진은 한국어 쪽 것을 같이 쓴다
   - 블록 가이드는 `gen_block_guide.py --lang=en` 이 영문 툴박스(`en.js`)로 그려 `source_en/blocks/` 에 쓴다(`build.sh` 가 주소를 받으면 한·영 둘 다). [수집] 분류에는 '국내판 전용' 안내가 붙는다
@@ -1141,7 +1141,8 @@ v1 전용 CSS(`index.css` `fontello.css` `cobalt.css` `duotone-light.css`), [새
 - 대화상자 한 벌(키트): 흐림 없는 어두운 막, 모서리 16, 안쪽 20, 버튼 40. **오류 알림은 빨간 아이콘** — 키트 `markAlerts` 가 `alert_popup` 을 감싸 키 이름(`err*`·`*error`·`*fail`·`*invalid`)으로 가른다
 - 알림·띠: 경고 노랑 옅은 칸, 오류 빨강, 정보 파랑(청록 안 씀). 어둡게에서도 어두운 칸
 - 카메라 칸 `.pb-stage`, 빈 화면 `.pb-empty`(아이콘 + ink-2 글자 + 버튼) — 도구·분류기·PiBrain 같이. 도구 왼쪽 메뉴는 Font Awesome(예전 PNG 는 안 씀)
-- 도움말(8080)도 쿠키 `pibo_theme` 를 따른다(`docs/source/_static/pibotheme.js`, `_templates/base.html` 이 `<head>` 에서 싣는다 — `html_js_files` 는 body 끝이라 늦다). Furo 의 밝기 버튼이 쿠키도 바꾼다. 사이드바에 [piBo IDE] 링크
+- 도움말(8080)도 쿠키 `pibo_theme` 를 따른다(`docs/source/_static/pibotheme.js`, `_templates/base.html` 이 `<head>` 에서 싣는다 — `html_js_files` 는 body 끝이라 늦다). Furo 의 밝기 버튼이 쿠키도 바꾼다.
+  **도움말에도 같은 48px 노랑 상단바**(`_templates/base.html`): `[아이콘] piBo · 도움말`(제품 이름은 `html_title` 에서) · 오른쪽 [IDE](80 으로) · 언어 select. 데스크톱은 고정, 63em 이하는 Furo 모바일 머리줄을 숨기고 메뉴·밝기·목차 버튼을 상단바로 옮긴다. 예전 4px 노랑 줄·사이드바 언어/IDE 알약은 없앴다. 파일은 두 리포 같다
 - H/W 검수는 인쇄 보고서라 최소만: 화면에서만 노랑 띠·Pretendard·파랑 #2563eb·모서리 8, 일련번호 제목은 인쇄 때만
 
 **문구(해요체·용어)** — 메시지·확인창·오류·빈 화면은 **해요체 + 마침표**(한/영 모두). 버튼·라벨은 짧게, 마침표 없음. 블록 설명(`ko.js`)·도움말 본문은 합니다체 그대로.
@@ -1162,7 +1163,7 @@ v1 전용 CSS(`index.css` `fontello.css` `cobalt.css` `duotone-light.css`), [새
 | 확인 버튼 | 확인 | OK |
 
 바뀐 버튼 이름(261028): [등록하기]→[저장], [원래자세]→[처음 자세], 도구 [음성] [실행하기]→[말하기], [삭제하기]→[지우기], 대화 [멈추기]→[정지], [인터넷 설정]→[WiFi 설정], 더보기 [초기화]→[공장 초기화]·[전원]→[전원 끄기].
-도움말 사용법 페이지(`notes/piboMaker.md` 한·영)도 같이 고쳤다. 캡처 그림은 예전 화면이다 — 다시 찍을 것
+도움말 사용법 페이지(`notes/piboMaker.md` 한·영)와 화면 캡처·블록 가이드 그림도 새 화면으로 다시 만들었다(261027v3, 컨테이너에서 가짜 소켓으로 상태를 넣어 찍음 — 카메라 그림·인식 상자는 예전 캡처에서 오려 낸 것)
 
 ## IDE 서버·블록 메모 (260924)
 
