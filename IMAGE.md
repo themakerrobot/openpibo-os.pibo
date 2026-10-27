@@ -151,6 +151,38 @@ sed -n '/^## sha256/,$p' VERSION | tail -n +2 | sha256sum -c --quiet && echo "VE
 $PY -c "from openpibo.speech import SpeechToText, SpeechOnDevice; SpeechOnDevice(); SpeechToText(); print('tts·stt ok')"
 ```
 
+### 대화 서버 llama.cpp — `/home/pi/.llama.cpp` (261027, 이미지당 1회)
+
+Qwen3.5 를 읽는 llama.cpp(파이보 cd488e95 에서 `b11889`)를 `/home/pi/.llama.cpp` 에 받아 빌드한다. 리포 코드는 서비스 이름(`llama-server.service`)만 부르고 경로는 아래 유닛에만 있다.
+**폴더를 빌드한 뒤에 옮기지 말 것** — 빌드 설정(CMakeCache)이 옛 경로를 기억한다. 옮겨야 하면 `build` 를 지우고 새 자리에서 다시 빌드한다(261027 에 그렇게 했다. Pi 4 `-j3` 수십 분).
+CPU 전용 Release 빌드이고 서버만 만든다: `cmake -B build -DCMAKE_BUILD_TYPE=Release && cmake --build build --config Release -j3 --target llama-server`.
+옵션을 다른 기기와 똑같이 맞추려면 그 기기 `build/CMakeCache.txt` 의 `GGML_*`·`LLAMA_*` BOOL 값을 `-D` 로 넘긴다.
+빌드 뒤 `ldd build/bin/llama-server | grep "not found"` 가 비어 있어야 한다.
+
+`/etc/systemd/system/llama-server.service` (리포 밖 — 이 내용 그대로):
+
+```ini
+[Unit]
+Description=Llama.cpp Server Service
+After=network.target
+
+[Service]
+User=root
+Group=root
+WorkingDirectory=/home/pi/.llama.cpp/build/bin/
+ExecStart=/home/pi/.llama.cpp/build/bin/llama-server -m /home/pi/.model/llm/llm-model.gguf --jinja --ctx-size 2048 -np 1 --cache-ram 0 -t 4 -ub 256 --log-disable --host 0.0.0.0 --port 50020
+Restart=on-failure
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
+```
+
+- 부팅 때 켜지 않는다(`systemctl disable llama-server` 상태로 둔다). IDE [대화]·코드의 `Speech.start_llm()` 이 켜고 끈다
+- `WorkingDirectory` 도 빌드 폴더여야 한다(옛 폴더면 30ms 만에 죽었다, 261026). `--log-disable` 이라 죽은 이유가 로그에 안 남는다 — 같은 명령을 직접 돌려 볼 것
+- 확인: `sudo systemctl start llama-server; sleep 15; curl -s localhost:50020/health` → `{"status":"ok"}`, 그 뒤 `sudo systemctl stop llama-server`
+
 ## 2. 뜨기 전 청소
 
 이미지에 개인 정보와 기기별 상태가 딸려간다. 전원 끄기 전에 지운다.
