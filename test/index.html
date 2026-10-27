@@ -167,10 +167,10 @@
        overflow box leaves half a row showing at the top and bottom when the
        report prints, and no amount of snapping scrollTop is reliable across
        the screen-to-print relayout. */
-    line-height: 14px;
+    line-height: 13px;
     white-space: pre;
     overflow: hidden;
-    height: 182px;       /* 12 rows: 14px x 12 + 12 padding + 2 border */
+    height: 274px;       /* 20 rows(센서 시험 20회 전부): 13px x 20 + 12 padding + 2 border */
     color: var(--ink);
   }
 
@@ -224,7 +224,12 @@
     table, .box, .summary { page-break-inside: avoid; break-inside: avoid; }
     h2 { page-break-after: avoid; break-after: avoid; }
     .box { min-height: 38mm; }
-    #sensor-log { min-height: 182px; }   /* beat .box's min-height */
+    #sensor-log { min-height: 274px; }   /* beat .box's min-height */
+    /* 센서 로그 20줄이 A4 한 장에 들어가게 위쪽 칸을 줄인다(인쇄에서만) */
+    th, td { padding: 3px 8px; }
+    h2 { margin: 10px 0 4px; }
+    .summary { margin-top: 6px; padding: 5px 10px; }
+    .sign-table td { height: 13mm; }
     .fill { border-bottom: 1px solid var(--ink); }
   }
 
@@ -549,7 +554,7 @@ async function runCamera(id) {
 
 /* Rows the log element can show. Keeping the element to exactly this many
    lines is what removes the scrollbar and the half-row clipping on print. */
-const LOG_ROWS = 12;
+const LOG_ROWS = 20;   // 센서 시험이 20회 읽으므로 전부 남긴다(전엔 12 — 앞 8줄이 잘렸다)
 
 async function runSensors(id) {
   const log = document.getElementById('sensor-log');
