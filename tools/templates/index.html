@@ -12,7 +12,7 @@
     <link rel="stylesheet" href="../static/all.min.css?ver=240110v1" type="text/css" />
     <link rel="stylesheet" href="../static/jquery.jsonview.min.css" />
     <link rel="stylesheet" href="../static/index.css?ver=261027v3" />
-  <link rel="stylesheet" href="../static/pibo-ui.css?ver=261027v3" />
+  <link rel="stylesheet" href="../static/pibo-ui.css?ver=261027v4" />
     <link rel="stylesheet" href="../static/simulator.css?ver=261027v3" />
     <link rel="shortcut icon" href="../static/icon.png" type="image/x-icon" />
 
@@ -380,15 +380,15 @@
                     style="width:178px"
                   />
                   <button id="add_motion_bt" class="btn-red">
-                    <i class="fa-solid fa-check-double"></i>
+                    <i class="fa-solid fa-floppy-disk"></i>
                     <span data-key="register"></span>
                   </button>
                   <button id="load_motion_bt">
-                    <i class="fa-solid fa-arrow-turn-up"></i>
+                    <i class="fa-solid fa-folder-open"></i>
                     <span data-key="load"></span>
                   </button>
                   <button id="delete_motion_bt">
-                    <i class="fa-solid fa-minus"></i>
+                    <i class="fa-solid fa-trash-can"></i>
                     <span data-key="remove"></span>
                   </button>
                   <i class="fa-solid fa-ellipsis-vertical pb-sep"></i>
@@ -503,6 +503,7 @@
                 <textarea
                 name="v_result"
                 id="v_result"
+                class="pb-result"
                 rows="5"
                 wrap="hard"
                 style="width:100%"
@@ -560,6 +561,7 @@
                 <h3 class="mark" data-key="listen_title"></h3>
               </div>
               <!-- 음성 인식(261027): 말이 끝나면 저절로 멈추고 글자로 보여 준다. 글자는 왼쪽 [말하기] 칸에 넣을 수 있다 -->
+              <div class="s-rec-sub s-rec-sub--first pb-label" data-key="stt_title"></div>
               <div class="speech-input-group stt-row">
                 <button id="stt_bt">
                   <i class="fa-solid fa-ear-listen"></i>
@@ -602,9 +604,9 @@
       </div>
     </main>
   </body>
-  <script src="../static/ko2en.js?ver=261027v3"></script>
-  <script src="../static/pibo-ui.js?ver=261027v3"></script>
-  <script src="../static/index.js?ver=261027v3"></script>
+  <script src="../static/ko2en.js?ver=261027v4"></script>
+  <script src="../static/pibo-ui.js?ver=261027v4"></script>
+  <script src="../static/index.js?ver=261027v4"></script>
   <script>/* [동작] 표가 비면 안내를 보인다(pibo-ui.css 의 .motion-table-wrap[data-empty]). :has() 를 안 쓰려고 tbody 를 지켜본다 */
   (function () { var tb = document.querySelector('#motor_table > tbody'), wrap = tb && tb.closest('.motion-table-wrap');
     if (!tb || !wrap || !window.MutationObserver) return;

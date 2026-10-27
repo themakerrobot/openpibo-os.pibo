@@ -156,6 +156,7 @@ const translations = {
   stt_error:      { ko: "음성 인식을 하지 못했어요.", en: "Could not recognize speech." },
   stt_result_ph:  { ko: "[말해 보기]를 누르고 말하면 여기에 글자로 나와요.", en: "Press [Try speaking] and talk. Your words show up here." },
   stt_to_tts:     { ko: "말할 글자로 넣기", en: "Use as text to speak" },
+  stt_title:      { ko: "받아쓰기", en: "Speech to text" },
 };
 
 // 키 → 현재 언어 문자열. 모르는 키(일반 문자열)는 그대로 반환.

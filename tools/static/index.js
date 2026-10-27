@@ -291,7 +291,7 @@ const getVisions = (socket) => {
   // v2 화면: 비전 기능을 select 대신 타일로 고른다(select 는 그대로 두고 값만 맞춘다 — v1 은 select 그대로).
   // 마커 길이 칸은 마커일 때만 보이게 article 에 지금 기능을 적어 둔다(data-func)
   const V_ICON = {
-    camera: "camera", grayscale: "circle-half-stroke", canny: "pen", cartoon: "palette", sketch_rgb: "pencil",
+    camera: "camera", grayscale: "circle-half-stroke", canny: "draw-polygon", cartoon: "palette", sketch_rgb: "pencil",
     detail: "magnifying-glass-plus", edgePreservingFilter: "water", qr: "qrcode", face: "face-smile",
     face_landmark: "location-crosshairs", object: "box", hand: "hand", pose: "person-walking",
     track: "arrows-to-dot", marker: "thumbtack"
