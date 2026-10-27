@@ -42,7 +42,7 @@ Try piBo's features one at a time, without code. Pick [Motion], [Camera] or [Spe
 
 - **Motion**: tap a number on the photo to pick a motor, set its angle in the panel next to it and press **[Add or update]** to add a row
   to the table on the right (the time goes up by 0.5 s each time). [Run] plays the table; type a name and press **[Save]**
-  to use it later with the `Execute my motion … times` block. On a laptop: ←→ picks the motor, ↑↓ changes the angle, Enter adds or updates
+  to use it later with the `Run my motion … times` block. On a laptop: ←→ picks the motor, ↑↓ changes the angle, Enter adds or updates
 
 ![Tools: Camera](images/tools_vision.jpg)
 

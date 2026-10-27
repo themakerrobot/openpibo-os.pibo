@@ -11,9 +11,9 @@
     <!-- <link rel="manifest" href="../static/manifest.json" /> -->
     <link rel="stylesheet" href="../static/all.min.css?ver=240110v1" type="text/css" />
     <link rel="stylesheet" href="../static/jquery.jsonview.min.css" />
-    <link rel="stylesheet" href="../static/index.css?ver=260923v3" />
-  <link rel="stylesheet" href="../static/pibo-ui.css?ver=261028v1" />
-    <link rel="stylesheet" href="../static/simulator.css?ver=261028v1" />
+    <link rel="stylesheet" href="../static/index.css?ver=261027v3" />
+  <link rel="stylesheet" href="../static/pibo-ui.css?ver=261027v3" />
+    <link rel="stylesheet" href="../static/simulator.css?ver=261027v3" />
     <link rel="shortcut icon" href="../static/icon.png" type="image/x-icon" />
 
     <script src="../static/jquery-3.7.1.min.js"></script>
@@ -488,10 +488,8 @@
                   <option value="face" data-key="v_face"></option>
                   <option value="face_landmark" data-key="v_face_landmark"></option>
                   <option value="object" data-key="v_object"></option>
-                  <!-- <option value="classify" data-key="v_classify"></option> -->
                   <option value="hand" data-key="v_hand"></option> 
                   <option value="pose" data-key="v_pose"></option>
-                  <!-- <option value="tm" data-key="v_tm"></option> -->
                   <option value="track" data-key="v_track"></option>
                   <option value="marker" data-key="v_marker"></option>
                 </select>
@@ -588,9 +586,9 @@
       </div>
     </main>
   </body>
-  <script src="../static/ko2en.js?ver=261028v1"></script>
-  <script src="../static/pibo-ui.js?ver=261028v1"></script>
-  <script src="../static/index.js?ver=261028v1"></script>
+  <script src="../static/ko2en.js?ver=261027v3"></script>
+  <script src="../static/pibo-ui.js?ver=261027v3"></script>
+  <script src="../static/index.js?ver=261027v3"></script>
   <script>/* [동작] 표가 비면 안내를 보인다(pibo-ui.css 의 .motion-table-wrap[data-empty]). :has() 를 안 쓰려고 tbody 를 지켜본다 */
   (function () { var tb = document.querySelector('#motor_table > tbody'), wrap = tb && tb.closest('.motion-table-wrap');
     if (!tb || !wrap || !window.MutationObserver) return;
