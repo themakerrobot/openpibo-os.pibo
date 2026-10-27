@@ -473,7 +473,7 @@
 <p>그림을 그리면 인스턴스 변수 <code class="docutils literal notranslate"><span class="pre">image</span></code> 에 저장됩니다. 이를 <code class="docutils literal notranslate"><span class="pre">show</span></code> 메소드를 사용하여 oled 화면에 출력할 수 있습니다.</p>
 <p>본 class에서 문자 또는 그림을 그리는 행위는 인스턴스 변수 <code class="docutils literal notranslate"><span class="pre">image</span></code> 의 데이터를 변경시키는 것으로 정의합니다.</p>
 <p>example:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">openpibo.oled</span><span class="w"> </span><span class="kn">import</span> <span class="n">OledbyST7735</span> <span class="k">as</span> <span class="n">Oled</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">openpibo.oled</span><span class="w"> </span><span class="kn">import</span> <span class="n">Oled7735</span> <span class="k">as</span> <span class="n">Oled</span>
 
 <span class="n">oled</span> <span class="o">=</span> <span class="n">Oled</span><span class="p">()</span>
 <span class="c1"># 아래의 모든 예제 이전에 위 코드를 먼저 사용합니다.</span>
@@ -576,7 +576,7 @@
 <dd><p>numpy 이미지 데이터를 입력받아 이미지로 변환합니다.</p>
 <p>카메라 출력값이 numpy 형식이므로, 이를 oled화면에 띄우기 위해 사용됩니다.</p>
 <p>example:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">openpibo.vision</span><span class="w"> </span><span class="kn">import</span> <span class="n">Camera</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">openpibo.vision_camera</span><span class="w"> </span><span class="kn">import</span> <span class="n">Camera</span>
 
 <span class="n">camera</span> <span class="o">=</span> <span class="n">Camera</span><span class="p">()</span>
 <span class="n">img</span> <span class="o">=</span> <span class="n">camera</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
@@ -587,7 +587,7 @@
 </div>
 <dl class="field-list simple">
 <dt class="field-odd">매개변수<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>img</strong> (<em>numpy.ndarray</em>) – 이미지 객체</p>
+<dd class="field-odd"><p><strong>img</strong> (<em>numpy.ndarray</em>) – 이미지 객체 (cv2 의 BGR 순서)</p>
 </dd>
 </dl>
 </dd></dl>

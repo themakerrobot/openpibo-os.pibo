@@ -769,6 +769,9 @@ const translations = {
   voice_ready:  { ko: "목소리 준비됐어요", en: "Voices ready" },
   voice_error:  { ko: "목소리를 준비하지 못했어요", en: "Could not load voices" },
   saved_empty:  { ko: "아직 저장한 동작이 없어요", en: "No saved motions yet" },
+  // 동작 파일 가져오기(261027): 서버가 400 과 함께 이 키를 보낸다
+  motion_file_invalid: { ko: "동작 파일이 아니거나 내용이 잘못됐어요.", en: "This is not a motion file, or its content is invalid." },
+  not_ready:    { ko: "로봇이 아직 준비되지 않았어요.", en: "The robot is not ready yet." },
 };
 
 // 키 → 현재 언어 문자열. 모르는 키(일반 문자열)는 그대로 반환.

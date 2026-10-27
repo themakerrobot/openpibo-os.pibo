@@ -76,22 +76,54 @@ async def f(data: dict = Body(...)):
   psk = str(data.get('psk', ''))
   identity = str(data.get('identity', ''))
   print(f"[wifi] ssid={ssid!r} identity={identity!r} psk={'set' if psk else 'none'}")
+  # conwifi.sh 는 지금 쓰는 연결을 먼저 지우므로, NetworkManager 가 거절할 값은 여기서 막는다(261027)
   if ssid == "":
-    return JSONResponse(content={'result':'fail', 'data':'ssid is empty.'}, status_code=200)   # 전엔 정의 안 된 ex 를 불러 500
+    return fail('wifi_err_ssid', 'ssid is empty.')   # 전엔 정의 안 된 ex 를 불러 500
+  if len(ssid.encode('utf-8')) > 32:
+    return fail('wifi_err_ssid', 'ssid must be at most 32 bytes.')
   if psk == "":                 # open
     args = ['open', ssid]
-  elif len(psk) < 8:
-    return JSONResponse(content={'result':'fail', 'data':'psk must be at least 8 digits.'}, status_code=200)
   elif identity == "":          # wpa
+    # WPA 비밀번호는 8~63 바이트(또는 16진수 64자). NetworkManager 가 바이트로 잰다(한글은 글자당 3바이트)
+    n = len(psk.encode('utf-8'))
+    if not (8 <= n <= 63 or (n == 64 and all(c in '0123456789abcdefABCDEF' for c in psk))):
+      return fail('wifi_err_psk', 'psk must be 8 to 63 characters.')
     args = ['wpa-psk', ssid, psk]
+  elif len(psk) < 8:
+    return fail('wifi_err_psk', 'psk must be at least 8 digits.')
   else:                         # wpa-e
     args = ['wpa-enterprise', ssid, identity, psk]
   try:
-    await asyncio.to_thread(subprocess.run, ['sudo', CONWIFI, *args], timeout=90)
+    r = await asyncio.to_thread(subprocess.run, ['sudo', CONWIFI, *args], timeout=90)
+    code = r.returncode
   except Exception as ex:
     print(f'[wifi] conwifi error: {ex}')
+    code = -1
+  if code != 0 and wifi_saved(ssid):
+    print(f'[wifi] conwifi exit {code}, 저장은 됨 → 재부팅')
+    code = 0
+  if code != 0:
+    # 실패면 재부팅하지 않는다(전엔 늘 재부팅해서 '재부팅됐는데 안 붙는다' 로만 보였다).
+    # AP 였으면 conwifi.sh 가 wlan0 을 건드렸을 수 있어 다음 점검에서 AP 를 다시 켠다
+    print(f'[wifi] conwifi failed (code {code})')
+    nw.wifi_failed()
+    return fail('wifi_err_connect', f'connection failed (code {code}).')
   os.system('shutdown -r now &')
   return JSONResponse(content="ok", status_code=200)
+
+def wifi_saved(ssid):
+  """conwifi.sh 가 실패로 끝나도 연결 정보(pibo-wifi)는 저장됐을 수 있다 — 지금 없는 공유기를 미리 넣을 때(connection up 만 실패).
+  그 경우는 예전처럼 재부팅해 저장한 WiFi 로 붙게 한다"""
+  try:
+    r = subprocess.run(['nmcli', '-g', '802-11-wireless.ssid', 'connection', 'show', 'pibo-wifi'],
+                       capture_output=True, text=True, timeout=10)
+    saved = r.stdout.strip().replace('\\:', ':').replace('\\\\', '\\')   # -g 는 : 와 \ 를 \ 로 막는다
+    return r.returncode == 0 and saved == ssid
+  except Exception:
+    return False
+
+def fail(reason, msg):
+  return JSONResponse(content={'result':'fail', 'reason':reason, 'data':msg}, status_code=200)
 
 def wifi_update():
   global winfo, apmode

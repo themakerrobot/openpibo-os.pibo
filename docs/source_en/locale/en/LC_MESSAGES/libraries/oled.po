@@ -166,6 +166,9 @@ msgstr "Takes numpy image data and converts it to an image."
 msgid "카메라 출력값이 numpy 형식이므로, 이를 oled화면에 띄우기 위해 사용됩니다."
 msgstr "Used to show camera output, which is in numpy format, on the oled screen."
 
+msgid "이미지 객체 (cv2 의 BGR 순서)"
+msgstr "Image object (cv2 BGR order)"
+
 msgid "* ``True`` : 사각형 내부를 채웁니다. * ``False`` : 사각형 내부를 채우지 않습니다."
 msgstr "* ``True`` : Fills the inside of the rectangle. * ``False`` : Does not fill the inside of the rectangle."
 

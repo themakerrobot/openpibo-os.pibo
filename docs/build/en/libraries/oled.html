@@ -472,7 +472,7 @@
 <p>Whatever you draw is stored in the instance variable <code class="docutils literal notranslate"><span class="pre">image</span></code>. You can show it on the oled screen with the <code class="docutils literal notranslate"><span class="pre">show</span></code> method.</p>
 <p>In this class, drawing text or pictures is defined as changing the data of the instance variable <code class="docutils literal notranslate"><span class="pre">image</span></code>.</p>
 <p>example:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">openpibo.oled</span><span class="w"> </span><span class="kn">import</span> <span class="n">OledbyST7735</span> <span class="k">as</span> <span class="n">Oled</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">openpibo.oled</span><span class="w"> </span><span class="kn">import</span> <span class="n">Oled7735</span> <span class="k">as</span> <span class="n">Oled</span>
 
 <span class="n">oled</span> <span class="o">=</span> <span class="n">Oled</span><span class="p">()</span>
 <span class="c1"># 아래의 모든 예제 이전에 위 코드를 먼저 사용합니다.</span>
@@ -571,7 +571,7 @@
 <dd><p>Takes numpy image data and converts it to an image.</p>
 <p>Used to show camera output, which is in numpy format, on the oled screen.</p>
 <p>example:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">openpibo.vision</span><span class="w"> </span><span class="kn">import</span> <span class="n">Camera</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">openpibo.vision_camera</span><span class="w"> </span><span class="kn">import</span> <span class="n">Camera</span>
 
 <span class="n">camera</span> <span class="o">=</span> <span class="n">Camera</span><span class="p">()</span>
 <span class="n">img</span> <span class="o">=</span> <span class="n">camera</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
@@ -582,7 +582,7 @@
 </div>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>img</strong> (<em>numpy.ndarray</em>) – Image object</p>
+<dd class="field-odd"><p><strong>img</strong> (<em>numpy.ndarray</em>) – Image object (cv2 BGR order)</p>
 </dd>
 </dl>
 </dd></dl>

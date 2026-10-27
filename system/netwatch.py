@@ -25,11 +25,14 @@ hotspot.sh 가 실패로 끝나면(set -e 라 중간 명령 하나가 실패하�
 AP 를 켠 것으로 치지 않고 다음 점검(10초 뒤)에 바로 다시 켜 본다(261027). hotspot.sh 는 AP 를 켜기 전에 학교 WiFi 를
 먼저 내리므로, 전처럼 'AP 켰음' 으로만 적어 두면 학교 WiFi 도 AP 도 없이 재부팅 전까지 접속할 길이 없었다.
 
+스캔이 실패하면(nmcli 끝 코드 ≠ 0·시간 초과) '안 보임' 이 아니라 '모름' 으로 보고 '보임' 처럼 90초 규칙을 따른다(261027).
+전엔 빈 목록이 돼서 바로 AP 로 넘어갔다. 숨긴 SSID(802-11-wireless.hidden yes)는 스캔에 이름이 안 나오므로 역시 '모름'.
+저장된 SSID 와 스캔한 SSID 는 둘 다 nmcli terse 이스케이프(\\: \\\\)를 풀어서 비교한다(전엔 저장된 쪽만 안 풀어 ':' 가 든 이름이 안 맞았다).
+
 실행하는 명령은 ops 로 바꿔 끼울 수 있다(기기 없이 시험하려고). ops['hotspot'] 이 False 를 돌려주면 실패로 본다.
+ops['visible_ssids'] 가 None 을 돌려주면 스캔 실패(모름)다.
 """
 import subprocess
-
-import wifi
 
 HOTSPOT = '/home/pi/openpibo-os/system/hotspot.sh'
 WIFI_CON = 'pibo-wifi'
@@ -45,16 +48,39 @@ def _run(args, timeout):
     return None
 
 
+def unescape(s):
+  """nmcli -t/-g 의 '\\:' '\\\\' 이스케이프를 푼다(필드 하나짜리 값)"""
+  out, i = [], 0
+  while i < len(s):
+    if s[i] == '\\' and i + 1 < len(s):
+      i += 1
+    out.append(s[i])
+    i += 1
+  return ''.join(out)
+
+
+def _saved_field(name):
+  r = _run(['nmcli', '-g', name, 'connection', 'show', WIFI_CON], 10)
+  return unescape(r.stdout.rstrip('\n')) if r and r.returncode == 0 else ''
+
+
 def saved_ssid():
-  r = _run(['nmcli', '-g', '802-11-wireless.ssid', 'connection', 'show', WIFI_CON], 10)
-  return r.stdout.strip() if r and r.returncode == 0 else ''
+  return _saved_field('802-11-wireless.ssid')
+
+
+def saved_hidden():
+  return _saved_field('802-11-wireless.hidden').strip().lower() in ('yes', 'true', '1')
 
 
 def visible_ssids(force=False):
+  """보이는 SSID 집합. 스캔이 실패하면 None(모름)"""
   r = _run(['nmcli', '-t', '-f', 'SSID', 'dev', 'wifi', 'list', '--rescan', 'yes' if force else 'auto'], 30)
-  if not r or r.returncode != 0:
-    return set()
-  return {wifi.split_terse(line)[0] for line in r.stdout.splitlines() if line.strip()}
+  if r is None:
+    return None
+  if r.returncode != 0:
+    print(f'[netwatch] 스캔 실패(끝 코드 {r.returncode}): {(r.stderr or "").strip()[:200]}', flush=True)
+    return None
+  return {unescape(line) for line in r.stdout.splitlines() if line.strip()}
 
 
 def hotspot(cmd):
@@ -69,6 +95,7 @@ def hotspot(cmd):
 DEFAULT_OPS = {
   'saved_ssid': saved_ssid,
   'visible_ssids': visible_ssids,
+  'saved_hidden': saved_hidden,
   'hotspot': hotspot,
 }
 
@@ -110,11 +137,28 @@ class NetWatch:
       return 'ap_on_retry' if self._ap_on('지난번 AP 켜기 실패 — 다시 시도') else 'ap_fail'
 
     ssid = self.ops['saved_ssid']()
-    if not ssid or ssid not in self.ops['visible_ssids'](False):
+    if not ssid:
+      return 'ap_on_absent' if self._ap_on('저장된 SSID 없음') else 'ap_fail'
+    seen = self.ops['visible_ssids'](False)
+    if seen is None:
+      why = '스캔 실패 → 보이는 것으로 봄'
+    elif ssid in seen:
+      why = '보임'
+    elif self.ops['saved_hidden']():
+      why = '숨긴 SSID 라 스캔에 안 나옴 → 보이는 것으로 봄'
+    else:
       return 'ap_on_absent' if self._ap_on(f'저장된 SSID {ssid!r} 가 안 보임') else 'ap_fail'
     self.miss += 1
     if self.miss >= AP_WAIT_CHECKS:
       waited = self.miss * 10
-      return 'ap_on_timeout' if self._ap_on(f'{ssid!r} 는 보이는데 {waited}초 동안 IP 를 못 받음') else 'ap_fail'
-    print(f'[netwatch] IP 없음, {ssid!r} 보임 → 기다림 {self.miss}/{AP_WAIT_CHECKS}', flush=True)
+      return 'ap_on_timeout' if self._ap_on(f'{ssid!r} ({why}) {waited}초 동안 IP 를 못 받음') else 'ap_fail'
+    print(f'[netwatch] IP 없음, {ssid!r} {why} → 기다림 {self.miss}/{AP_WAIT_CHECKS}', flush=True)
     return 'wait'
+
+  def wifi_failed(self):
+    """[인터넷 설정] 의 연결이 실패했다(booting.py POST /wifi). AP 였으면 conwifi.sh 가 wlan0 을 건드렸을 수 있으니
+    다음 점검에서 AP 를 다시 켠다(hotspot.sh start 는 먼저 끄고 켠다)"""
+    if self.apmode:
+      print('[netwatch] WiFi 설정 실패 → 다음 점검에서 AP 다시 켬', flush=True)
+      self.apmode = False
+      self.ap_retry = True

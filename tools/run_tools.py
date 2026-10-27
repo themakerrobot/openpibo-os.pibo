@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from contextlib import asynccontextmanager
 
-import time,os,re,json,shutil,logging,asyncio
+import time,os,re,json,shutil,logging,asyncio,math
 from urllib import parse
 import argparse
 from threading import Timer
@@ -59,6 +59,68 @@ try:
 except Exception as ex:
   logging.error(f'Server Error:{ex}')
 
+# 화면(소켓·올린 파일)에서 오는 값은 그대로 믿지 않는다(261027). 숫자로 바꾸고 범위 안으로 자른다.
+# 전엔 그대로 넘겨서 글자 하나로 녹음·모터 명령이 실패하거나 화면 스레드가 죽었다. 숫자가 아니면 None
+def to_num(v, lo, hi, cast=int):
+  if isinstance(v, bool):
+    return None
+  try:
+    f = float(v)
+  except (TypeError, ValueError):
+    return None
+  if not math.isfinite(f):
+    return None
+  f = min(max(f, lo), hi)
+  return int(round(f)) if cast is int else f
+
+MOTOR_KEEP = 999   # 동작 데이터에서 '이 모터는 그대로' 표시(openpibo motion_db)
+
+def motor_pos(v):
+  p = to_num(v, -MOTOR_KEEP, MOTOR_KEEP)
+  if p is None or p == MOTOR_KEEP:
+    return p
+  return min(max(p, -80), 80)
+
+def motor_list(v):
+  if not isinstance(v, list) or len(v) != 10:
+    return None
+  lst = [motor_pos(p) for p in v]
+  return None if None in lst else lst
+
+def clean_motion(m):
+  """동작 하나(make_raw 형식)를 검사해 숫자만 담은 새 dict 로 돌려준다. 틀리면 ValueError"""
+  if not isinstance(m, dict):
+    raise ValueError('motion must be an object')
+  if not m:
+    return {}
+  out = {}
+  if 'init_def' in m:
+    init_def = to_num(m['init_def'], 0, 1)
+    if init_def is None:
+      raise ValueError('bad init_def')
+    out['init_def'] = init_def
+  if 'init' in m:
+    init = motor_list(m['init'])
+    if init is None:
+      raise ValueError('bad init')
+    out['init'] = init
+  pos = m.get('pos', [])
+  if not isinstance(pos, list):
+    raise ValueError('bad pos')
+  out['pos'] = []
+  for item in pos:
+    d = motor_list(item.get('d')) if isinstance(item, dict) else None
+    seq = to_num(item.get('seq'), 0, 3600000) if isinstance(item, dict) else None
+    if d is None or seq is None:
+      raise ValueError('bad pos item')
+    out['pos'].append({'d': d, 'seq': seq})
+  return out
+
+def clean_motions(j):
+  if not isinstance(j, dict) or not j:
+    raise ValueError('file must be an object of motions')
+  return {str(name): clean_motion(m) for name, m in j.items()}
+
 # REST API
 @app.get('/', response_class=HTMLResponse)
 async def f(request:Request):
@@ -69,18 +131,18 @@ async def f(request:Request):
 
 @app.post('/import_motion')
 async def import_motion(data:UploadFile = File(...)):
-  data.filename = "custom_motion.json"
-
-  with open(f"/home/pi/{data.filename}", 'wb') as f:
-    content = await data.read()
-    f.write(content)
-
+  if pibo is None:
+    return JSONResponse(content={'result':'not_ready'}, status_code=503)
+  # 전엔 임시 파일(~/custom_motion.json)에 쓰고 읽었는데, 읽기에 실패해도 그대로 진행해 500 이 났다.
+  # 메모리에서 바로 읽고 검사한다. 틀린 파일이면 400 + 문구 키(화면이 t() 로 번역)
   try:
-    with open(f'/home/pi/{data.filename}', 'rb') as f:
-      content = json.load(f)
+    content = await data.read(2 * 1024 * 1024 + 1)
+    if len(content) > 2 * 1024 * 1024:
+      raise ValueError('file too large')
+    content = clean_motions(json.loads(content))
   except Exception as ex:
     logging.error(f'[import_motion] Error: {ex}')
-    pass
+    return JSONResponse(content={'result':'motion_file_invalid'}, status_code=400)
 
   pibo.motion_j.update(content)
   with open('/home/pi/mymotion.json', 'w') as f:
@@ -89,9 +151,9 @@ async def import_motion(data:UploadFile = File(...)):
 
   try:
     await emit('disp_motion', {'record':pibo.motion_j})
-    return JSONResponse(content={"filename":data.filename}, status_code=200)
+    return JSONResponse(content={"filename":"custom_motion.json"}, status_code=200)
   except Exception as ex:
-    return JSONResponse(content={'result':'파일에 문제가 있습니다.'}, status_code=500)
+    return JSONResponse(content={'result':'motion_file_invalid'}, status_code=500)
 
 @app.get('/export_motion/{name}', response_class=FileResponse)
 async def export_motion(name="all"):
@@ -162,45 +224,76 @@ async def disp_vision(sid, d=None):
 async def detect(sid, d=None):
   if pibo is None:
     return
-  pibo.vision_type=d
+  pibo.vision_type=str(d)
 
 @app.sio.on('marker_length')
 async def marker_length(sid, d=None):
   if pibo is None:
     return
-  pibo.marker_length=d
+  v = to_num(d, 0.1, 100, float)
+  if v is not None:
+    pibo.marker_length = v
 
 @app.sio.on('object_tracker_init')
 async def object_tracker_init(sid, d=None):
   if pibo is None:
     return
+  if not isinstance(d, dict):
+    return
+  box = {k: to_num(d.get(k), 0, 4096) for k in ('x1', 'y1', 'x2', 'y2')}
+  if None in box.values():
+    return
   if pibo.vision_type == "track":
-    pibo.object_tracker_init(d)
+    pibo.object_tracker_init(box)
 
 @app.sio.on('update_img_pointer')
 async def update_img_pointer(sid, d=None):
-  if pibo is None:
+  if pibo is None or not isinstance(d, dict):
     return
-  pibo.imgX, pibo.imgY = d['x'], d['y']
+  x, y = to_num(d.get('x'), 0, 4096), to_num(d.get('y'), 0, 4096)
+  if x is not None and y is not None:   # 정수가 아니면 화면 스레드의 putText 가 죽었다
+    pibo.imgX, pibo.imgY = x, y
+
+def volume_of(d):
+  v = to_num(d.get('volume'), 0, 100) if isinstance(d, dict) else None
+  return 80 if v is None else v
+
+mic_lock = asyncio.Lock()
 
 @app.sio.on('mic')
 async def mic(sid, d=None):
   if pibo is None:
     return
-  pibo.mic(d)
+  # 녹음 시간은 화면 입력칸과 같은 1~30초. 녹음은 스레드에서 — 전엔 녹음하는 동안 도구 서버 전체가 멈췄다
+  if mic_lock.locked():   # 녹음 중에 또 누름
+    return
+  sec = to_num(d.get('time'), 1, 30) if isinstance(d, dict) else None
+  if sec is None:
+    await emit('mic', '')
+    return
+  async with mic_lock:
+    try:
+      await asyncio.to_thread(pibo.mic, {'time': sec})
+    except Exception as ex:
+      logging.error(f'[mic] Error: {ex}')
+      await emit('mic', '')
+      return
   await emit('mic', '')
-  pibo.aud.play("/home/pi/myaudio/mic.wav", d['volume'])
+  pibo.aud.play("/home/pi/myaudio/mic.wav", volume_of(d))
 
 @app.sio.on('mic_replay')
 async def mic_replay(sid, d=None):
   if pibo is None:
     return
-  pibo.aud.play("/home/pi/myaudio/mic.wav", d['volume'])
+  pibo.aud.play("/home/pi/myaudio/mic.wav", volume_of(d))
 
 @app.sio.on('tts')
 async def tts(sid, d=None):
   if pibo is None:
     return
+  if not isinstance(d, dict):
+    return
+  d = {'voice_type': str(d.get('voice_type', '')), 'text': str(d.get('text', '')), 'volume': volume_of(d)}
   # 온디바이스 합성이 1~2초 걸린다. 스레드로 돌려야 그동안 다른 화면(카메라 스트림 등)이 안 멈춘다
   cold = pibo.voice_state != 'ready' and d and d.get('voice_type') in pibo.OD_VOICES
   if cold:
@@ -230,26 +323,40 @@ async def disp_motion(sid, d=None):
 async def set_motor(sid, d=None):
   if pibo is None:
     return
-  pibo.set_motor(d['idx'], d['pos'])
+  if not isinstance(d, dict):
+    return
+  idx, pos = to_num(d.get('idx'), -1, 10), to_num(d.get('pos'), -80, 80)
+  if idx is None or not 0 <= idx <= 9 or pos is None:
+    return
+  pibo.set_motor(idx, pos)
 
 @app.sio.on('set_motors')
 async def set_motors(sid, d=None):
   if pibo is None:
     return
-  pibo.set_motors(d['pos_lst'])
+  lst = motor_list(d.get('pos_lst')) if isinstance(d, dict) else None
+  if lst is None:
+    return
+  pibo.set_motors(lst)
 
 @app.sio.on('add_frame')
 async def add_frame(sid, d=None):
   if pibo is None:
     return
-  res = pibo.add_frame(d)
+  seq = to_num(d, 0, 3600000)
+  if seq is None:
+    return
+  res = pibo.add_frame(seq)
   await emit('disp_motion', {'table':res})
 
 @app.sio.on('delete_frame')
 async def delete_frame(sid, d=None):
   if pibo is None:
     return
-  res = pibo.delete_frame(d)
+  seq = to_num(d, 0, 3600000)
+  if seq is None:
+    return
+  res = pibo.delete_frame(seq)
   await emit('disp_motion', {'table':res})
 
 @app.sio.on('init_frame')
@@ -263,7 +370,10 @@ async def init_frame(sid, d=None):
 async def play_frame(sid, d=None):
   if pibo is None:
     return
-  pibo.play_frame(d)
+  cycle = to_num(d, 1, 100)
+  if cycle is None:
+    return
+  pibo.play_frame(cycle)
 
 @app.sio.on('stop_frame')
 async def stop_frame(sid, d=None):
@@ -275,6 +385,8 @@ async def stop_frame(sid, d=None):
 async def add_motion(sid, d=None):
   if pibo is None:
     return
+  if not isinstance(d, str) or d.strip() == '':
+    return
   res = pibo.add_motion(d)
   await emit('disp_motion', {'record':res})
 
@@ -282,14 +394,14 @@ async def add_motion(sid, d=None):
 async def load_motion(sid, d=None):
   if pibo is None:
     return
-  res = pibo.load_motion(d)
+  res = pibo.load_motion(str(d))
   await emit('disp_motion', {'table':res})
 
 @app.sio.on('delete_motion')
 async def delete_motion(sid, d=None):
   if pibo is None:
     return
-  res = pibo.delete_motion(d)
+  res = pibo.delete_motion(str(d))
   await emit('disp_motion', {'record':res})
 
 @app.sio.on('reset_motion')

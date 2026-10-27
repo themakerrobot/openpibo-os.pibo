@@ -380,7 +380,9 @@ const getVisions = (socket) => {
       if (status == "success") {
         await alert_popup(translations["file_ok"][lang]);
       } else {
-        await alert_popup(`${translations["file_error"][lang]}\n >> ${xhr.responseJSON["result"]}`);
+        // 서버는 문구 키(motion_file_invalid 등)를 보낸다(261027)
+        const r = (xhr.responseJSON || {}).result;
+        await alert_popup(r ? `${translations["file_error"][lang]}\n >> ${t(r)}` : translations["file_error"][lang]);
         $("#v_upload_tm").val("");
       }
     });
@@ -836,7 +838,9 @@ const getMotions = (socket) => {
       if (status == "success") {
         await alert_popup(translations["file_ok"][lang]);
       } else {
-        await alert_popup(`${translations["file_error"][lang]}\n >> ${xhr.responseJSON["result"]}`);
+        // 서버는 문구 키(motion_file_invalid 등)를 보낸다(261027)
+        const r = (xhr.responseJSON || {}).result;
+        await alert_popup(r ? `${translations["file_error"][lang]}\n >> ${t(r)}` : translations["file_error"][lang]);
         $("#v_import_motion").val("");
       }
     });
