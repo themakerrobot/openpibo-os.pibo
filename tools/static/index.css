@@ -355,24 +355,6 @@ nav button {
   opacity: 0.3;
 }
 
-nav button[name="home"]::after {
-  content: url("home.png");
-}
-nav button[name="device"]::after {
-  content: url("tool.png");
-}
-nav button[name="motion"]::after {
-  content: url("man-celebrating.png");
-}
-nav button[name="vision"]::after {
-  content: url("camera.png");
-}
-nav button[name="speech"]::after {
-  content: url("speech.png");
-}
-nav button[name="simulator"]::after {
-  content: url("simulator.png");
-}
 
 nav button:hover {
   opacity: 0.6;
