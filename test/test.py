@@ -219,28 +219,37 @@ async def system_stream_generator():
     A generator that yields system status data in the SSE format.
     Format: "data: <json_string>\n\n"
     """
-    device_obj.send_cmd(Device.code_list['PIR'], "on")
-    for i in range(20):
-        touch()   # 센서 스트림이 도는 동안에는 워치독이 끼어들지 않게 한다
-        data = device_obj.send_cmd(Device.code_list['SYSTEM']).split(':')[1].split('-')
+    # 시리얼 명령은 블로킹이라 스레드에서 돌린다(이벤트 루프에서 부르면 그동안 서버 전체가 멈춘다).
+    # 검수 화면이 20번 전에 끊겨도 PIR 은 꼭 끈다(finally)
+    try:
+        await asyncio.to_thread(device_obj.send_cmd, Device.code_list['PIR'], "on")
+        for i in range(20):
+            touch()   # 센서 스트림이 도는 동안에는 워치독이 끼어들지 않게 한다
+            raw = await asyncio.to_thread(device_obj.send_cmd, Device.code_list['SYSTEM'])
+            data = raw.split(':')[1].split('-')
 
-        # Safely get data from the split list
-        pir = data[0] if len(data) > 0 and data[0] else "nobody"
-        touch_v = data[1] if len(data) > 1 and data[1] else "No signal"
-        dc = data[2] if len(data) > 2 and data[2] else "No signal"
-        button = data[3] if len(data) > 3 and data[3] else "No signal"
+            # Safely get data from the split list
+            pir = data[0] if len(data) > 0 and data[0] else "nobody"
+            touch_v = data[1] if len(data) > 1 and data[1] else "No signal"
+            dc = data[2] if len(data) > 2 and data[2] else "No signal"
+            button = data[3] if len(data) > 3 and data[3] else "No signal"
 
-        response_data = {
-            "pir": pir,
-            "touch": touch_v,
-            "dc": dc,
-            "button": button,
-            "count": i + 1
-        }
-        # Manually format the data for SSE
-        yield f"data: {json.dumps(response_data)}\n\n"
-        await asyncio.sleep(1)
-    device_obj.send_cmd(Device.code_list['PIR'], "off")
+            response_data = {
+                "pir": pir,
+                "touch": touch_v,
+                "dc": dc,
+                "button": button,
+                "count": i + 1
+            }
+            # Manually format the data for SSE
+            yield f"data: {json.dumps(response_data)}\n\n"
+            await asyncio.sleep(1)
+    finally:
+        # 연결이 끊겨 취소된 경우에도 끄는 명령은 끝까지 보낸다(shield)
+        try:
+            await asyncio.shield(asyncio.to_thread(device_obj.send_cmd, Device.code_list['PIR'], "off"))
+        except Exception as ex:
+            print(f"[system_stream] PIR off: {ex!r}")
 
 
 # ==============================================================================

@@ -569,7 +569,7 @@
 
 <span class="sd">  example::</span>
 
-<span class="sd">    from openpibo.oled import OledbyST7735 as Oled</span>
+<span class="sd">    from openpibo.oled import Oled7735 as Oled</span>
 
 <span class="sd">    oled = Oled()</span>
 <span class="sd">    # 아래의 모든 예제 이전에 위 코드를 먼저 사용합니다.</span>
@@ -728,7 +728,7 @@
 
 <span class="sd">    example::</span>
 
-<span class="sd">      from openpibo.vision import Camera</span>
+<span class="sd">      from openpibo.vision_camera import Camera</span>
 
 <span class="sd">      camera = Camera()</span>
 <span class="sd">      img = camera.read()</span>
@@ -736,14 +736,14 @@
 <span class="sd">      oled.draw_data(img)</span>
 <span class="sd">      oled.show()</span>
 
-<span class="sd">    :param numpy.ndarray img: 이미지 객체</span>
+<span class="sd">    :param numpy.ndarray img: 이미지 객체 (cv2 의 BGR 순서)</span>
 <span class="sd">    """</span>
 
     <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">img</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
       <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">'"img" must be image data from opencv.'</span><span class="p">)</span>
 
     <span class="c1">#self.image = Image.fromarray(cv2.cvtColor(img, cv2.COLOR_BGR2RGB)).resize((self.width, self.height))</span>
-    <span class="bp">self</span><span class="o">.</span><span class="n">image</span> <span class="o">=</span> <span class="n">Image</span><span class="o">.</span><span class="n">fromarray</span><span class="p">(</span><span class="n">img</span><span class="p">)</span><span class="o">.</span><span class="n">resize</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">width</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">height</span><span class="p">))</span></div>
+    <span class="bp">self</span><span class="o">.</span><span class="n">image</span> <span class="o">=</span> <span class="n">Image</span><span class="o">.</span><span class="n">fromarray</span><span class="p">(</span><span class="n">img</span><span class="p">[:,</span> <span class="p">:,</span> <span class="p">::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="n">img</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">3</span> <span class="k">else</span> <span class="n">img</span><span class="p">)</span><span class="o">.</span><span class="n">resize</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">width</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">height</span><span class="p">))</span>   <span class="c1"># BGR → RGB (OledByPiBrain 과 같게)</span></div>
 
 
 <div class="viewcode-block" id="Oled7735.draw_rectangle">

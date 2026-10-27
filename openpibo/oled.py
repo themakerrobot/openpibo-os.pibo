@@ -242,7 +242,7 @@ Functions:
 
   example::
 
-    from openpibo.oled import OledbyST7735 as Oled
+    from openpibo.oled import Oled7735 as Oled
 
     oled = Oled()
     # 아래의 모든 예제 이전에 위 코드를 먼저 사용합니다.
@@ -384,7 +384,7 @@ Functions:
 
     example::
 
-      from openpibo.vision import Camera
+      from openpibo.vision_camera import Camera
 
       camera = Camera()
       img = camera.read()
@@ -392,14 +392,14 @@ Functions:
       oled.draw_data(img)
       oled.show()
 
-    :param numpy.ndarray img: 이미지 객체
+    :param numpy.ndarray img: 이미지 객체 (cv2 의 BGR 순서)
     """
 
     if type(img) is not np.ndarray:
       raise Exception('"img" must be image data from opencv.')
 
     #self.image = Image.fromarray(cv2.cvtColor(img, cv2.COLOR_BGR2RGB)).resize((self.width, self.height))
-    self.image = Image.fromarray(img).resize((self.width, self.height))
+    self.image = Image.fromarray(img[:, :, ::-1] if img.ndim == 3 else img).resize((self.width, self.height))   # BGR → RGB (OledByPiBrain 과 같게)
 
   def draw_rectangle(self, points, fill=None):
     """

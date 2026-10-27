@@ -310,7 +310,7 @@ Functions:
     for barcode in barcodes:
       x,y,w,h = barcode.rect
       _type = barcode.type
-      _data = barcode.data.decode("utf-8")
+      _data = barcode.data.decode("utf-8", errors="replace")   # UTF-8 이 아닌 QR 도 멈추지 않게
 
       res = get_card(_data)
       if res != None:

@@ -141,10 +141,17 @@ class Pibo:
       if img is None:   # 카메라가 첫 장을 못 읽었다. 스레드가 죽지 않게 다음 장을 기다린다
         time.sleep(0.5)
         continue
-      self.res_img = img.copy()
-      if self.cam:
-        self.cam.putText(img, '+', (self.imgX-5,self.imgY), 0.6, (100,100,200), 3)
-      asyncio.run(self.emit('stream', {'img':to_jpeg(img), 'data':res}, callback=None))
+      # 그리기·보내기에서 예외가 나도 스레드가 죽지 않게 한다(전엔 imgX 가 숫자가 아니면 카메라 화면이 영영 멈췄다)
+      try:
+        self.res_img = img.copy()
+        if self.cam:
+          try:
+            self.cam.putText(img, '+', (int(self.imgX)-5, int(self.imgY)), 0.6, (100,100,200), 3)
+          except Exception as ex:
+            logging.error(f'[vision_loop] pointer Error: {ex}')
+        asyncio.run(self.emit('stream', {'img':to_jpeg(img), 'data':res}, callback=None))
+      except Exception as ex:
+        logging.error(f'[vision_loop] send Error: {ex}')
       time.sleep(0.5)
 
   def face_detect(self):
@@ -246,8 +253,6 @@ class Pibo:
   def detect_marker(self):
     im = self.frame.copy()
     res = self.det.detect_marker(im, self.marker_length)
-    cv2.imwrite("im.jpg", im)
-    print('marker', im.shape, self.marker_length, res)
     self.det.detect_marker_vis(im, res)
     return im, " ".join([ f'({d["id"]})-{d["distance"]}cm' for d in res])
 
@@ -276,7 +281,8 @@ class Pibo:
       if voice_type == "espeak":
         # 인자 목록으로 넘긴다. 전엔 os.system(f'espeak "{text}"') 이라 글자에 " 나 ; 가 들어가면
         # 셸 명령으로 실행됐다(서비스가 root 라 그대로 root 권한)
-        subprocess.run(['espeak', str(d['text']), '-w', filename], check=True, timeout=30)
+        # '--' 뒤는 글자로만 읽는다('-' 로 시작하는 글이 옵션으로 읽히지 않게)
+        subprocess.run(['espeak', '-w', filename, '--', str(d['text'])], check=True, timeout=30)
       elif voice_type in self.OD_VOICES:
         # ONNX 모델 로딩이 무거워 처음 호출될 때만 올린다.
         # lang='na' 는 자동 판별이라 한국어·영어 양쪽 배포판에서 그대로 쓸 수 있다.
