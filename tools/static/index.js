@@ -30,6 +30,24 @@ function hidePopups() {
   if (promptPopup) promptPopup.style.display = 'none';
 }
 
+// 내려받기(261028): 실패하면 서버가 보낸 문구 키를 알림으로 보인다.
+// 전엔 <a download> 로 바로 받아서, 실패하면 오류 JSON(한국어 문장)이 파일로 저장됐다
+async function downloadOrAlert(url, filename) {
+  let r = null;
+  try { r = await fetch(url, { cache: "no-store" }); } catch (e) { /* 연결 끊김 */ }
+  if (!r || !r.ok) {
+    let key = "download_failed";
+    try { key = (await r.json()).result || key; } catch (e) { /* JSON 아님 */ }
+    await alert_popup(t(key));
+    return;
+  }
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(await r.blob());
+  a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+
 // --- alert_popup Function (변경 없음) ---
 async function alert_popup(message) {
   hidePopups();
@@ -359,12 +377,7 @@ const getVisions = (socket) => {
     socket.emit("marker_length",  Number($('#marker_length').val()));
   });
 
-  $("#v_capture").on("click", function () {
-    let capture_a = document.createElement("a");
-    capture_a.setAttribute("href", "/download_img");
-    capture_a.setAttribute("download", "");
-    capture_a.click();
-  });
+  $("#v_capture").on("click", () => downloadOrAlert("/download_img", "capture.jpg"));
 
   $("#v_upload_tm").on("change", (e) => {
     let formData = new FormData();
@@ -382,7 +395,7 @@ const getVisions = (socket) => {
       } else {
         // 서버는 문구 키(motion_file_invalid 등)를 보낸다(261027)
         const r = (xhr.responseJSON || {}).result;
-        await alert_popup(r ? `${translations["file_error"][lang]}\n >> ${t(r)}` : translations["file_error"][lang]);
+        await alert_popup(r ? `${t("file_error")}\n${t(r)}` : t("file_error"));
         $("#v_upload_tm").val("");
       }
     });
@@ -817,11 +830,8 @@ const getMotions = (socket) => {
   });
 
   $("#export_motion_bt").on("click", function() {
-    let motion_a = document.createElement("a");
-    if($("#motion_name_val").val() == "") motion_a.setAttribute("href", `/export_motion/all`);
-    else motion_a.setAttribute("href", `/export_motion/${$("#motion_name_val").val()}`); 
-    motion_a.setAttribute("download", "");
-    motion_a.click()
+    const name = $("#motion_name_val").val();
+    downloadOrAlert(`/export_motion/${name == "" ? "all" : encodeURIComponent(name)}`, `${name == "" ? "all" : name}.json`);
   });
 
   $("#v_import_motion").on("change", (e) => {
@@ -840,7 +850,7 @@ const getMotions = (socket) => {
       } else {
         // 서버는 문구 키(motion_file_invalid 등)를 보낸다(261027)
         const r = (xhr.responseJSON || {}).result;
-        await alert_popup(r ? `${translations["file_error"][lang]}\n >> ${t(r)}` : translations["file_error"][lang]);
+        await alert_popup(r ? `${t("file_error")}\n${t(r)}` : t("file_error"));
         $("#v_import_motion").val("");
       }
     });
@@ -848,7 +858,7 @@ const getMotions = (socket) => {
 
   // 테이블 초기화
   $("#init_frame_bt").on("click", async function () {
-    if (await confirm_popup(translations["confirm_motion_delete_all"][lang])) {
+    if (await confirm_popup(t("confirm_clear_frames"))) {
       socket.emit("init_frame");
       $("#motor_table > tbody").empty();
     }
@@ -994,7 +1004,7 @@ const getSpeech = (socket) => {
   socket.on("tts_status", (d) => {
     if (d && d.stopped) setTtsStatus(t("tts_stopped"));
     else if (d && d.ok) setTtsStatus(t("tts_done"), "ok");
-    else setTtsStatus(t("tts_error", (d && d.error) || ""), "err");
+    else setTtsStatus(t("tts_error", t((d && d.error) || "")), "err");   // 서버는 문구 키(tts_err_voice) 또는 오류 글을 보낸다
   });
   $("#s_tts_stop_bt").on("click", () => socket.emit("tts_stop"));
   // 목소리 모델은 음성 탭을 열 때 서버가 미리 올린다(handleMenu → voice_warm). 처음 한 번 몇 초 걸린다
@@ -1196,6 +1206,15 @@ const setLanguage = (lang) => {
       if (translations[key] && translations[key][lang]) {
           element.textContent = translations[key][lang];
       }
+  });
+  // 툴팁·접근성 이름도 번역한다(261028): data-title-key → title(+aria-label), data-aria-key → aria-label
+  document.querySelectorAll('[data-title-key]').forEach(el => {
+    const v = translations[el.getAttribute('data-title-key')];
+    if (v && typeof v[lang] === 'string') { el.title = v[lang]; el.setAttribute('aria-label', v[lang]); }
+  });
+  document.querySelectorAll('[data-aria-key]').forEach(el => {
+    const v = translations[el.getAttribute('data-aria-key')];
+    if (v && typeof v[lang] === 'string') el.setAttribute('aria-label', v[lang]);
   });
 }
 

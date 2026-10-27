@@ -207,11 +207,7 @@ ul.style-none {
   margin: 0.5em 0;
 }
 
-.card:has(#sequence_list) {
-  max-height: 200px;
-  overflow-x: hidden;
-  overflow-y: auto;
-}
+/* (261028) .card:has(#sequence_list) 를 지웠다 — 시뮬레이터 화면이 없어 쓰이지 않았고, :has() 는 오래된 브라우저가 모른다 */
 
 section.config {
   gap: 1em;

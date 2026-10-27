@@ -162,7 +162,7 @@ async def export_motion(name="all"):
       tmp = json.load(f)
   except Exception as ex:
     logging.error(f'[export_motion] Error: {ex}')
-    return JSONResponse(content={'result':'저장된 모션이 없습니다.'}, status_code=500)
+    return JSONResponse(content={'result':'motion_export_none'}, status_code=500)
 
   if name == "all":
     j = tmp  
@@ -170,7 +170,7 @@ async def export_motion(name="all"):
     j = dict()
     j[name] = tmp[name]
   else:
-    return JSONResponse(content={'result':'선택한 모션이 없습니다.'}, status_code=500)
+    return JSONResponse(content={'result':'motion_not_found'}, status_code=500)
 
   with open('/home/pi/.motion.json', 'w') as f:
     json.dump(j, f)
@@ -180,7 +180,7 @@ async def export_motion(name="all"):
 @app.get('/download_img', response_class=FileResponse)
 async def download_img():
   if pibo is None or not pibo.imwrite('/home/pi/capture.jpg'):
-    return JSONResponse(content={'result': 'camera not ready'}, status_code=503)
+    return JSONResponse(content={'result': 'camera_not_ready'}, status_code=503)
   return FileResponse(path="/home/pi/capture.jpg", media_type="image/jpeg", filename="capture.jpg")
 
 ## socktio

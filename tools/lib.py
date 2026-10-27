@@ -271,7 +271,7 @@ class Pibo:
   OD_VOICES = ("m1", "m2", "m3", "m4", "m5", "f1", "f2", "f3", "f4", "f5")
 
   def tts(self, d):
-    """말하기. 성공하면 None, 실패하면 오류 문구를 돌려준다(도구 화면에 그대로 보인다)"""
+    """말하기. 성공하면 None, 실패하면 문구 키 또는 오류 글을 돌려준다(도구 화면이 t() 로 번역해 보인다)"""
     print("TTS", d)
     voice_type = d['voice_type']
     volume = d['volume']
@@ -291,7 +291,7 @@ class Pibo:
       else:
         # 서버 TTS(oe-sapi)는 제거됐다
         logging.error(f'[tts] unsupported voice_type: {voice_type}')
-        return f'unsupported voice: {voice_type}'
+        return 'tts_err_voice'   # 문구 키 — 화면(tools/static/ko2en.js)이 번역한다
       self.aud.play(filename=filename, volume=volume)
     except Exception as ex:
       logging.error(f'[tts] Error: {ex}')
