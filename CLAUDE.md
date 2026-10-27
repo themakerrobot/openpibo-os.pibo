@@ -640,7 +640,7 @@ IDE [대화] 는 llama-server 기본 웹 화면이 아니라 **우리 대화 웹
 - **기기 서비스 전환(261026, 파이보 cd488e95 에서 함)**: `/etc/systemd/system/llama-server.service` 의 ExecStart 를 새 llama.cpp
   (`/home/pi/llama.cpp-new`, Qwen3.5 를 읽는 빌드)로, **`WorkingDirectory` 도 새 빌드 폴더로**(옛 폴더면 30ms 만에 죽었다), 모델 링크
   `/home/pi/.model/llm/llm-model.gguf` → `pibo-qwen3.5-0.8b-school-small-Q4_K_M.gguf`(젬마 파일은 261027 에 지웠다 — `.model/VERSION` 도 다시 만듦). 백업 `/home/pi/llama-server.service.gemma.bak`.
-  **이미지 작업**이라 다른 기기·새 이미지에도 같은 변경이 필요하다(IMAGE.md 에 아직 안 옮김). 도구를 뺐으니 `--jinja` 는 없어도 된다
+  **이미지 작업**이라 다른 기기·새 이미지에도 같은 변경이 필요하다(유닛 전문·빌드는 IMAGE.md '대화 서버 llama.cpp', 261027). 도구를 뺐으니 `--jinja` 는 없어도 된다
   - **261027: 새 빌드를 원래 자리 `/home/pi/.llama.cpp` 로 옮긴다**(예전 젬마용 빌드는 `.llama.cpp.old`). 리포 코드는 빌드 경로를 안 쓴다 —
     서비스 이름(`llama-server.service`)만 부르고, 경로는 유닛 파일(리포 밖)의 ExecStart·WorkingDirectory 에만 있다. `requirements.txt` 주석은 원래 `/home/pi/.llama.cpp`.
     **폴더를 옮기면 실행 파일이 공유 라이브러리(`libllama.so`·`libggml*.so`)를 못 찾을 수 있다** — CMake 빌드 트리 RPATH 가 절대 경로일 수 있어서(확인 필요).
