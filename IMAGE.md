@@ -130,7 +130,7 @@ $PY -m pip check
 | `tts/assets/onnx` | Supertonic 3 **int8** 변환본(`leeyunjai/edge-lab` `tts-int8`, vocoder 만 fp32, 약 178MB) + `tts.json` `unicode_indexer.json` |
 | `tts/assets` | `voice_styles/`(F1~F5·M1~M5) · `LICENSE` · `LICENSE-OpenRAIL-M.txt` · `MODIFICATIONS.md`(변환 고지 — 변형 모델이라 필요) |
 | `stt` | `model.int8.onnx` `tokens.txt`(sherpa-onnx `sense-voice-zh-en-ja-ko-yue-int8-2024-07-17`) · `silero_vad.onnx` · `LICENSE-SenseVoice` |
-| `llm` | `gemma-3-1b-it-Q4_K_M.gguf` + 링크 `llm-model.gguf` |
+| `llm` | `pibo-qwen3.5-0.8b-school-small-Q4_K_M.gguf`(Qwen3.5 0.8B 미세조정, 학습 PC 에서 가져온다 — HF 에 올렸는지 확인 필요) + 링크 `llm-model.gguf`. 예전 `gemma-3-1b-it-Q4_K_M.gguf` 는 지운다(261027). 서버는 `/home/pi/.llama.cpp` 빌드(Qwen3.5 를 읽는 판) |
 | `object` | **`ed-s-320.onnx`** 하나(easydetect ed-s COCO, 이름·conf 는 파일 안 메타데이터, HF `.model/object/ed-s-320.onnx`). 예전 사물 인식 가중치와 그 고지 파일은 **지운다**(261026) |
 | `hand` `face` | 그대로 |
 | (지움) | `classifier/`(예전 TF 가중치), `tts/assets/{.git,audio_samples,img}`, fp32 `onnx` |
@@ -146,7 +146,7 @@ find . -type f ! -name VERSION ! -name VERSION.new -print0 | sort -z | xargs -0 
 mv VERSION.new VERSION
 
 cd /home/pi/.model
-du -sh */ | sort -h            # tts 약 181M, stt 약 230M, llm 769M
+du -sh */ | sort -h            # tts 약 181M, stt 약 230M, llm 약 515M(Qwen3.5 0.8B — 확인 필요)
 sed -n '/^## sha256/,$p' VERSION | tail -n +2 | sha256sum -c --quiet && echo "VERSION 과 같음"
 $PY -c "from openpibo.speech import SpeechToText, SpeechOnDevice; SpeechOnDevice(); SpeechToText(); print('tts·stt ok')"
 ```

@@ -639,7 +639,7 @@ IDE [대화] 는 llama-server 기본 웹 화면이 아니라 **우리 대화 웹
   보내자마자 브라우저가 끊기면 starlette 가 대답 생성기를 한 번도 안 돌려 생성기 안의 finally 가 안 돌았고, 잠금이 남아 이후 모든 말이 409 였다(컨테이너 starlette 1.10 에서 재현)
 - **기기 서비스 전환(261026, 파이보 cd488e95 에서 함)**: `/etc/systemd/system/llama-server.service` 의 ExecStart 를 새 llama.cpp
   (`/home/pi/llama.cpp-new`, Qwen3.5 를 읽는 빌드)로, **`WorkingDirectory` 도 새 빌드 폴더로**(옛 폴더면 30ms 만에 죽었다), 모델 링크
-  `/home/pi/.model/llm/llm-model.gguf` → `pibo-qwen3.5-0.8b-school-small-Q4_K_M.gguf`(젬마 파일은 남겨 둠). 백업 `/home/pi/llama-server.service.gemma.bak`.
+  `/home/pi/.model/llm/llm-model.gguf` → `pibo-qwen3.5-0.8b-school-small-Q4_K_M.gguf`(젬마 파일은 261027 에 지웠다 — `.model/VERSION` 도 다시 만듦). 백업 `/home/pi/llama-server.service.gemma.bak`.
   **이미지 작업**이라 다른 기기·새 이미지에도 같은 변경이 필요하다(IMAGE.md 에 아직 안 옮김). 도구를 뺐으니 `--jinja` 는 없어도 된다
   - **261027: 새 빌드를 원래 자리 `/home/pi/.llama.cpp` 로 옮긴다**(예전 젬마용 빌드는 `.llama.cpp.old`). 리포 코드는 빌드 경로를 안 쓴다 —
     서비스 이름(`llama-server.service`)만 부르고, 경로는 유닛 파일(리포 밖)의 ExecStart·WorkingDirectory 에만 있다. `requirements.txt` 주석은 원래 `/home/pi/.llama.cpp`.
