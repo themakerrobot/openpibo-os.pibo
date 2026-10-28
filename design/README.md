@@ -125,3 +125,9 @@ node -e "1"                        # (CSS 는 문법검사 도구가 따로 없�
 
 스타일 가이드를 열어 **Tab 으로 훑어** 포커스 링이 보이는지, 브라우저를 720px 아래로
 좁혀 아이콘 라벨이 접히는지 눈으로 확인한다.
+
+## 화면 미리보기 (로봇 없이)
+
+`python3 design/preview.py [../openpibo-os.pibrain]` — PC 에서 파이보(·PiBrain) 웹 화면을 띄운다. 목록 페이지 `http://<PC IP>:18999`.
+IDE·도구·분류기·도움말은 화면만(실시간 값 없음), 로봇 놀이·대화는 가짜 로봇·가짜 대답으로 움직인다(fastapi·uvicorn·pillow·numpy 필요).
+`localhost` 로 열면 socket.io vendor 파일이 죽어 화면이 깨지므로 늘 IP 로 연다. 자세한 건 파일 맨 위 설명.
