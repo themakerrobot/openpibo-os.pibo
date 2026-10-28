@@ -533,7 +533,7 @@ curl -s http://localhost/static/ko2en.js | head -n1
 
 `tools.service`(50000), `classify.service`(50010), `llama-server.service`(50020) 는
 **셋 중 하나만** 돈다. 포트는 PiBrain 과 같다(260930 에 PiBrain 도구 50040 → 50000, 파이보 H/W 검수 8000 → 50050 으로 맞춤).
-H/W 검수(`test/test.py`, 50050)는 유닛이 아니라 IDE 의 `/hwtest` 가 직접 띄우고, 켤 때 셋을 다 끈다. 대화 웹(`chat/run_chat.py`, 50030, 261026)도 IDE 가 `/llm` 때 llama-server 와 같이 띄운다('대화 웹' 절). IDE가 하나를 켤 때 나머지를 stop 한다 (`ide/run_ide.py` 의
+체험 앱(`kids/`, 50060, 261028 시험 중)은 아직 IDE 와 연결 안 됨. H/W 검수(`test/test.py`, 50050)는 유닛이 아니라 IDE 의 `/hwtest` 가 직접 띄우고, 켤 때 셋을 다 끈다. 대화 웹(`chat/run_chat.py`, 50030, 261026)도 IDE 가 `/llm` 때 llama-server 와 같이 띄운다('대화 웹' 절). IDE가 하나를 켤 때 나머지를 stop 한다 (`ide/run_ide.py` 의
 `/tools` `/classifier` `/llm` 핸들러). 부팅 시엔 안 뜬다.
 
 **종료는 탭이 닫힐 때 브라우저가 알린다.** 각 페이지의 `beforeunload` 가
@@ -663,6 +663,20 @@ IDE [대화] 는 llama-server 기본 웹 화면이 아니라 **우리 대화 웹
   **실기기로는 흘려 받기·말하기 아직 안 봤다**(도구 판은 파이보에서 돌려 봤다 — 위 시간)
 
 ---
+
+## 체험 앱 '로봇 놀이' (261028, 시험 중) — `kids/`, 50060
+
+유치원·초등 저학년이 코딩 없이 카드를 줄 세워 로봇을 움직이고([놀이] 1~3단계: 순서·고치기·반복), 다마고치처럼 돌본다([키우기]: 배고픔·기분·졸림, 성격·이름·색, 관찰 일기).
+**파이보·PiBrain 같은 코드**(`kids/` 통째로, 원본은 파이보 리포 — 고치면 PiBrain 에도 복사). 제품은 `--device pibo|pibrain` 으로 고른다.
+기획·구조·채점·확인 필요는 **파이보 리포 `KIDS.md`**.
+
+- **IDE 버튼이 아직 없다**(사용자 결정 — 기기 시험 뒤 연결). 손으로 띄운다: 도구 3개를 끄고 `sudo /home/pi/.pyenv/bin/python3 kids/run_kids.py --device <제품>`, 태블릿 `:50060`.
+  연결할 때 `run_ide.py` 의 '셋 중 하나만' 규칙에 넣을 것
+- 로봇 말은 처음 한 번 6~15초라 **`kids/make_voice.py --device <제품>` 으로 미리** 만든다(`/home/pi/.kids/voice/`). 상태·설정은 `/home/pi/.kids/*.json`
+- 문구는 IDE `ko2en.js` 끝의 `kids_*` 키(두 리포 같은 블록), 카드·미션·말은 `kids/content.json`. 효과음은 `kids/make_sounds.py` 로 숫자로 만든 것(녹음·외부 파일 없음)
+- 선생님 잠금: 상단바 자물쇠 3초 → 숫자 4개(기본 1234)
+- **키트 변경**: body `pb-plain` 이면 `pibo-ui.js` 가 `pb-v2` 층을 얹지 않는다(그 층의 앱 버튼 규칙이 카드 색을 덮었다). `design/sync.sh` 가 `kids/static` 에도 복사
+- 확인은 컨테이너(가짜 로봇)뿐: 서버 41/41, [블록으로 보기] 결과를 IDE Blockly 에 넣어 파이썬 생성까지. **실기기 확인 필요** — 동작 이름(`greeting` 등)·머리 터치 값·PiBrain 버튼 순서·LCD 방향
 
 ## 분류기 (260924)
 
