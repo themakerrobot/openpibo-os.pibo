@@ -135,7 +135,9 @@ kids/
   pet.py          키우기 규칙(수치·성격·얼굴) — 로봇을 모른다
   robot.py        PiboRobot · PiBrainRobot · FakeRobot(기기 없이)
   blocks.py       카드 줄 → IDE 블록 JSON(재주 = 함수 블록)
-  face.py         키우기 얼굴(PIL) → PiBrain LCD (평소 화면은 IP 정보 — 앱 켤 때·키우기 나갈 때·끌 때 network_disp.py 로 되돌림)
+  pet.js          키우기 친구 그림(써큘러스 캐릭터 SVG, 포즈·꾸미기)
+  make_pet_png.py pet.js → static/pet/lcd/*.png (PiBrain LCD 용, PC 에서)
+  face.py         그 PNG 를 친구 색으로 바꿔 PiBrain LCD 에 (평소 화면은 IP 정보 — 앱 켤 때·키우기 나갈 때·끌 때 network_disp.py 로 되돌림)
   make_sounds.py  효과음 만들기 → sounds/ (숫자로 생성, 녹음·외부 파일 없음)
   make_voice.py   로봇 말 미리 만들기 → /home/pi/.kids/voice/
   templates/index.html · static/kids.js · kids.css (+ 키트 pibo-ui.css/js — design/sync.sh 가 복사)
