@@ -130,7 +130,7 @@ $PY -m pip check
 | `tts/assets/onnx` | Supertonic 3 **int8** 변환본(`leeyunjai/edge-lab` `tts-int8`, vocoder 만 fp32, 약 178MB) + `tts.json` `unicode_indexer.json` |
 | `tts/assets` | `voice_styles/`(F1~F5·M1~M5) · `LICENSE` · `LICENSE-OpenRAIL-M.txt` · `MODIFICATIONS.md`(변환 고지 — 변형 모델이라 필요) |
 | `stt` | `model.int8.onnx` `tokens.txt`(sherpa-onnx `sense-voice-zh-en-ja-ko-yue-int8-2024-07-17`) · `silero_vad.onnx` · `LICENSE-SenseVoice` |
-| `llm` | `pibo-qwen3.5-0.8b-school-small-Q4_K_M.gguf`(Qwen3.5 0.8B 미세조정, 학습 PC 에서 가져온다 — HF 에 올렸는지 확인 필요) + 링크 `llm-model.gguf`. 예전 `gemma-3-1b-it-Q4_K_M.gguf` 는 지운다(261027). 서버는 `/home/pi/.llama.cpp` 빌드(Qwen3.5 를 읽는 판) |
+| `llm` | `pibo-qwen3.5-0.8b-school-small-Q4_K_M.gguf`(Qwen3.5 0.8B 미세조정, HF `.model/llm/` — 261028 올림, sha256 `ca312fda…090a8fd12`) + 링크 `llm-model.gguf`(받은 뒤 `ln -sfn` 으로 만든다 — 링크는 HF 에 올리지 않는다). 예전 `gemma-3-1b-it-Q4_K_M.gguf` 는 지운다(261027). 서버는 `/home/pi/.llama.cpp` 빌드(Qwen3.5 를 읽는 판) |
 | `object` | **`ed-s-320.onnx`** 하나(easydetect ed-s COCO, 이름·conf 는 파일 안 메타데이터, HF `.model/object/ed-s-320.onnx`). 예전 사물 인식 가중치와 그 고지 파일은 **지운다**(261026) |
 | `hand` `face` | 그대로 |
 | (지움) | `classifier/`(예전 TF 가중치), `tts/assets/{.git,audio_samples,img}`, fp32 `onnx` |
