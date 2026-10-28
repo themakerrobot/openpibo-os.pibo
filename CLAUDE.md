@@ -649,7 +649,7 @@ IDE [대화] 는 llama-server 기본 웹 화면이 아니라 **우리 대화 웹
   - **그 전까지(261028)**: `run_chat.py` 가 `--device pibrain` 이면 시스템 글의 `로봇 파이보야` 를 `로봇 파이브레인이야` 로 바꾼다(PiBrain [대화] 가 자기를 파이보라고 했다).
     Qwen 은 파이보 이름으로 학습된 모델이라 PiBrain 대답에 '파이보' 가 섞일 수 있다. 공통 이름 모델로 다시 학습하면 그 줄을 없앤다
   - **PiBrain 도 Qwen + 새 llama.cpp(b11889, `/home/pi/.llama.cpp`) 로 맞췄다(261028, fc1a8f31).** 젬마는 두 기기·HF 어디에도 없다.
-    `.model` 은 파이보 것을 그대로 옮겼다(`tar` 로 묶어 Windows 를 거쳐 — 두 로봇이 같은 Deco 메시에서 서로 ARP 가 안 됐다). llama.cpp 는 PiBrain 에서 따로 빌드(파이보 CMakeCache 옵션 그대로).
+    `.model` 은 파이보 것을 옮겼다(두 로봇이 같은 Deco 메시에서 서로 ARP 가 안 돼 Windows 를 거쳤다). 옮긴 폴더 권한이 `drwx------`(700)였다 — 서비스는 root 라 읽지만 파이보(755)와 맞춰 둘 것. llama.cpp 는 PiBrain 에서 따로 빌드(파이보 CMakeCache 옵션 그대로).
     **옮긴 뒤 링크 `llm/llm-model.gguf` 가 없어 서비스가 바로 죽었다**(`failed`, `--log-disable` 이라 이유가 안 남음 — 로그 없이 직접 돌려 'No such file' 확인). `ln -sfn` 으로 다시 만들어 해결.
     `.model/VERSION` 대조는 실제 파일만 보므로 링크가 없어도 통과한다 — 옮긴 뒤엔 `ls -laL /home/pi/.model/llm/llm-model.gguf` 를 따로 볼 것
   - 시험 PiBrain 은 RAM 7.7GB 지만 납품품은 2GB 라 메모리 판단은 파이보(1.8GB)와 같게 한다(사용자)
