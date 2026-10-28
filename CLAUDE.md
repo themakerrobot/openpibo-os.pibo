@@ -805,7 +805,7 @@ easydetect-lab 지시서(`docs/pibo-integration.md`, 473dbe3) 그대로다. **�
 - **모델 파일**: ONNX opset 17, 입력 `images`, 크기는 파일마다 고정(320·640 …) — **파일에서 읽고 막지 않는다**.
   파일 안 메타데이터(`custom_metadata_map`): `easydetect.names`(이름 JSON `{"0":"person","1":"컵"}`, 없으면 번호) · `easydetect.conf`(문자열 숫자, 없으면 0.5)
 - 기본 `/home/pi/.model/object/ed-s-320.onnx`(COCO 80, HF `leeyunjai/themaker` 의 `.model/object/ed-s-320.onnx`) — `vision_detect.py` 의 `OBJECT_MODEL` 한 줄.
-  더 좋은 COCO 모델은 같은 이름으로 파일만 바뀐다. lab 의 'Pibo로 보내기' 는 `pibo-job<번호>.onnx` 하나를 준다
+  더 좋은 COCO 모델은 같은 이름으로 파일만 바뀐다. lab 에서 받는 모델은 `job<번호>.onnx` 파일 하나다(261028 — 전엔 `pibo-job<번호>.onnx`. 내용·읽는 방식은 같다)
 - **lab 의 `pibo/detect.py` 는 불러오지 않는다**(내용만 맞춘다). `EdOnnx` 의 `preprocess`·`postprocess`·`drop_duplicates` 는 그 파일과 같은 계산이고 **비교 기준**이다.
   lab `pibo/detect.py` 가 바뀌면 같이 맞출 것(지시서 4절: letterbox 없이 resize, sigmoid 는 로짓일 때 한 번만, NMS 없음, 클래스 상관없이 IoU 0.7 겹침 제거).
   `detect.py` 는 메타데이터가 없으면 옆의 `labels.txt`·`model.json` 을 찾지만 `EdOnnx` 는 지시서대로 번호·0.5 로 한다(같은 폴더의 엉뚱한 `labels.txt` 를 읽지 않게)
@@ -814,13 +814,13 @@ easydetect-lab 지시서(`docs/pibo-integration.md`, 473dbe3) 그대로다. **�
 - conf 는 파일의 `easydetect.conf`(없으면 0.5), iou 는 0.7 — 부를 때 넘기는 값(openpibo 는 늘 0.5·0.4)보다 우선한다. iou 0.4 는 말 위의 사람처럼 실제로 겹친 다른 물체를 지운다
 - **점수(%)는 반올림**(`int(round(round(score, 2) * 100))`) — lab·`detect.py` 의 `:.2f` 와 같게(전엔 버림)
 - 고르는 법: `Detect(object_model=파일)` · `detect.load_object_model(파일)` · `load_object_model()`(기본으로) ·
-  IDE 블록 [사물인식 모델 [폴더] (이름).onnx 불러오기] — 블록이 `폴더+이름+'.onnx'` 를 넘기므로 `/home/pi/code/pibo-job3.onnx` 는 [code] (pibo-job3). 기본 글자 `pibo-job1`
+  IDE 블록 [사물인식 모델 [폴더] (이름).onnx 불러오기] — 블록이 `폴더+이름+'.onnx'` 를 넘기므로 `/home/pi/code/job3.onnx` 는 [code] (job3). 기본 글자 `job1`(261028, 전엔 `pibo-job1` — 예전에 저장한 프로그램은 적힌 글자 그대로 열린다)
 - **못 쓰면 오류를 낸다**(다른 모델로 몰래 바꾸지 않는다): 파일 없음 → `FileNotFoundError`, onnxruntime 1.13 미만·읽기 실패 → `RuntimeError`(이유·버전 포함).
   실패하면 경로는 바뀐 채로 두어 다음 `detect_object` 도 같은 오류를 낸다(예전 모델로 조용히 돌지 않게)
 - 모델을 바꿀 때 이전 세션을 놓는다(`EdOnnx.close`). 모델은 처음 `detect_object` 를 부를 때 올린다(QR·마커만 쓰면 메모리 안 씀)
 - 이름표 그리기는 PIL: `detect_object_vis`, 파이보 도구 [카메라](`tools/lib.py` `object_detect`, KDL.ttf 22). `cv2.putText` 는 한글을 못 그린다
 - **기본 파일이 기기에 없으면 사물 인식이 오류로 멈춘다.** 이 코드를 기기에 올리기 전에 `/home/pi/.model/object/ed-s-320.onnx` 를 먼저 넣을 것(IMAGE.md)
-- 확인(컨테이너, onnxruntime 1.20.1 = 기기 버전): 두 리포 22/22 — lab(easydetect 0.7.9 `pibo_export.build`)에서 만든 실제 `pibo-job1.onnx`(ed-n 30에폭, `빨간 공`·`파란 상자`,
+- 확인(컨테이너, onnxruntime 1.20.1 = 기기 버전): 두 리포 22/22 — lab(easydetect 0.7.9 `pibo_export.build`)에서 만든 실제 `pibo-job1.onnx`(당시 이름, ed-n 30에폭, `빨간 공`·`파란 상자`,
   conf 0.45)와 같은 가중치의 640 판이 사진 12장에서 `detect.py` 와 이름·점수·상자(차 0px) 같음, 가짜 파일(로짓·확률·클래스 4개·메타데이터 없음·640·COCO 이름) 같음,
   파일 conf 0.30 이면 0.5 아래 상자도 나옴, sigmoid 두 번 안 함, 오류 네 가지, 열 번 바꿔도 RSS 그대로, 한글 그리기.
   lab 화면(torch, best.pt)과는 17개 중 16개 — 하나는 0.6150(torch)·0.61501(ONNX)로 반올림 경계였고 `detect.py` 도 같은 차이.
