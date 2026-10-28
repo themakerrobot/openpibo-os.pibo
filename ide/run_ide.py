@@ -299,6 +299,7 @@ async def classifier(enable: str):
     subprocess.Popen(['systemctl', 'stop', 'classify.service'])
     subprocess.Popen(['systemctl', 'stop', 'llama-server.service'])
     stop_hwtest()   # 검수 서버가 카메라·시리얼을 쥐고 있으면 tools 가 실패한다
+    stop_kids()     # 체험 앱도 모터·소리를 쓴다
     stop_chat()     # 대화 웹이 카메라를 쥐고 있을 수 있다(find_objects)
     subprocess.Popen(['systemctl', 'start', 'tools.service'])
   elif enable == "off":
@@ -314,6 +315,7 @@ async def classifier(enable: str):
     subprocess.Popen(['systemctl', 'stop', 'tools.service'])
     subprocess.Popen(['systemctl', 'stop', 'llama-server.service'])
     stop_hwtest()   # 〃 (classifier 는 카메라를 직접 쓴다)
+    stop_kids()     # 체험 앱도 모터·소리를 쓴다
     stop_chat()     # 〃
     subprocess.Popen(['systemctl', 'start', 'classify.service'])
   elif enable == "off":
@@ -341,6 +343,40 @@ def stop_chat():
   # 핸들을 잃은 경우(IDE 재시작)까지 정리한다. 전체 경로로 띄우므로 cmdline 에 CHAT_PY 가 그대로 들어간다
   subprocess.Popen(['pkill', '-f', CHAT_PY])
 
+# [로봇 놀이] 체험 앱(kids/run_kids.py, 50060, 261028 시험 중). 대화 웹·H/W 검수처럼 IDE 가 직접 띄운다(유닛 파일은 리포 밖).
+# 모터·소리·LCD 를 쓰므로 도구·분류기·대화·검수·코드 실행과 같이 돌지 않게 서로 끈다. 버튼을 없애려면 index.html 의 #kids_bt 만 지우면 된다
+KIDS_DIR = '/home/pi/openpibo-os/kids'
+KIDS_PY = f'{KIDS_DIR}/run_kids.py'
+KIDS_DEVICE = 'pibo'
+kids_proc = None
+
+def stop_kids():
+  """체험 앱을 내린다. 여러 번 불러도 안전하다. SIGTERM 이면 앱이 소리를 끊고 화면을 IP 로 되돌린다"""
+  global kids_proc
+  if kids_proc is not None and kids_proc.poll() is None:
+    kids_proc.terminate()
+    try:
+      kids_proc.wait(timeout=10)
+    except subprocess.TimeoutExpired:
+      kids_proc.kill()
+  kids_proc = None
+  subprocess.Popen(['pkill', '-f', KIDS_PY])   # 핸들을 잃은 경우(IDE 재시작·손으로 띄움)까지
+
+@app.get('/kids')
+async def kids(enable: str):
+  global kids_proc
+  if enable == "on":
+    subprocess.Popen(['systemctl', 'stop', 'tools.service'])
+    subprocess.Popen(['systemctl', 'stop', 'classify.service'])
+    subprocess.Popen(['systemctl', 'stop', 'llama-server.service'])
+    stop_hwtest()
+    stop_chat()
+    if kids_proc is None or kids_proc.poll() is not None:
+      kids_proc = subprocess.Popen([f'{ENV_PATH}/python3', KIDS_PY, '--device', KIDS_DEVICE], cwd=KIDS_DIR)
+  elif enable == "off":
+    await asyncio.to_thread(stop_kids)
+  return HTMLResponse(content="", status_code=200)
+
 @app.get('/llm')
 async def llm(enable: str):
   global chat_proc
@@ -348,6 +384,7 @@ async def llm(enable: str):
     subprocess.Popen(['systemctl', 'stop', 'tools.service'])
     subprocess.Popen(['systemctl', 'stop', 'classify.service'])
     stop_hwtest()   # 〃
+    stop_kids()     # 체험 앱도 모터·소리를 쓴다
     subprocess.Popen(['systemctl', 'start', 'llama-server.service'])
     if chat_proc is None or chat_proc.poll() is not None:
       chat_proc = subprocess.Popen([f'{ENV_PATH}/python3', CHAT_PY, '--device', CHAT_DEVICE], cwd=CHAT_DIR)
@@ -386,6 +423,7 @@ async def hwtest(enable: str):
     subprocess.Popen(['systemctl', 'stop', 'classify.service'])
     subprocess.Popen(['systemctl', 'stop', 'llama-server.service'])
     stop_chat()
+    stop_kids()
     if hwtest_proc is None or hwtest_proc.poll() is not None:
       hwtest_proc = subprocess.Popen([f'{ENV_PATH}/python3', HWTEST_PY], cwd=HWTEST_DIR)
     await asyncio.sleep(3)
@@ -673,6 +711,7 @@ async def handle_execute(sid, d):
   subprocess.Popen(['systemctl', 'stop', 'classify.service'])
   subprocess.Popen(['systemctl', 'stop', 'llama-server.service'])
   stop_hwtest()
+  stop_kids()     # 체험 앱도 모터·소리를 쓴다
   stop_chat()
   try:
     if is_protect(d['codepath']) or is_protect(os.path.dirname(d['codepath'])):
@@ -699,6 +738,7 @@ async def handle_executeb(sid, d):
   subprocess.Popen(['systemctl', 'stop', 'classify.service'])
   subprocess.Popen(['systemctl', 'stop', 'llama-server.service'])
   stop_hwtest()
+  stop_kids()     # 체험 앱도 모터·소리를 쓴다
   stop_chat()
   try:
     kill_run()
