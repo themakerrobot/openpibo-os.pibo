@@ -197,6 +197,10 @@ document.getElementById("llm_bt").addEventListener("click", function () {
 document.getElementById("classifier_bt").addEventListener("click", function () {
   PiboUI.openService("classifier");
 });
+// [로봇 놀이] 체험 앱(261028 시험 중). 버튼을 빼려면 index.html 의 #kids_bt 를 지우면 된다
+if (document.getElementById("kids_bt")) document.getElementById("kids_bt").addEventListener("click", function () {
+  PiboUI.openService("kids");
+});
 
 // 하드웨어 검수 페이지. 일반 사용자가 쓸 일이 없어 헤더에 아이콘을 두지 않고,
 // 푸터의 시리얼번호를 눌러야 열리게 해 뒀다. 켜기 전에 한 번 되묻는다.
