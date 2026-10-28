@@ -646,6 +646,10 @@ IDE [대화] 는 llama-server 기본 웹 화면이 아니라 **우리 대화 웹
     **폴더를 옮기면 실행 파일이 공유 라이브러리(`libllama.so`·`libggml*.so`)를 못 찾을 수 있다** — CMake 빌드 트리 RPATH 가 절대 경로일 수 있어서(확인 필요).
     옮긴 뒤 `ldd …/llama-server | grep "not found"` 로 볼 것. 나오면 다시 빌드(빌드 폴더를 지우고 cmake — CMakeCache 가 옛 경로를 들고 있다)
 - **모델 이름(261026, 사용자 결정)**: 파이보·PiBrain 공통 모델로 가려고 기기와 별개인 이름을 붙이고 자기소개에서 몸 정보(키 등)를 뺀다. PC 재학습 일, 이름 미정
+  - **그 전까지(261028)**: `run_chat.py` 가 `--device pibrain` 이면 시스템 글의 `로봇 파이보야` 를 `로봇 파이브레인이야` 로 바꾼다(PiBrain [대화] 가 자기를 파이보라고 했다).
+    PiBrain 기기는 아직 **젬마 + 옛 llama.cpp** 라 학습 글과 맞출 일이 없다. PiBrain 에 Qwen 을 쓰려면 PiBrain 에서 llama.cpp 를 새로 빌드해야 하고(옛 빌드는 Qwen3.5 를 못 읽어 [대화] 때 서버가 바로 죽는다),
+    그때는 파이보 이름으로 학습된 모델이라 대답에 '파이보' 가 섞일 수 있다. 공통 이름 모델로 다시 학습하면 그 줄을 없앤다
+  - **`.model` 을 파이보에서 PiBrain 으로 통째로 복사하지 말 것** — `llm/` 이 Qwen 으로 덮여 PiBrain 의 옛 llama.cpp 가 죽는다. 필요한 폴더(`object/` 등)만 옮긴다
 - **모델 바꾸기(재학습 때마다)**: gguf 파일만 갈아 끼운다 — 새 파일을 `/home/pi/.model/llm/` 에 넣고 링크 `llm-model.gguf` 를 그 파일로(`ln -sfn`), `systemctl restart llama-server`,
   옛 gguf 지우기, `.model/VERSION` sha256 목록 다시 만들기(IMAGE.md). 유닛·리포 코드는 링크 이름만 보므로 안 바뀐다.
   **단 학습 때 시스템 글이 바뀌었으면 `chat/run_chat.py` 의 `SYSTEM` 을 글자까지 같게 고칠 것**(파이보·PiBrain 같은 파일) — 다르면 대답 품질이 떨어진다.
