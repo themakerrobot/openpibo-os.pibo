@@ -649,7 +649,8 @@ IDE [대화] 는 llama-server 기본 웹 화면이 아니라 **우리 대화 웹
 - **모델 바꾸기(재학습 때마다)**: gguf 파일만 갈아 끼운다 — 새 파일을 `/home/pi/.model/llm/` 에 넣고 링크 `llm-model.gguf` 를 그 파일로(`ln -sfn`), `systemctl restart llama-server`,
   옛 gguf 지우기, `.model/VERSION` sha256 목록 다시 만들기(IMAGE.md). 유닛·리포 코드는 링크 이름만 보므로 안 바뀐다.
   **단 학습 때 시스템 글이 바뀌었으면 `chat/run_chat.py` 의 `SYSTEM` 을 글자까지 같게 고칠 것**(파이보·PiBrain 같은 파일) — 다르면 대답 품질이 떨어진다.
-  261026 판 `pibo-qwen3.5-0.8b-school-small-Q4_K_M.gguf` 는 339,212,576 바이트
+  261026 판 `pibo-qwen3.5-0.8b-school-small-Q4_K_M.gguf` 는 339,212,576 바이트, HF `leeyunjai/themaker` 의 `.model/llm/` 에 올림(261028, sha256 `ca312fda…`).
+  새 판도 같은 자리에 올릴 것(`huggingface-cli upload leeyunjai/themaker <파일> .model/llm/<파일>`). **링크 `llm-model.gguf` 는 올리지 않는다** — scp·업로드 도구가 링크를 따라가 같은 파일을 한 벌 더 만든다
 - 확인(컨테이너, 가짜 llama-server·가짜 TTS): 23/23 — 흘려 받기(중간 글자), [정지] → 모델 연결 끊김·다시 보내기, 소리 끔이면 안 말함,
   고른 목소리로 말하기·[그만 말하기], 체크·목소리 기억, 새 대화, 한/영, 1366·1024·768·390 넘침 0, 어둡게, pageerror 0.
   **실기기로는 흘려 받기·말하기 아직 안 봤다**(도구 판은 파이보에서 돌려 봤다 — 위 시간)
