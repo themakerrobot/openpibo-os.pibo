@@ -64,7 +64,7 @@ TensorFlow·torch·ultralytics, MeloTTS 시험 잔재(gruut·unidic·mecab·jieb
 
 ```bash
 PY=/home/pi/.pyenv/bin/python3
-sudo systemctl stop tools.service classify.service llama-server.service   # 도구가 떠 있으면 먼저 끈다
+sudo systemctl stop tools.service classify.service 'llama-server@*'   # 도구가 떠 있으면 먼저 끈다
 
 # 1) 목록만 본다 — 아무것도 안 바꾼다. 맨 위에 개수·용량, 아래에 큰 것부터
 sudo $PY /home/pi/openpibo-os/system/venv_prune.py | head -40
@@ -130,7 +130,7 @@ $PY -m pip check
 | `tts/assets/onnx` | Supertonic 3 **int8** 변환본(`leeyunjai/edge-lab` `tts-int8`, vocoder 만 fp32, 약 178MB) + `tts.json` `unicode_indexer.json` |
 | `tts/assets` | `voice_styles/`(F1~F5·M1~M5) · `LICENSE` · `LICENSE-OpenRAIL-M.txt` · `MODIFICATIONS.md`(변환 고지 — 변형 모델이라 필요) |
 | `stt` | `model.int8.onnx` `tokens.txt`(sherpa-onnx `sense-voice-zh-en-ja-ko-yue-int8-2024-07-17`) · `silero_vad.onnx` · `LICENSE-SenseVoice` |
-| `llm` | `pibo-qwen3.5-0.8b-school-small-Q4_K_M.gguf`(Qwen3.5 0.8B 미세조정, HF `.model/llm/` — 261028 올림, sha256 `ca312fda…090a8fd12`) + 링크 `llm-model.gguf`(받은 뒤 `ln -sfn` 으로 만든다 — 링크는 HF 에 올리지 않는다). 예전 `gemma-3-1b-it-Q4_K_M.gguf` 는 지운다(261027). 서버는 `/home/pi/.llama.cpp` 빌드(Qwen3.5 를 읽는 판) |
+| `llm` | `gemma-3-1b-it-Q4_K_M.gguf`(806,058,272 B) · `themaker-0.8b-Q4_K_M.gguf`(337,040,032 B) · (오면) `themaker-en-0.8b-Q4_K_M.gguf` + 별칭 링크 `general.gguf` `themaker-ko.gguf` `themaker-en.gguf`(받은 뒤 `ln -sfn` 으로 만든다 — 링크는 HF 에 올리지 않는다, 261029). 예전 `pibo-qwen3.5-…gguf`·링크 `llm-model.gguf` 는 없다. 서버는 `/home/pi/.llama.cpp` 빌드 |
 | `object` | **`ed-s-320.onnx`** 하나(easydetect ed-s COCO, 이름·conf 는 파일 안 메타데이터, HF `.model/object/ed-s-320.onnx`). 예전 사물 인식 가중치와 그 고지 파일은 **지운다**(261026) |
 | `hand` `face` | 그대로 |
 | (지움) | `classifier/`(예전 TF 가중치), `tts/assets/{.git,audio_samples,img}`, fp32 `onnx` |
@@ -153,45 +153,19 @@ $PY -c "from openpibo.speech import SpeechToText, SpeechOnDevice; SpeechOnDevice
 
 ### 대화 서버 llama.cpp — `/home/pi/.llama.cpp` (261027, 이미지당 1회)
 
-Qwen3.5 를 읽는 llama.cpp(파이보 cd488e95 에서 `b11889`)를 `/home/pi/.llama.cpp` 에 받아 빌드한다. 리포 코드는 서비스 이름(`llama-server.service`)만 부르고 경로는 아래 유닛에만 있다.
+Qwen3.5 를 읽는 llama.cpp(파이보 cd488e95 에서 `b11889`)를 `/home/pi/.llama.cpp` 에 받아 빌드한다. 리포 코드는 유닛 이름(`llama-server@<모델>`)만 부르고 경로는 아래 유닛에만 있다.
 **폴더를 빌드한 뒤에 옮기지 말 것** — 빌드 설정(CMakeCache)이 옛 경로를 기억한다. 옮겨야 하면 `build` 를 지우고 새 자리에서 다시 빌드한다(261027 에 그렇게 했다. Pi 4 `-j3` 수십 분).
 CPU 전용 Release 빌드이고 서버만 만든다: `cmake -B build -DCMAKE_BUILD_TYPE=Release && cmake --build build --config Release -j3 --target llama-server`.
 옵션을 다른 기기와 똑같이 맞추려면 그 기기 `build/CMakeCache.txt` 의 `GGML_*`·`LLAMA_*` BOOL 값을 `-D` 로 넘긴다.
 빌드 뒤 `ldd build/bin/llama-server | grep "not found"` 가 비어 있어야 한다.
 
-`/etc/systemd/system/llama-server.service` (리포 밖 — 이 내용 그대로):
-
-```ini
-[Unit]
-Description=Llama.cpp Server Service
-After=network.target
-
-[Service]
-User=root
-Group=root
-WorkingDirectory=/home/pi/.llama.cpp/build/bin/
-ExecStart=/home/pi/.llama.cpp/build/bin/llama-server -m /home/pi/.model/llm/llm-model.gguf --jinja --ctx-size 2048 -np 1 --cache-ram 0 -t 4 -ub 256 --log-disable --host 0.0.0.0 --port 50020
-Restart=on-failure
-StandardOutput=journal
-StandardError=journal
-
-[Install]
-WantedBy=multi-user.target
-```
-
-- 부팅 때 켜지 않는다(`systemctl disable llama-server` 상태로 둔다). IDE [대화]·코드의 `Speech.start_llm()` 이 켜고 끈다
-- `WorkingDirectory` 도 빌드 폴더여야 한다(옛 폴더면 30ms 만에 죽었다, 261026). `--log-disable` 이라 죽은 이유가 로그에 안 남는다 — 같은 명령을 직접 돌려 볼 것
-- 확인: `sudo systemctl start llama-server; sleep 15; curl -s localhost:50020/health` → `{"status":"ok"}`, 그 뒤 `sudo systemctl stop llama-server`
-
-**모델 고르기용 템플릿 유닛(261029)** — 대화 화면·블록이 모두 `systemctl start llama-server@<이름>` 으로 띄운다(CLAUDE.md '대화 모델 고르기'). 위 `llama-server.service`·`llm-model.gguf` 는 이제 아무도 안 쓴다(남겨 둔다).
-**리포 코드(261029v2~)를 기기에 올리기 전에 먼저 깔 것** — 없으면 대화 모델이 안 뜬다.
-`/etc/systemd/system/llama-server@.service` — 위 서비스와 같고 `-m`·`Description`·`Conflicts`·`Restart` 만 다르다. **enable 하지 않는다**:
+`/etc/systemd/system/llama-server@.service` (리포 밖 — 이 내용 그대로, 261029). 대화 모델은 **이 템플릿 유닛 하나로만** 띄운다.
+`%i` 가 모델 이름(`general` · `themaker-ko` · `themaker-en`)이고 `/home/pi/.model/llm/<이름>.gguf` 별칭 링크를 연다(CLAUDE.md '대화 모델 고르기').
 
 ```ini
 [Unit]
 Description=llama-server (%i)
 After=network.target
-Conflicts=llama-server.service
 
 [Service]
 User=root
@@ -203,8 +177,15 @@ StandardOutput=journal
 StandardError=journal
 ```
 
-모델별 별칭 링크(한 번만): `cd /home/pi/.model/llm && sudo ln -sfn gemma-3-1b-it-Q4_K_M.gguf general.gguf && sudo ln -sfn themaker-0.8b-Q4_K_M.gguf themaker-ko.gguf && sudo ln -sfn themaker-en-0.8b-Q4_K_M.gguf themaker-en.gguf`
-(영문 파일이 오기 전엔 `themaker-en.gguf` 가 깨진 링크 — `set_llm_model` 이 '파일이 아직 없어요' 로 알린다). 그 뒤 `sudo systemctl daemon-reload`.
+모델별 별칭 링크: `cd /home/pi/.model/llm && sudo ln -sfn gemma-3-1b-it-Q4_K_M.gguf general.gguf && sudo ln -sfn themaker-0.8b-Q4_K_M.gguf themaker-ko.gguf && sudo ln -sfn themaker-en-0.8b-Q4_K_M.gguf themaker-en.gguf`
+(영문 파일이 오기 전엔 `themaker-en.gguf` 가 깨진 링크 — 대화 화면에 '(없음)', `set_llm_model` 은 '파일이 아직 없어요'). 그 뒤 `sudo systemctl daemon-reload`.
+
+- `[Install]` 이 없어 enable 되지 않는다(`systemctl is-enabled llama-server@general` → `static`). 대화 화면·`Speech.start_llm()` 이 켜고, IDE 가 끈다
+- 템플릿끼리는 서로 끄지 않는다 — 켜는 쪽(코드)이 늘 `systemctl stop 'llama-server@*'` 를 먼저 한다(램 2GB 라 하나만)
+- `WorkingDirectory` 도 빌드 폴더여야 한다(옛 폴더면 30ms 만에 죽었다, 261026). `--log-disable` 이라 죽은 이유가 로그에 안 남는다 — 같은 명령을 직접 돌려 볼 것
+- 확인: `sudo systemctl start llama-server@general; sleep 15; curl -s localhost:50020/health` → `{"status":"ok"}`, 그 뒤 `sudo systemctl stop 'llama-server@*'`
+- **예전 `llama-server.service` 와 링크 `llm-model.gguf` 는 261029 에 지웠다**(사용자). 남아 있는 기기는:
+  `sudo systemctl disable --now llama-server.service; sudo rm -f /etc/systemd/system/llama-server.service /home/pi/.model/llm/llm-model.gguf; sudo systemctl daemon-reload; sudo systemctl reset-failed`
 
 ## 2. 뜨기 전 청소
 
