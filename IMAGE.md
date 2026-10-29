@@ -183,6 +183,28 @@ WantedBy=multi-user.target
 - `WorkingDirectory` 도 빌드 폴더여야 한다(옛 폴더면 30ms 만에 죽었다, 261026). `--log-disable` 이라 죽은 이유가 로그에 안 남는다 — 같은 명령을 직접 돌려 볼 것
 - 확인: `sudo systemctl start llama-server; sleep 15; curl -s localhost:50020/health` → `{"status":"ok"}`, 그 뒤 `sudo systemctl stop llama-server`
 
+**모델 고르기용 템플릿 유닛(261029)** — 블록 [대화 모델 고르기] 가 `systemctl start llama-server@<이름>` 으로 띄운다(CLAUDE.md '대화 모델 고르기').
+`/etc/systemd/system/llama-server@.service` — 위 서비스와 같고 `-m`·`Description`·`Conflicts`·`Restart` 만 다르다. **enable 하지 않는다**:
+
+```ini
+[Unit]
+Description=llama-server (%i)
+After=network.target
+Conflicts=llama-server.service
+
+[Service]
+User=root
+Group=root
+WorkingDirectory=/home/pi/.llama.cpp/build/bin/
+ExecStart=/home/pi/.llama.cpp/build/bin/llama-server -m /home/pi/.model/llm/%i.gguf --jinja --ctx-size 2048 -np 1 --cache-ram 0 -t 4 -ub 256 --log-disable --host 0.0.0.0 --port 50020
+Restart=no
+StandardOutput=journal
+StandardError=journal
+```
+
+모델별 별칭 링크(한 번만): `cd /home/pi/.model/llm && sudo ln -sfn gemma-3-1b-it-Q4_K_M.gguf gemma3.gguf && sudo ln -sfn themaker-0.8b-Q4_K_M.gguf themaker-ko.gguf && sudo ln -sfn themaker-en-0.8b-Q4_K_M.gguf themaker-en.gguf`
+(영문 파일이 오기 전엔 `themaker-en.gguf` 가 깨진 링크 — `set_llm_model` 이 '파일이 아직 없어요' 로 알린다). 그 뒤 `sudo systemctl daemon-reload`.
+
 ## 2. 뜨기 전 청소
 
 이미지에 개인 정보와 기기별 상태가 딸려간다. 전원 끄기 전에 지운다.
