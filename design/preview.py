@@ -144,7 +144,12 @@ def main():
       links.append(('로봇 놀이', f'http://{host}:{base + 60}/?ide={ide}'))
     if live and os.path.isfile(os.path.join(root, 'chat', 'run_chat.py')):
       fake_llm(base + 21, ANSWER[dev])
-      procs.append(subprocess.Popen([sys.executable, 'run_chat.py', '--device', dev, '--port', str(base + 30), '--llm', f'http://127.0.0.1:{base + 21}'],
+      mdir = os.path.join(tmp, dev, 'llm')                 # 대화 모델 고르기용 가짜 파일(더메이커 영어는 아직 없는 것처럼)
+      os.makedirs(mdir, exist_ok=True)
+      for m in ('gemma3', 'themaker-ko'):
+        open(os.path.join(mdir, m + '.gguf'), 'w').close()
+      procs.append(subprocess.Popen([sys.executable, 'run_chat.py', '--device', dev, '--port', str(base + 30), '--llm', f'http://127.0.0.1:{base + 21}',
+                                     '--model-dir', mdir],
                                     cwd=os.path.join(root, 'chat'), env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL))
       links.append(('대화', f'http://{host}:{base + 30}/?ide={ide}'))
     rows.append((dev, links))
