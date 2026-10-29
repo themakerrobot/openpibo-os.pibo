@@ -153,7 +153,7 @@ kids/
 ## 12. 띄우기 (시험 중)
 
 ```bash
-sudo systemctl stop tools.service classify.service llama-server.service
+sudo systemctl stop tools.service classify.service 'llama-server@*'
 cd /home/pi/openpibo-os
 sudo /home/pi/.pyenv/bin/python3 kids/make_voice.py --device pibo      # 처음 한 번. PiBrain 은 --device pibrain
 sudo /home/pi/.pyenv/bin/python3 kids/run_kids.py --device pibo         # PiBrain 은 --device pibrain
