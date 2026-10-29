@@ -78,7 +78,13 @@ def fake_llm(port, text):
       self.wfile.write(b'{"status":"ok"}')
 
     def do_POST(self):
-      self.rfile.read(int(self.headers.get('Content-Length', 0)))
+      body = json.loads(self.rfile.read(int(self.headers.get('Content-Length', 0))) or b'{}')
+      if not body.get('stream'):            # 더메이커(도구) 차례는 한 번에 받는다
+        self.send_response(200)
+        self.send_header('Content-Type', 'application/json')
+        self.end_headers()
+        self.wfile.write(json.dumps({'choices': [{'message': {'role': 'assistant', 'content': text}}]}).encode())
+        return
       self.send_response(200)
       self.send_header('Content-Type', 'text/event-stream')
       self.end_headers()
