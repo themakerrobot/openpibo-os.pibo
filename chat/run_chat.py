@@ -23,6 +23,7 @@ pibo_chat.turn() 으로 처리한다 — 멈춰 → 시스템 글 + 최근 3번 
 """
 import os
 import re
+import atexit
 import json
 import time
 import asyncio
@@ -115,14 +116,12 @@ use_tools = [True]    # 더메이커: "대화만 하자" 로 끄고 "이제 움�
 TOOL_HISTORY_KEEP = 20   # 더메이커 기록은 최근 3번만 보내지만(pibo_chat.window) 목록이 끝없이 늘지 않게
 robot = None             # __main__ 에서 만든다(파이보 Pibo / PiBrain)
 _tool_log = []           # 이번 차례에 실행한 도구 [[이름, 값, 성공]] — 화면에 작게 보인다
-_prep_lock = threading.Lock()
 
 
 def make_robot(device, fake=False):
   """pibo_chat.Pibo / pibrain_chat.PiBrain 에 두 가지만 덧씌운다:
   - 보기: 참고 앱은 부를 때마다 Camera() 를 새로 만든다 — Picamera2 는 앞 것이 안 닫히면 다시 못 연다. 한 번 만들어 계속 쓴다
-  - 실행한 도구를 _tool_log 에 남긴다(화면 표시)
-  - prepare(): 더메이커를 고를 때 장치를 미리 올린다 — 처음 부를 때 import·카메라 켜기·사물 인식 모델 적재로 그 차례만 늦지 않게"""
+  - 실행한 도구를 _tool_log 에 남긴다(화면 표시)"""
   base = pibrain_chat.PiBrain if device == 'pibrain' else pibo_chat.Pibo
 
   class Robot(base):
@@ -146,25 +145,6 @@ def make_robot(device, fake=False):
     def look(self):
       return self._log('look', '', self._look)
 
-    def prepare(self):
-      """장치·카메라·사물 인식을 미리 올린다(스레드, 모델 미리 읽기와 같이). 한 번만, 실패해도 대화는 된다(그 도구만 실패)"""
-      with _prep_lock:
-        if self.fake or self._parts.get('ready'):
-          return
-        t = time.time()
-        for name in (('device', 'motion') if self.can_move else ('device',)):
-          try:
-            self.part(name)
-          except Exception as exc:  # noqa: BLE001
-            print(f'[chat] {name} 준비 실패: {exc}', flush=True)
-        try:
-          self._cam()
-          self._parts['detect'].detect_object(self._parts['camera'].read())   # 인식 모델은 처음 부를 때 올라간다
-        except Exception as exc:  # noqa: BLE001
-          print(f'[chat] 카메라·사물 인식 준비 실패: {exc}', flush=True)
-        self._parts['ready'] = True
-        print(f'[chat] 도구 준비 {time.time() - t:.1f}초', flush=True)
-
     def _cam(self):
       if 'camera' not in self._parts:
         from openpibo.vision_camera import Camera
@@ -175,8 +155,7 @@ def make_robot(device, fake=False):
       names = pibo_chat.korean_names if pibo_chat.LANG == 'ko' else pibo_chat.english_names
       if self.fake:
         return names(['cup', 'apple'])
-      with _prep_lock:
-        self._cam()
+      self._cam()
       items = self._parts['detect'].detect_object(self._parts['camera'].read())
       return names(i.get('name') if isinstance(i, dict) else i for i in items or [])
 
@@ -300,8 +279,6 @@ def switch_model(model):
         use_tools[0] = True
         pibo_chat.LANG = model_lang(model)
         state.update(model=model, llm='down', warm='idle', error='')
-      if is_tool_model(model):             # 모델이 뜨는 동안 장치도 미리
-        threading.Thread(target=robot.prepare, daemon=True).start()
       systemctl('stop', 'llama-server@*')
       systemctl('reset-failed', unit(model))
       systemctl('start', '--no-block', unit(model))
@@ -672,7 +649,7 @@ if __name__ == '__main__':
   p.add_argument('--fake-robot', action='store_true', help='도구를 실행하지 않고 흉내만(시험·미리보기)')
   args = p.parse_args()
   robot = make_robot(args.device, args.fake_robot)
-  app.add_event_handler('shutdown', robot.off)
+  atexit.register(robot.off)            # IDE 가 끌 때(SIGTERM → uvicorn 이 정상 종료) 켜 둔 불빛을 끈다
   LLM = args.llm.rstrip('/')
   MODEL_DIR = args.model_dir
   # PiBrain 은 자기를 파이브레인이라고 해야 한다. 젬마3 에 보내는 시스템 글은 파이보 글이라 PiBrain 에서만 이름을 바꾼다
