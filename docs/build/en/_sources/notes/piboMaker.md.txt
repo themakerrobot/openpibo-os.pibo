@@ -78,8 +78,30 @@ will start right away during class.
 
 ## Chat
 
-Chat in text with the language model (LLM) that runs inside piBo. Programs can use it too, with the `Start LLM server` and
-`Respond to …` blocks in [Speech]. Loading the model takes a while, so the first time you open it a waiting screen appears until it is ready.
+Chat in text with the language model (LLM) that runs inside piBo. Choose a model in **[Chat model]** at the top, and the model loads then
+(the first time takes several tens of seconds). Changing the model starts the chat over.
+
+| Model | What it is |
+|---|---|
+| General | Chats in Korean and English. No tools |
+| TheMaker KO | A Korean model trained to talk with students. You can ask piBo to do things (tools below) |
+| TheMaker EN | The English version of TheMaker. If the model file is not on the robot, it shows "(not installed)" and can't be chosen |
+
+TheMaker listens and **chooses a tool by itself**. The tool it ran appears in small text under the answer (for example `Light red`).
+
+| Tool | Try saying | What it does |
+|---|---|---|
+| Light | "Turn on the red light", "Turn off the light" | Changes or turns off the eye light (red, orange, yellow, green, blue, sky blue, purple, pink, white) |
+| Look | "What do you see?" | Looks with the camera and says what it sees |
+| Move | "Say hello", "Can you dance?" | greeting, wave, dance, clap, high five, nod, head shake, forward, backward, left, right |
+
+- Say **"Stop"** and it stops right away, without asking the model.
+- Moves that change place (forward, backward, left, right) happen only when your words name a direction. Be careful near the edge of a desk.
+- Say "Let's just talk" to stop using tools, and "You can move now" to use them again.
+- Turn on [Speak out loud] and piBo speaks the answer (you can choose the voice and volume).
+
+Programs can use it too, with the `Choose chat model`, `Start LLM server` and `Respond to …` blocks in [Speech].
+Blocks chat in text only and do not run tools.
 
 ```{note}
 Tools, Chat and Classifier run **one at a time**. Opening one closes the others, and running a program in the IDE closes them too
