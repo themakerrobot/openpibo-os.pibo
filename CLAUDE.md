@@ -1244,6 +1244,7 @@ v1 전용 CSS(`index.css` `fontello.css` `cobalt.css` `duotone-light.css`), [새
   글자 `--fs-xs…xl` 12/13/14/16/20 · 굵기 400/700 둘뿐(Pretendard 파일이 두 벌이라 600·800 은 700 과 같게 보인다)
 
 **화면 규칙**
+- **상단바 왼쪽 로고를 누르면 로봇 화면(파이보 OLED · PiBrain LCD)이 IP 화면으로 돌아간다(261030, 사용자).** 키트 `pibo-ui.js` 의 `screenReset` 이 모든 앱의 `.pb-header__brand`·IDE `.v2-brand` 에 걸고, IDE(80) `POST /screen_reset` 이 `system/network_disp.py` 를 띄운다([출력 지우기] 의 화면 초기화와 같은 일, 여러 번 눌러도 하나만). 로봇 놀이 키우기 화면도 IP 로 덮는다
 - 상단바: 모든 앱 48px + 아래 1px 선, 왼쪽 `[제품 아이콘] piBo · 도구`(IDE 는 `piBo 메이커`), 오른쪽 순서 (앱 동작) · IDE · 전체화면 · 밝기 · 언어. 언어는 늘 **지금 언어를 보여 주는 select**
 - 브라우저 탭 제목: `<html data-product="piBo|PiBrain">` + `<title data-key=…>` 에 앱 이름만 — 키트 `fixTitle` 이 ` · piBo` 를 붙인다(IDE 는 앞에). `도구 · piBo` / `Tools · PiBrain`, `piBo 메이커`, `도움말 · piBo`, `H/W 검수 · piBo`
 - **꽉 찬 버튼은 한 구역(카드)에 하나**: IDE [실행](저장·+추가는 옅은 파랑 `.v2-btn--tint`), 분류기 [AI 가르치기](저장은 옅게), 도구 [동작] 왼쪽 [추가·수정]·오른쪽 저장 칸 [저장], [음성] 카드마다 [말하기]·[녹음하기], 대화상자 [확인]
