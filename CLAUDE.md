@@ -105,9 +105,11 @@ git tag -d <태그> ...           # 로컬 삭제
 - `examples/` 는 `restore`(공장초기화) 때만 `/home/pi/examples/` 로 복사된다
   (`ide/run_ide.py:369`). 리포만 고쳐서는 기존 기기에 반영되지 않는다 — 수동 복사하거나
   이미지를 다시 만들 것
-- **TTS 블록은 `speech_otts_play`(온디바이스)와 `speech_etts_play`(espeak) 둘뿐이다.**
-  전자는 `lang="na"`(자동 판별)라 한국어·영어 양쪽을 처리한다. 서버 TTS(`speech_tts*`)와
-  gtts(`speech_gtts*`), 번역(`speech_translate`)은 260914v6 에서 제거됐다
+- **말하기 블록은 `speech_tts_play`(말하기)·`speech_tts`(파일로 저장) 둘이다(261102, 사용자).** 예전 `speech_otts*`(온디바이스)·`speech_etts*`(espeak) 네 개를 합쳤다.
+  목소리 선택지 = 남성 1~5·여성 1~5(`SpeechOnDevice`, `lang="na"` 자동 판별) + 기계 목소리 `espeak`(`Speech.tts`, 영어 글자만 제대로 읽는다). 생성기가 목소리로 갈라 부른다.
+  이름은 260914v6 에 지운 서버 TTS 블록과 같지만 **새 블록이다**(서버 목소리 main/boy… 는 없다 — 예전 서버 TTS 프로그램은 드롭다운 값이 안 맞아 첫 목소리로 열린다).
+  예전 네 블록으로 저장한 프로그램은 `customblock_callback.js` 끝 `renameTts` 가 불러올 때 새 이름으로 바꾼다(espeak 블록은 `voice:'espeak'` 를 넣는다).
+  gtts(`speech_gtts*`)·번역(`speech_translate`)은 260914v6 에서 제거됐다
 - 텍스트 블록 기본값 `가나다` 는 `customblock.js`(수정 금지 파일)에 있다. 예제 안의 값을 바꿔도
   새로 끌어다 놓는 블록은 계속 `가나다` 로 뜬다
 
@@ -1342,7 +1344,7 @@ v1 전용 CSS(`index.css` `fontello.css` `cobalt.css` `duotone-light.css`), [새
 - **WiFi 저장(`booting.py` `POST /wifi`)**: SSID 1~32바이트, WPA-PSK 비밀번호 8~63바이트(16진수 64자)를 conwifi.sh 전에 검사한다(conwifi.sh 가 쓰던 연결을 먼저 지우므로).
   실패는 `{'result':'fail','reason':wifi_err_ssid|wifi_err_psk|wifi_err_connect}` — IDE 가 `reason` 으로 안내하고 창을 닫지 않는다.
   conwifi.sh 가 실패로 끝나도 **연결 정보가 저장됐으면 예전처럼 재부팅**한다(`wifi_saved` — 지금 없는 공유기를 미리 넣을 때는 `connection up` 만 실패한다). 저장도 안 됐을 때만 재부팅하지 않는다
-- **말하기 블록(`speech_otts_play`·`speech_etts_play`)은 말을 다 하고 다음 블록으로 간다**(`background=False`). 전엔 둘을 이어 쓰면 같은 `/home/pi/tmp.mp3` 를 덮어써 겹치거나 잘렸다
+- **말하기 블록(지금 `speech_tts_play`)은 말을 다 하고 다음 블록으로 간다**(`background=False`). 전엔 둘을 이어 쓰면 같은 `/home/pi/tmp.mp3` 를 덮어써 겹치거나 잘렸다
 - **`Audio.play(background=True)` 는 `play` 를 따로 띄운다**(`Popen`, 셸 안 씀). 스레드 안에서 부르면 바로 끝나는 프로그램은 `play` 가 시작되기 전에 파이썬이 끝나 소리가 안 났다. 소리는 프로그램이 끝나도 계속 나고 [정지] 때 꺼진다
 - **파이썬 변수 이름**: `Blockly.Python.nameDB_.safeName` 을 바꿔 끼운다(`index.js`) — 영문·숫자·`_`·한글 음절(가-힣)은 그대로, 나머지는 `_`. 전엔 `_XX` 를 모두 되살려서 `pos_10`·`pos_11` 이 둘 다 `pos_` 가 됐다. 겹치는 이름은 Blockly 가 숫자를 붙인다
 - 실행 출력은 서버·화면 모두 마지막 약 200KB 만 둔다(`record_*`, 400KB 넘으면 자름). 폴더 내려받기는 요청마다 따로 압축(스레드)

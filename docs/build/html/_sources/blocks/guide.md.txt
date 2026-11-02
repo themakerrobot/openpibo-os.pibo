@@ -32,7 +32,7 @@
 | 장치 | 8 |
 | 동작 | 10 |
 | 화면 | 11 |
-| 음성 | 9 |
+| 음성 | 7 |
 | 시각 | 16 |
 | 인식 | 36 |
 | 기타 | 12 |
@@ -209,21 +209,13 @@
 
 파이보 마이크로 듣고, 말이 끝나면 글자로 바꿉니다. 기기 안에서 처리하고 한국어·영어는 자동으로 알아봅니다. 처음 한 번은 준비하느라 몇 초 더 걸립니다. *값을 돌려주는 블록*
 
-<img src="img/speech_otts.png" alt="([안녕하세요]) 를 [남성 1 ▾] 목소리로 [폴더 선택 ▾] ([tts]) . [mp3 ▾] 에 저장하기(ondevice)" width="984" class="blk">
+<img src="img/speech_tts.png" alt="([안녕하세요]) 를 [남성 1 ▾] 목소리로 [폴더 선택 ▾] ([tts]) . [mp3 ▾] 에 저장하기" width="882" class="blk">
 
-입력한 글자를 파이보 안에서 목소리로 만들어 파일로 저장합니다. 한국어·영어는 자동으로 알아봅니다.
+입력한 글자를 목소리로 만들어 파일로 저장합니다. 로봇 안에서 만들고, 한국어·영어는 자동으로 알아봅니다. 기계 목소리(espeak)는 영어 글자만 제대로 읽습니다.
 
-<img src="img/speech_otts_play.png" alt="([안녕하세요]) 를 [남성 1 ▾] 목소리 ([80]) 크기로 말하기(ondevice)" width="705" class="blk">
+<img src="img/speech_tts_play.png" alt="([안녕하세요]) 를 [남성 1 ▾] 목소리 ([80]) 크기로 말하기" width="603" class="blk">
 
-입력한 글자를 파이보 안에서 목소리로 만들어 말합니다. 한국어·영어는 자동으로 알아봅니다.
-
-<img src="img/speech_etts.png" alt="([안녕하세요]) 를 목소리 [폴더 선택 ▾] ([tts]) . [mp3 ▾] 에 저장하기(E-speak)" width="858" class="blk">
-
-입력한 글자를 espeak 기계 목소리로 파일에 저장합니다.
-
-<img src="img/speech_etts_play.png" alt="([안녕하세요]) 를 목소리 ([80]) 크기로 말하기(E-speak)" width="598" class="blk">
-
-입력한 글자를 espeak 기계 목소리로 말합니다.
+입력한 글자를 목소리로 만들어 말합니다. 로봇 안에서 만들고, 한국어·영어는 자동으로 알아봅니다. 기계 목소리(espeak)는 영어 글자만 제대로 읽습니다.
 
 <img src="img/speech_set_llm_model.png" alt="대화 모델 고르기 [더메이커 KO ▾]" width="350" class="blk">
 
