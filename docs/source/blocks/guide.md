@@ -59,7 +59,7 @@
 
 재생 중인 소리를 멈춥니다.
 
-<img src="img/audio_record.png" alt="([5]) 초 녹음하고 [폴더 선택 ▾] ([audio]) . [wav ▾] 저장하기" width="652" class="blk">
+<img src="img/audio_record.png" alt="([5]) 초 녹음하고 [폴더 선택 ▾] ([audio]) . [mp3 ▾] 저장하기" width="657" class="blk">
 
 설정한 시간 동안 소리를 녹음하고 파일로 저장합니다.
 
