@@ -947,6 +947,12 @@ easydetect-lab 지시서(`docs/pibo-integration.md`, 473dbe3) 그대로다. **�
   `ToolboxCategory` 를 바꿔 끼운다
 - 화면 출력은 경로 `/home/pi/.tmp.jpg` 로 구분한다(`ide.js` 의 `LIVE_PATH`). `run_ide.py` 의 `/show` 경로를 바꾸면 같이 바꿀 것
 
+### 파일 목록 아이콘 (261102)
+
+`index.js` 의 `fmIcon()`(`update_file_manager` 위) — 종류마다 Font Awesome 아이콘과 색: 폴더(호박색) · `usb` 폴더(fa-brands fa-usb) · `.py` 코드 · `.json` 블록(퍼즐) ·
+그림 · 소리 · 영상 · 모델(onnx·tflite·task·bin·gguf, 큐브) · 글(txt·md·csv) · 압축 · 그 밖은 회색 파일. 색은 `v2/ide.css` 의 `--fm-*`(어둡게는 밝은 판).
+**클릭 처리는 첫 칸 html 에 `folder`/`file` 이 있는지로 가르므로 아이콘에 `data-kind='folder|file'` 을 꼭 넣을 것.** 줄마다 걸던 jQuery 흐려짐(`animate opacity`)은 뺐다 — 줄 배경(hover)·아이콘 확대로 대신한다(삭제는 빨강)
+
 ### 블록 찾기 — `@blockly/toolbox-search` 1.2.11
 
 - `ide/static/v2/vendor/toolbox-search.js`(UMD, Apache-2.0, 라이선스 파일 옆에 있음). **Blockly 10 용 마지막 판**이다.
