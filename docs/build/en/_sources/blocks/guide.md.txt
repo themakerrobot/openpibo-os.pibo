@@ -32,7 +32,7 @@ Everything runs **inside piBo**. Only the [Collect] category needs the internet,
 | Device | 8 |
 | Motion | 10 |
 | Display | 11 |
-| Speech | 9 |
+| Speech | 7 |
 | Vision | 16 |
 | Recognition | 36 |
 | Utilities | 12 |
@@ -213,21 +213,13 @@ Clear the screen.
 
 Listen with the robot microphone and turn speech into text when you stop talking. Runs on the robot; Korean and English are detected automatically. The first call takes a few extra seconds to get ready. *returns a value*
 
-<img src="img/speech_otts.png" alt="Save ([Hello]) with [Male 1 ▾] voice to [Select folder ▾] ([tts]) . [mp3 ▾]" width="857" class="blk">
+<img src="img/speech_tts.png" alt="Save ([Hello]) with [Male 1 ▾] voice to [Select folder ▾] ([tts]) . [mp3 ▾]" width="857" class="blk">
 
-Make speech on the robot and save it to a file. Korean and English are detected automatically.
+Make speech on the robot and save it to a file. Korean and English are detected automatically. The robot voice (espeak) reads English text only.
 
-<img src="img/speech_otts_play.png" alt="Say ([Hello]) with [Male 1 ▾] voice at ([80]) volume" width="601" class="blk">
+<img src="img/speech_tts_play.png" alt="Say ([Hello]) with [Male 1 ▾] voice at ([80]) volume" width="601" class="blk">
 
-Make speech on the robot and say it. Korean and English are detected automatically.
-
-<img src="img/speech_etts.png" alt="Save ([Hello]) with Espeak voice to [Select folder ▾] ([tts]) . [mp3 ▾]" width="824" class="blk">
-
-Save text as espeak robot voice to a file.
-
-<img src="img/speech_etts_play.png" alt="Say ([Hello]) with Espeak voice at ([80]) volume" width="568" class="blk">
-
-Say text with the espeak robot voice.
+Make speech on the robot and say it. Korean and English are detected automatically. The robot voice (espeak) reads English text only.
 
 <img src="img/speech_set_llm_model.png" alt="Choose chat model [TheMaker KO ▾]" width="418" class="blk">
 
