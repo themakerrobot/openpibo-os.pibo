@@ -59,7 +59,7 @@ Enter music file name to play.
 
 Stop the audio currently playing.
 
-<img src="img/audio_record.png" alt="Record for ([5]) seconds and save to [Select folder ▾] ([audio]) . [wav ▾]" width="813" class="blk">
+<img src="img/audio_record.png" alt="Record for ([5]) seconds and save to [Select folder ▾] ([audio]) . [mp3 ▾]" width="817" class="blk">
 
 Record for a set time and save as a file.
 
