@@ -327,8 +327,8 @@ AP 는 스스로 끄지 않으므로 스캔해서 판단할 게 없을 뿐이다
   학교 WiFi 는 이미 내린 뒤라 전엔 둘 다 없이 재부팅 전까지 접속 불가였다. 실패 이유는 `[netwatch] hotspot.sh start 실패` 로그에 남는다
 - **기기에서 볼 것:** ① 교실처럼 IP 가 늦을 때 90초 기다리는지 ② 공유기를 끄면 약 42초 뒤 AP
   ③ AP 모드가 계속 유지되고, [WiFi 설정]으로 학교 WiFi 를 잡으면 AP 가 꺼지는지
-  ④ `journalctl -u booting.service | grep netwatch` 로 판단 기록 확인. PiBrain(`openpibo-os.pibrain/system/booting.py`)도
-  같은 구조(IP 한 번 없으면 AP)지만 아직 안 옮겼다
+  ④ `journalctl -u booting.service | grep netwatch` 로 판단 기록 확인. PiBrain 도 261102 에 같은 `netwatch.py`(글자 그대로)로 옮겼다 —
+  `booting.py` 의 `wifi_update` 가 `nw.step`, WiFi 저장 실패는 `nw.wifi_failed()`. 가짜 ops 로 7경우 확인, **PiBrain 실기기 확인 필요**
 **확인 필요:** AP 를 켤 때 학교 연결을 내리는 게 CYW43455 의 AP+STA 같은 채널 제약 때문인지
 
 WiFi 절전은 `system/init` 이 부팅 때 `iw wlan0 set power_save off` 로 끈다(260929 기기 확인: off).

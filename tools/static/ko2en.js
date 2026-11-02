@@ -51,7 +51,7 @@ const translations = {
   result:          { ko: "결과", en: "Result" },
   speak:           { ko: "말하기", en: "Speak" },
   voice_type:      { ko: "목소리", en: "Voice" },
-  espeak:          { ko: "기계음 (espeak)", en: "Robot voice (espeak)" },
+  espeak:          { ko: "기계 목소리 (espeak) · 영어 글자만", en: "Robot voice (espeak) · English text only" },
   file_ok:    { ko: "파일을 올렸어요.", en: "File uploaded." },
   file_error: { ko: "파일을 올리지 못했어요.", en: "Could not upload the file." },
   range_warn: {
