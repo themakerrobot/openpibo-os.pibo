@@ -202,7 +202,7 @@
               background: var(--frame); color: var(--frame-ink); border-bottom: 1px solid rgba(61, 47, 18, .14);
               font-size: 16px; font-weight: 700; letter-spacing: -.2px; }
     .hw-top span { font-weight: 400; }
-    .hw-top i { font-size: 18px; margin-right: 2px; }
+    .hw-top .hw-mark { flex: none; margin-right: 2px; }
     .hw-top span::before { content: "·"; margin: 0 6px 0 -2px; opacity: .55; font-weight: 700; }
     html[data-theme="light"] body { --canvas: #f1f3f8; }
     html[data-theme="light"] .hw-top { background: #ffcb2f; }
@@ -241,7 +241,7 @@
 </head>
 <body>
 
-<header class="hw-top no-print"><i class="fa-solid fa-robot" aria-hidden="true"></i><b>piBo</b><span>H/W 검수</span></header>
+<header class="hw-top no-print"><svg class="hw-mark" viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M12 .9a2.6 2.6 0 0 1 .8 5.07V8H16a5.5 5.5 0 0 1 5.5 5.5v3A5.5 5.5 0 0 1 16 22H8a5.5 5.5 0 0 1-5.5-5.5v-3A5.5 5.5 0 0 1 8 8h3.2V5.97A2.6 2.6 0 0 1 12 .9zm0 1.5a1.1 1.1 0 1 0 0 2.2 1.1 1.1 0 0 0 0-2.2zM8.3 11.7a2.6 2.6 0 1 0 0 5.2 2.6 2.6 0 0 0 0-5.2zm0 1.4a1.2 1.2 0 1 1 0 2.4 1.2 1.2 0 0 1 0-2.4zm7.4-1.4a2.6 2.6 0 1 0 0 5.2 2.6 2.6 0 0 0 0-5.2zm0 1.4a1.2 1.2 0 1 1 0 2.4 1.2 1.2 0 0 1 0-2.4zM10.4 18.4h3.2a1.6 1.6 0 0 1-3.2 0z"/></svg><b>piBo</b><span>H/W 검수</span></header>
 
 <div class="toolbar no-print">
   <button class="btn btn-primary" id="btn-run-all">Run all tests</button>

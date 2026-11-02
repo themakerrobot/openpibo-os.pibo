@@ -1281,6 +1281,14 @@ v1 전용 CSS(`index.css` `fontello.css` `cobalt.css` `duotone-light.css`), [새
 - 크기: 상단바 `--header-h` 48 · 버튼·입력 `--ctl-sm/md/lg` 32/40/48 · 모서리 `--r-chip/ctl/card/dlg/pill` 6/8/12/16/999 · 간격 `--sp-1…5` 4/8/12/16/24 ·
   글자 `--fs-xs…xl` 12/13/14/16/20 · 굵기 400/700 둘뿐(Pretendard 파일이 두 벌이라 600·800 은 700 과 같게 보인다)
 
+**아이콘 (261102)**
+- **제품 마크**: 상단바의 Font Awesome `robot`·`brain` 대신 파이보 얼굴(고리 안테나·둥근 눈)·PiBrain 보드(화면·십자 버튼) 그림. 원본 `design/marks/{pibo,pibrain}.svg`(두 리포 같은 파일).
+  키트 CSS 가 `.pb-header__brand`·`.v2-brand`·`.v2-stat` 안의 `<i class="fa-robot|fa-brain">` 글리프를 마스크 그림으로 바꾼다(템플릿·체험 앱의 class 전환은 그대로). 도움말 상단바·H/W 검수는 같은 그림을 SVG 로 직접 넣었다
+- **탭 아이콘** `*/static/icon.png`·도움말 `_static/icon.png` = 노랑 둥근 칸 + 제품 마크(64px, 예전 `</>` 57px 대신). 마크를 바꾸면 다시 만들 것
+- **앱 아이콘은 어디서나 같게**: 도구 `fa-screwdriver-wrench` · 대화 `fa-comments` · 분류기 `fa-graduation-cap`([AI 가르치기]와 같음) · 로봇 놀이 `fa-shapes` · 도움말 `fa-circle-question` — IDE 상단바와 대기 페이지(`launch.html`)
+- 대화 화면의 도구 표시는 알약 + 도구 아이콘(불빛·보기·움직이기·멈춤), 실패는 빨간 ✕ 아이콘
+- IDE 상단바: 1439px 이하는 [전체화면] 을 아이콘만, 1299px 이하는 앱 버튼 모두 아이콘만(영문에서 [전체화면] 글자가 [더보기] 를 덮었다)
+
 **화면 규칙**
 - **상단바 왼쪽 로고를 누르면 로봇 화면(파이보 OLED · PiBrain LCD)이 IP 화면으로 돌아간다(261030, 사용자).** 키트 `pibo-ui.js` 의 `screenReset` 이 모든 앱의 `.pb-header__brand`·IDE `.v2-brand` 에 걸고, IDE(80) `POST /screen_reset` 이 `system/network_disp.py` 를 띄운다([출력 지우기] 의 화면 초기화와 같은 일, 여러 번 눌러도 하나만). 로봇 놀이 키우기 화면도 IP 로 덮는다
 - 상단바: 모든 앱 48px + 아래 1px 선, 왼쪽 `[제품 아이콘] piBo · 도구`(IDE 는 `piBo 메이커`), 오른쪽 순서 (앱 동작) · IDE · 전체화면 · 밝기 · 언어. 언어는 늘 **지금 언어를 보여 주는 select**
