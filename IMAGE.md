@@ -132,6 +132,7 @@ $PY -m pip check
 | `llm` | `gemma-3-1b-it-Q4_K_M.gguf`(806,058,272 B) · `themaker-0.8b-Q4_K_M.gguf`(337,040,032 B) · (오면) `themaker-en-0.8b-Q4_K_M.gguf` + 별칭 링크 `general.gguf` `themaker-ko.gguf` `themaker-en.gguf`(받은 뒤 `ln -sfn` 으로 만든다 — 링크는 HF 에 올리지 않는다, 261029). 예전 `pibo-qwen3.5-…gguf`·링크 `llm-model.gguf` 는 없다. 서버는 `/home/pi/.llama.cpp` 빌드 |
 | `object` | **`ed-s-320.onnx`** 하나(easydetect ed-s COCO, 이름·conf 는 파일 안 메타데이터, HF `.model/object/ed-s-320.onnx`). 예전 사물 인식 가중치와 그 고지 파일은 **지운다**(261026) |
 | `hand` | 그대로 |
+| `mask` | **`mask.onnx`**(261104 — 마스크 판별 `Face.mask_face`, edge-lab 과 같은 파일, HF `leeyunjai/edge-lab` 의 `mask/mask.onnx`, 4,453,442 B, sha256 `bd3624be…37010`). 없으면 `mask_face` 만 오류(처음 부를 때 올린다) |
 | `face` | `detection/face-detection-retail-0005.{xml,bin}`(261104 — 0004 대신) · `age-gender/` · `emotion/` · `landmark/face_landmarker.task` · **`reid/face-reidentification-retail-0095.{xml,bin}`**(261104 — 얼굴 구분, dlib 대신). 0005·0095 는 OMZ 2023.0 FP16 — `system/bench_models.py --fetch` 가 받는다. **코드보다 먼저 넣을 것** — 없으면 `Face()` 가 파일 이름을 담은 오류로 멈춘다. 0004 는 지워도 된다 |
 | (지움) | `classifier/`(예전 TF 가중치), `tts/assets/{.git,audio_samples,img}`, fp32 `onnx` |
 

@@ -921,7 +921,7 @@ sudo /home/pi/.pyenv/bin/python3 /home/pi/openpibo-os/system/bench_models.py --c
 | 얼굴 찾기 | **retail-0005** | **했다(261104)** — '얼굴 (261104)'. Pi 속도는 실측으로 볼 것 |
 | 얼굴 방향 | MediaPipe 계산 | 없음 |
 | 얼굴 구분 | **OpenVINO retail-0095** | **했다(261104)** — '얼굴 (261104)'. dlib 빼기. `landmark_face(_vis)` 는 dlib 68점 번호 유지, `train_face`·`recognize`·`save_db`·`load_db` 이름·인자 유지, 얼굴 정보 파일 pickle → JSON/npz(예전 파일은 다시 등록 안내). 재등록은 괜찮다(사용자) |
-| 마스크 | edge-lab `mask.onnx` | 추가(teach-lab cropTo, 얼굴 30% 여유, FP32) |
+| 마스크 | edge-lab `mask.onnx` | **했다(261104)** — `Face.mask_face`, '얼굴 (261104)' |
 | TFLite | onnxruntime | **했다(261104)** — '분류기 → 기기 요구' |
 | STT | 보류 | SenseVoice 라이선스 상업 조건 **확인 필요** |
 | LLM | 모델은 기기별 | 말투·프롬프트만 맞춤 |
@@ -949,6 +949,10 @@ sudo /home/pi/.pyenv/bin/python3 /home/pi/openpibo-os/system/bench_models.py --c
 - 얼굴 하나 처리(점 찾기 + 정렬 + 0095) x86 13.9ms · dlib 78.2ms. **Pi 4 속도·교실 아이 얼굴 인식률은 확인 필요** — 기준값 0.6 은 아이들 사진으로 다시 볼 것
 - 기능 확인 17/17(컨테이너): 같은/다른 사람, 68점 모양·순서, 얼굴 없는 상자, JSON 왕복, 예전 pickle·다른 모델 거부, 나이·감정·mesh 그대로, 추적기 이동 따라감
 - 패키지 `dlib`·`openpibo-dlib-models`(68점 약 99MB + 구분 약 22MB)를 `requirements.txt`·`venv_prune.py`·`venv_rebuild.sh`(컴파일 목록)에서 뺐다 — 새 태그를 올린 뒤 `venv_prune.py --apply`
+- **마스크 `mask_face(img, item)` (261104, 일원화 4단계)** → `{"mask": True/False, "score": %, "box"}`. edge-lab 과 같은 `/home/pi/.model/mask/mask.onnx`(임베더 + 분류기 한 개)를 onnxruntime 으로,
+  얼굴 상자 둘레 30% 를 붙여 자르고 teach-lab `crop_to`(= TM cropTo, edge-lab `MaskCls._prep` 과 같은 쌍선형) 224, 0~255 float 그대로. 종류 이름은 파일 메타데이터 `edge-lab.classes`. 처음 부를 때 올린다.
+  같은 자른 그림에서 edge-lab(OpenVINO f32)과 확률 최대 차이 1.2e-6, 답 120/120 일치. LFW 맨얼굴 60/60 no mask, 그려 넣은 마스크 60/60 mask(진짜 마스크 사진은 확인 필요).
+  **블록은 아직 없다** — 파이썬·블록 이름 맞추기(일원화 8단계) 때 같이 정한다
 - **0005·0095 파일이 `/home/pi/.model/face/` 에 먼저 있어야 한다**(IMAGE.md 모델 폴더 표, `bench_models.py --fetch`). 없으면 `Face()` 가 파일 이름을 담은 오류
 
 ## 사물 인식 (261026) — easydetect ed 모델 파일
