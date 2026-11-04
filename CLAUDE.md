@@ -926,7 +926,11 @@ sudo /home/pi/.pyenv/bin/python3 /home/pi/openpibo-os/system/bench_models.py --c
 | STT | 보류 | SenseVoice 라이선스 상업 조건 **확인 필요** |
 | LLM | 모델은 기기별 | 말투·프롬프트만 맞춤 |
 
-순서: ① 실측(`system/bench_models.py`) ② TFLite → ONNX ③ 얼굴 정리 ④ 마스크 ⑤ 모델 받기 인증(분류기 `POST /api/models` · IDE `POST /upload`, 화면 번호 짝 맞추기) ⑥ 같은 점수 점검 도구.
+순서: ① 실측(`system/bench_models.py`) ② TFLite → ONNX ③ 얼굴 정리 ④ 마스크 ⑤ 모델 받기 인증 ⑥ 같은 점수 점검 도구 ⑦ edge-lab 가르치기 전환.
+- **⑤ 인증은 넣지 않는다(261104, 사용자).** 분류기 `POST /api/models` 는 지금처럼 인증 없이 받는다 — edge-lab 은 사설 IP 로봇에만 보낸다
+- **⑦ 했다(261104, edge-lab).** edge-lab 이 로봇과 같은 `teachlab`(같은 코드·같은 모델 파일)으로 특징을 뽑고, 같은 머리(Dense 64 → 0.2 → softmax, 40회·16)로 배우고,
+  로봇 형식(`project.json`·`classifier.json/bin`·`labels.txt`·`samples.json`)으로 저장한 뒤 [로봇으로 보내기] 가 이 `POST /api/models`(50010)로 보낸다(`project.app = "edge-lab"`).
+  확인(컨테이너): 같은 사진에서 특징 차이 1.5e-6 이하, 보낸 모델을 `CustomClassifier` 로 돌린 답·확률이 edge-lab 과 17/17 같음. **`/api/models` 의 받는 형식을 바꾸면 edge-lab `train_routes.robot_send` 도 같이 바꿀 것**
 파이썬·블록 API 는 openpibo 를 기준으로 하는 것을 권장 — 최종 결정은 사용자.
 
 ## 얼굴 (261104) — `openpibo/vision_face.py`, dlib 없음
