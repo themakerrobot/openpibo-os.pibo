@@ -1,6 +1,6 @@
 import subprocess
 import openpibo_models
-# 카메라·얼굴·인식(vision_camera / vision_face / vision_detect)은 무거워서(dlib·OpenVINO·MediaPipe)
+# 카메라·얼굴·인식(vision_camera / vision_face / vision_detect)은 무거워서(OpenVINO·MediaPipe)
 # 여기서 불러오지 않는다. 로봇 연결(모터·소리)을 먼저 알리고 vision_start 가 이어서 불러온다(260929)
 from openpibo.audio import Audio
 from openpibo.motion import Motion
@@ -47,7 +47,7 @@ class Pibo:
     self.vision_sleep = True
 
     # 준비 순서(260929): 모터·소리 → [로봇 연결됨] → 카메라 → 사물·손 인식 → 얼굴 인식.
-    # 전엔 얼굴(dlib 모델 약 120MB·OpenVINO 3개 컴파일·MediaPipe)까지 다 올린 뒤에야 연결됨이 떠서,
+    # 전엔 얼굴(당시 dlib 모델 약 120MB·OpenVINO 3개 컴파일·MediaPipe)까지 다 올린 뒤에야 연결됨이 떠서,
     # 동작 탭만 쓸 사람도 한참 기다렸다. 카메라 쪽은 vision_state 로 단계를 알린다(도구 [카메라] 탭에 표시)
     self.cam = None
     self.fac = None

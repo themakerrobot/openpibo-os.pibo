@@ -900,7 +900,7 @@ sudo /home/pi/.pyenv/bin/python3 /home/pi/openpibo-os/system/bench_models.py --c
 ### `/home/pi/.model` 과 `requirements.txt`
 
 - `/home/pi/.model` 은 리포 밖(이미지)이다. 구성과 파일별 sha256 은 그 폴더의 `VERSION`. 코드가 읽는 것: `tts/assets/{onnx,voice_styles}`,
-  `stt/`, `llm/{general,themaker-ko,themaker-en}.gguf`(별칭 링크, 261029), `object/ed-s-320.onnx`, `hand/*.task`, `face/{detection,age-gender,emotion,landmark}`.
+  `stt/`, `llm/{general,themaker-ko,themaker-en}.gguf`(별칭 링크, 261029), `object/ed-s-320.onnx`, `hand/*.task`, `face/{detection,age-gender,emotion,landmark,reid}`(261104 — 0005·0095, '얼굴 (261104)').
   `classifier/`(예전 TF 가중치)는 260930 에 지웠다(아무도 안 씀)
 - 모델은 `leeyunjai/themaker`(HF)에서 손으로 받는다. **`git clone` 말고 `huggingface-cli download`** — clone 은 `.git/lfs` 에 한 벌을 더 남긴다(이번에 약 400MB)
 - `requirements.txt`(리포 맨 위): 리포 코드가 직접 import 하는 패키지만, 기기 버전으로. `test/requirements.txt` 는 260923 전체 스냅숏(TF·torch 포함)
@@ -918,9 +918,9 @@ sudo /home/pi/.pyenv/bin/python3 /home/pi/openpibo-os/system/bench_models.py --c
 | 분류 — 사진 특징 · 손 · 몸 · 표정 · 저장 파일 | **로봇(teach-lab) 방식** | 없음 — edge-lab 이 바꾼다 |
 | 손동작 8종 · 나이·성별·감정 · TTS | 그대로 | 없음 |
 | 자세 보기 | 결과 모양만 COCO 17점 | 모델은 기기별(로봇 MoveNet) |
-| 얼굴 찾기 | **retail-0005** | 0004 → 0005 (속도 실측 뒤) |
+| 얼굴 찾기 | **retail-0005** | **했다(261104)** — '얼굴 (261104)'. Pi 속도는 실측으로 볼 것 |
 | 얼굴 방향 | MediaPipe 계산 | 없음 |
-| 얼굴 구분 | **OpenVINO retail-0095** | dlib 빼기. `landmark_face(_vis)` 는 dlib 68점 번호 유지, `train_face`·`recognize`·`save_db`·`load_db` 이름·인자 유지, 얼굴 정보 파일 pickle → JSON/npz(예전 파일은 다시 등록 안내). 재등록은 괜찮다(사용자) |
+| 얼굴 구분 | **OpenVINO retail-0095** | **했다(261104)** — '얼굴 (261104)'. dlib 빼기. `landmark_face(_vis)` 는 dlib 68점 번호 유지, `train_face`·`recognize`·`save_db`·`load_db` 이름·인자 유지, 얼굴 정보 파일 pickle → JSON/npz(예전 파일은 다시 등록 안내). 재등록은 괜찮다(사용자) |
 | 마스크 | edge-lab `mask.onnx` | 추가(teach-lab cropTo, 얼굴 30% 여유, FP32) |
 | TFLite | onnxruntime | **했다(261104)** — '분류기 → 기기 요구' |
 | STT | 보류 | SenseVoice 라이선스 상업 조건 **확인 필요** |
@@ -928,6 +928,28 @@ sudo /home/pi/.pyenv/bin/python3 /home/pi/openpibo-os/system/bench_models.py --c
 
 순서: ① 실측(`system/bench_models.py`) ② TFLite → ONNX ③ 얼굴 정리 ④ 마스크 ⑤ 모델 받기 인증(분류기 `POST /api/models` · IDE `POST /upload`, 화면 번호 짝 맞추기) ⑥ 같은 점수 점검 도구.
 파이썬·블록 API 는 openpibo 를 기준으로 하는 것을 권장 — 최종 결정은 사용자.
+
+## 얼굴 (261104) — `openpibo/vision_face.py`, dlib 없음
+
+일원화 3단계. **파이보·PiBrain 같은 파일**(차이는 `detect_mesh_vis` 글자 위치 한 줄 — 파이보 y-40, PiBrain y-30).
+
+| 기능 | 모델 | 바뀐 것 |
+|---|---|---|
+| 얼굴 찾기 `detect_face` | OMZ face-detection-retail-**0005** | 0004 → 0005. 입출력 모양이 같아 코드는 경로만 |
+| 얼굴 점 `landmark_face` | MediaPipe 얼굴 점 478개에서 **dlib 68점 번호로 골라** 돌려준다(`MP_TO_DLIB68`) | 학생 코드의 점 번호(예: 36·45 눈꼬리, 8 턱 끝)가 그대로. 상자 둘레 25% 넓혀 잘라 찾는다. 못 찾으면 빈 배열(전엔 dlib 이 늘 68점) |
+| 얼굴 구분 `train_face` `recognize` | OMZ face-reidentification-retail-**0095**(숫자 256개, L2) | MediaPipe 점 5개(두 눈 가운데·코끝·입 끝 둘)로 128x128 정렬(OMZ 기준점, 닮음 변환). 점을 못 찾으면 상자만 잘라 넣는다 |
+| 오차도 `score` | **코사인 거리(0~2)**, 기본 `face.threshold = 0.6` | 전엔 dlib 유클리드·0.4. 낮을수록 비슷한 건 같다 |
+| 얼굴 정보 파일 `save_db` `load_db` | **JSON**(`format: openpibo-facedb`, `model: face-reidentification-retail-0095`) | pickle 을 열지 않는다. 예전 파일·다른 모델 파일은 '얼굴을 다시 등록해 주세요' 오류. 파일 이름은 넘긴 그대로(확장자 안 붙임) |
+| 사물 따라가기 `object_tracker_init` `track_object` | OpenCV **CSRT**(opencv-contrib) | 전엔 `dlib.correlation_tracker`. 놓치면 마지막 상자를 그대로 돌려준다 |
+
+- 이름·인자는 그대로다(블록·`examples/vision_face1.json`·`vision_face2.json`). `get_db()` 의 숫자만 128 → 256개
+- **LFW 공개 사진(성인) 1000쌍으로 비교(261104, 컨테이너 x86)**: 0095 최고 정확도 99.5%(거리 0.676), 0.6 에서 다른 사람 오인 0% · 같은 사람 놓침 2.2%.
+  dlib(예전 코드와 같은 68점 → 인코딩)은 최고 97.8%(0.594)인데 **예전 기준 0.4 에서는 같은 사람을 71.6% 놓쳤다**(정확도 64.2%).
+  68점 번호 맞추기는 dlib 68점과의 평균 차이가 두 눈꼬리 거리의 5.8%(중간값, p90 10.6% — 턱선은 두 모델의 정의가 달라 차이가 큰 쪽)
+- 얼굴 하나 처리(점 찾기 + 정렬 + 0095) x86 13.9ms · dlib 78.2ms. **Pi 4 속도·교실 아이 얼굴 인식률은 확인 필요** — 기준값 0.6 은 아이들 사진으로 다시 볼 것
+- 기능 확인 17/17(컨테이너): 같은/다른 사람, 68점 모양·순서, 얼굴 없는 상자, JSON 왕복, 예전 pickle·다른 모델 거부, 나이·감정·mesh 그대로, 추적기 이동 따라감
+- 패키지 `dlib`·`openpibo-dlib-models`(68점 약 99MB + 구분 약 22MB)를 `requirements.txt`·`venv_prune.py`·`venv_rebuild.sh`(컴파일 목록)에서 뺐다 — 새 태그를 올린 뒤 `venv_prune.py --apply`
+- **0005·0095 파일이 `/home/pi/.model/face/` 에 먼저 있어야 한다**(IMAGE.md 모델 폴더 표, `bench_models.py --fetch`). 없으면 `Face()` 가 파일 이름을 담은 오류
 
 ## 사물 인식 (261026) — easydetect ed 모델 파일
 
