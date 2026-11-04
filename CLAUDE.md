@@ -871,6 +871,24 @@ TensorFlow·torch 걷어내기 순서와 지울 목록은 IMAGE.md. 파이보에
 - 인식 5.2초 음성 1.33초, 합성 5.2초 문장 6.05초(int8). 대화 한 바퀴는 합성이 가장 느린 고리다 — 줄이려면 문장 단위로 쪼개 첫 문장부터 말하기
 - 실제 대화 한 바퀴(녹음 → STT → LLM 생성 → TTS → 재생)에서의 시간·스왑은 **아직 안 쟀다**
 
+### 모델 실측 스크립트 (261104) — `system/bench_models.py`
+
+로봇 연동 일원화(아래 '로봇 연동 일원화') 1단계. 모델마다 새 파이썬 프로세스로 올림 시간·첫 회·중간·p90(ms)·RSS(기본·최고)를 재고
+`/home/pi/bench_<호스트>_<날짜시각>.json` 으로 남긴다. **파이보·PiBrain 같은 파일**(고치면 같이).
+
+```bash
+sudo /home/pi/.pyenv/bin/python3 /home/pi/openpibo-os/system/bench_models.py --fetch   # 0005·0095 받고 모델별
+sudo /home/pi/.pyenv/bin/python3 /home/pi/openpibo-os/system/bench_models.py --combo   # LLM+TTS+STT+인식 함께
+```
+
+- 대상: ed-s-320 · mobilenet_v3_small(tflite, onnx 는 파일이 생기면) · MediaPipe 손(두 손)·얼굴·자세 lite·손동작 · MoveNet · OMZ 0004·0005·0013·0003·0095 · dlib 68점+resnet · mask.onnx(파일이 생기면)
+- 입력: `--image` 가 없으면 카메라 한 장. 얼굴은 0004 로 찾아 30% 여유로 잘라 얼굴 모델에 넣는다. 얼굴이 없으면 결과에 '얼굴 없음'
+- `--fetch` 는 OMZ open_model_zoo 2023.0 FP16 을 `.model/face/detection/`·`.model/face/reid/` 로 받는다(이미지 작업 — 받으면 `.model/VERSION` 도 다시)
+- `--combo` 는 **서비스를 끈다**(tools·classify·llama-server@*), `llama-server@<--llm>`(기본 general) 을 띄우고 끝나면 끈다. 0.2초마다 남은 메모리 최저·스왑 최고·llama RSS 최고
+- 측정 전후 온도·`vcgencmd get_throttled` 를 적는다. 저전압 비트가 서면 값을 버리고 전원부터 볼 것(파이보는 서보가 같은 전원 — 서보를 움직이지 않은 상태로 잴 것)
+- 확인(컨테이너 x86, 기기와 같은 onnxruntime 1.20.1·openvino 2024.5.0·mediapipe 0.10.18·tflite-runtime 2.14.0): 모델별 12개 돌고 없는 파일은 건너뜀, `--fetch` 받기 확인.
+  dlib·`--combo` 는 컨테이너에 llama·TTS·STT 가 없어 **오류 경로만** 봤다. **Pi 4 실측 값은 아직 없다** — 받으면 이 절에 표로 적을 것
+
 ### `/home/pi/.model` 과 `requirements.txt`
 
 - `/home/pi/.model` 은 리포 밖(이미지)이다. 구성과 파일별 sha256 은 그 폴더의 `VERSION`. 코드가 읽는 것: `tts/assets/{onnx,voice_styles}`,
@@ -881,6 +899,27 @@ TensorFlow·torch 걷어내기 순서와 지울 목록은 IMAGE.md. 파이보에
 - **안 쓰는 패키지 걷어내기는 `system/venv_prune.py`(260930).** 기기에서 돌리면 `ROOTS`+`requirements.txt` 와 그 의존만 남기고 나머지를 목록으로 보여 주고,
   `--apply` 로 지운다(백업 목록·pip check·import 확인까지). 260930 두 기기 site-packages 5.5~5.6GB 의 대부분이 TF·torch·MeloTTS 잔재다.
   mediapipe 0.10.18 은 jax 를 불러오지 않는다(지우고 확인함, `--jax`). 패키지를 새로 쓰게 되면 `ROOTS` 와 `requirements.txt` 둘 다에 넣을 것. 자세한 건 IMAGE.md
+
+## 로봇 연동 일원화 (261104 착수) — edge-lab(PC) · 파이보 · PiBrain
+
+**같은 기능은 같은 파일 형식 · 같은 특징 계산 · 같은 결과 모양, 모델 크기만 기기별**(PC 크게, 로봇 작게). PC 에서 가르친 AI 가 로봇에서 그대로 돌게 한다.
+
+| 기능 | 기준 | 로봇에서 할 일 |
+|---|---|---|
+| 사물 인식 · 학습 | easydetect `.onnx` 하나 · easydetect-lab | 없음(이미 같다). 로봇 ed-s-320, PC ed-m-640 |
+| 분류 — 사진 특징 · 손 · 몸 · 표정 · 저장 파일 | **로봇(teach-lab) 방식** | 없음 — edge-lab 이 바꾼다 |
+| 손동작 8종 · 나이·성별·감정 · TTS | 그대로 | 없음 |
+| 자세 보기 | 결과 모양만 COCO 17점 | 모델은 기기별(로봇 MoveNet) |
+| 얼굴 찾기 | **retail-0005** | 0004 → 0005 (속도 실측 뒤) |
+| 얼굴 방향 | MediaPipe 계산 | 없음 |
+| 얼굴 구분 | **OpenVINO retail-0095** | dlib 빼기. `landmark_face(_vis)` 는 dlib 68점 번호 유지, `train_face`·`recognize`·`save_db`·`load_db` 이름·인자 유지, 얼굴 정보 파일 pickle → JSON/npz(예전 파일은 다시 등록 안내). 재등록은 괜찮다(사용자) |
+| 마스크 | edge-lab `mask.onnx` | 추가(teach-lab cropTo, 얼굴 30% 여유, FP32) |
+| TFLite | onnxruntime | 사진 임베더·MoveNet 을 ONNX 로, 숫자가 브라우저와 같은지 본 뒤 `load_interpreter`·tflite-runtime 빼기 |
+| STT | 보류 | SenseVoice 라이선스 상업 조건 **확인 필요** |
+| LLM | 모델은 기기별 | 말투·프롬프트만 맞춤 |
+
+순서: ① 실측(`system/bench_models.py`) ② TFLite → ONNX ③ 얼굴 정리 ④ 마스크 ⑤ 모델 받기 인증(분류기 `POST /api/models` · IDE `POST /upload`, 화면 번호 짝 맞추기) ⑥ 같은 점수 점검 도구.
+파이썬·블록 API 는 openpibo 를 기준으로 하는 것을 권장 — 최종 결정은 사용자.
 
 ## 사물 인식 (261026) — easydetect ed 모델 파일
 
