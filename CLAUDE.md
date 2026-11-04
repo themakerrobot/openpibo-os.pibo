@@ -826,12 +826,13 @@ vendor 파일을 갈아 끼울 때 이 동작이 그대로인지 확인할 것.
 기기에 있는 `mediapipe` 0.10.18 · `onnxruntime` 1.20.1 · numpy 1.26.4 로 돈다. 260924 에 tflite-runtime 2.14.0 으로 브라우저가 저장한 모델을 돌려
 답 8/8 일치를 확인했다.
 
-**TFLite 를 뺐다(261104, 일원화 2단계).** 사진 특징(mobilenet_v3_small)과 MoveNet 을 tf2onnx 1.17(opset 17)로 ONNX 로 바꿔 리포에 둔다 —
+**분류기·MoveNet 에서 TFLite 를 뺐다(261104, 일원화 2단계).** 사진 특징(mobilenet_v3_small)과 MoveNet 을 tf2onnx 1.17(opset 17)로 ONNX 로 바꿔 리포에 둔다 —
 `openpibo/modules/teachlab/mobilenet_v3_small_embedder.onnx`(4.2MB) · `openpibo/modules/pose/movenet_lightning.onnx`(9.4MB, 가중치 fp32 라 tflite 의 두 배).
 같은 입력 40장에서 TFLite(tflite-runtime 2.14.0)와 최대 차이 임베더 2e-5 · MoveNet 2e-6, 코사인 1.000000. 브라우저는 그대로 `.tflite` 를 쓴다(MediaPipe wasm).
 - `ImageEmbedder` 는 project.json·모델 폴더에 적힌 `mobilenet_v3_small_embedder.tflite` 이름을 보고 같은 모델의 ONNX 를 쓴다(예전 저장 모델 그대로 열림). 다른 임베더 이름은 오류
-- `Movenet()` 은 인자가 없거나 `.tflite` 면 리포 ONNX 를 쓴다. `load_interpreter()`·`TeachableMachine`(블록은 이미 꺼져 있던 TFLite 전용 클래스)을 지웠다
-- 패키지 `tflite-runtime`·`openpibo-detect-models`(movenet tflite 하나 때문에 있던 약 80MB)를 `requirements.txt`·`venv_prune.py` 에서 뺐다 — 새 태그를 올린 뒤 `venv_prune.py --apply` 로 지운다
+- `Movenet()` 은 인자가 없거나 `.tflite` 면 리포 ONNX 를 쓴다(예전처럼 경로를 넘겨도 된다)
+- **`TeachableMachine`·`load_interpreter()` 는 그대로 둔다**(파이썬 API 호환 — 사용자가 받은 `.tflite` 를 돌리므로 TFLite 런타임을 부를 때만 찾는다). 그래서 `tflite-runtime` 은 `requirements.txt` 에 남기고,
+  `openpibo-detect-models`(movenet tflite 하나 때문에 있던 약 80MB)만 뺐다 — 새 태그를 올린 뒤 `venv_prune.py --apply` 로 지운다
 - edge-lab(PC)도 같은 임베더 ONNX 를 OpenVINO 로 읽는다(일원화 7단계)
 - **파이보 실기기(ARM onnxruntime)로는 아직 안 봤다** — `system/bench_models.py --only embedder,movenet`
 TensorFlow·torch 걷어내기 순서와 지울 목록은 IMAGE.md. 파이보에서 실제 추론 속도·메모리는 아직 못 쟀다.
@@ -935,7 +936,7 @@ sudo /home/pi/.pyenv/bin/python3 /home/pi/openpibo-os/system/bench_models.py --c
 - **⑦ 했다(261104, edge-lab).** edge-lab 이 로봇과 같은 `teachlab`(같은 코드·같은 모델 파일)으로 특징을 뽑고, 같은 머리(Dense 64 → 0.2 → softmax, 40회·16)로 배우고,
   로봇 형식(`project.json`·`classifier.json/bin`·`labels.txt`·`samples.json`)으로 저장한 뒤 [로봇으로 보내기] 가 이 `POST /api/models`(50010)로 보낸다(`project.app = "edge-lab"`).
   확인(컨테이너): 같은 사진에서 특징 차이 1.5e-6 이하, 보낸 모델을 `CustomClassifier` 로 돌린 답·확률이 edge-lab 과 17/17 같음. **`/api/models` 의 받는 형식을 바꾸면 edge-lab `train_routes.robot_send` 도 같이 바꿀 것**
-파이썬·블록 API 는 openpibo 를 기준으로 하는 것을 권장 — 최종 결정은 사용자.
+**파이썬 API·블록은 그대로 호환되게, 바꾸는 건 함수 안에서만(261104, 사용자).** 이름·인자·돌려주는 모양·기준값을 바꾸지 말 것 — 새 기능은 함수·블록을 더하는 것으로(예: `Face.mask_face`).
 
 ## 얼굴 (261104) — `openpibo/vision_face.py`, dlib 없음
 
@@ -944,17 +945,17 @@ sudo /home/pi/.pyenv/bin/python3 /home/pi/openpibo-os/system/bench_models.py --c
 | 기능 | 모델 | 바뀐 것 |
 |---|---|---|
 | 얼굴 찾기 `detect_face` | OMZ face-detection-retail-**0005** | 0004 → 0005. 입출력 모양이 같아 코드는 경로만 |
-| 얼굴 점 `landmark_face` | MediaPipe 얼굴 점 478개에서 **dlib 68점 번호로 골라** 돌려준다(`MP_TO_DLIB68`) | 학생 코드의 점 번호(예: 36·45 눈꼬리, 8 턱 끝)가 그대로. 상자 둘레 25% 넓혀 잘라 찾는다. 못 찾으면 빈 배열(전엔 dlib 이 늘 68점) |
+| 얼굴 점 `landmark_face` | MediaPipe 얼굴 점 478개에서 **dlib 68점 번호로 골라** 돌려준다(`MP_TO_DLIB68`) | 학생 코드의 점 번호(예: 36·45 눈꼬리, 8 턱 끝)가 그대로. 상자 둘레 25% 넓혀 잘라 찾는다. 못 찾아도 예전(dlib)처럼 늘 68점 — 상자에 평균 얼굴 점(`MEAN68`, LFW 300장 평균)을 맞춰 돌려준다 |
 | 얼굴 구분 `train_face` `recognize` | OMZ face-reidentification-retail-**0095**(숫자 256개, L2) | MediaPipe 점 5개(두 눈 가운데·코끝·입 끝 둘)로 128x128 정렬(OMZ 기준점, 닮음 변환). 점을 못 찾으면 상자만 잘라 넣는다 |
-| 오차도 `score` | **코사인 거리(0~2)**, 기본 `face.threshold = 0.6` | 전엔 dlib 유클리드·0.4. 낮을수록 비슷한 건 같다 |
+| 오차도 `score` | 코사인 거리 × 2/3(`SCORE_SCALE`) — **기본 `face.threshold = 0.4` 그대로**(코사인 0.6 이 0.4) | 예전 dlib 유클리드 크기에 맞춰 학생 코드의 `score < 0.4` 같은 비교가 그대로 통한다. 낮을수록 비슷한 건 같다 |
 | 얼굴 정보 파일 `save_db` `load_db` | **JSON**(`format: openpibo-facedb`, `model: face-reidentification-retail-0095`) | pickle 을 열지 않는다. 예전 파일·다른 모델 파일은 '얼굴을 다시 등록해 주세요' 오류. 파일 이름은 넘긴 그대로(확장자 안 붙임) |
 | 사물 따라가기 `object_tracker_init` `track_object` | OpenCV **CSRT**(opencv-contrib) | 전엔 `dlib.correlation_tracker`. 놓치면 마지막 상자를 그대로 돌려준다 |
 
-- 이름·인자는 그대로다(블록·`examples/vision_face1.json`·`vision_face2.json`). `get_db()` 의 숫자만 128 → 256개
+- **파이썬 API·블록 호환(261104, 사용자): 이름·인자·돌려주는 모양·기준값을 바꾸지 않고 함수 안에서만 바꾼다.** 블록·`examples/vision_face1.json`·`vision_face2.json` 그대로. 달라진 건 `get_db()` 의 숫자 개수(128 → 256)와 얼굴 정보 파일 형식(다시 등록 — 사용자 확인)뿐
 - **LFW 공개 사진(성인) 1000쌍으로 비교(261104, 컨테이너 x86)**: 0095 최고 정확도 99.5%(거리 0.676), 0.6 에서 다른 사람 오인 0% · 같은 사람 놓침 2.2%.
   dlib(예전 코드와 같은 68점 → 인코딩)은 최고 97.8%(0.594)인데 **예전 기준 0.4 에서는 같은 사람을 71.6% 놓쳤다**(정확도 64.2%).
   68점 번호 맞추기는 dlib 68점과의 평균 차이가 두 눈꼬리 거리의 5.8%(중간값, p90 10.6% — 턱선은 두 모델의 정의가 달라 차이가 큰 쪽)
-- 얼굴 하나 처리(점 찾기 + 정렬 + 0095) x86 13.9ms · dlib 78.2ms. **Pi 4 속도·교실 아이 얼굴 인식률은 확인 필요** — 기준값 0.6 은 아이들 사진으로 다시 볼 것
+- 얼굴 하나 처리(점 찾기 + 정렬 + 0095) x86 13.9ms · dlib 78.2ms. **Pi 4 속도·교실 아이 얼굴 인식률은 확인 필요** — 기준값(코사인 0.6 = 오차도 0.4)은 아이들 사진으로 다시 볼 것
 - 기능 확인 17/17(컨테이너): 같은/다른 사람, 68점 모양·순서, 얼굴 없는 상자, JSON 왕복, 예전 pickle·다른 모델 거부, 나이·감정·mesh 그대로, 추적기 이동 따라감
 - 패키지 `dlib`·`openpibo-dlib-models`(68점 약 99MB + 구분 약 22MB)를 `requirements.txt`·`venv_prune.py`·`venv_rebuild.sh`(컴파일 목록)에서 뺐다 — 새 태그를 올린 뒤 `venv_prune.py --apply`
 - **마스크 `mask_face(img, item)` (261104, 일원화 4단계)** → `{"mask": True/False, "score": %, "box"}`. edge-lab 과 같은 `/home/pi/.model/mask/mask.onnx`(임베더 + 분류기 한 개)를 onnxruntime 으로,
