@@ -46,8 +46,8 @@ pyenv 를 새로 만들면 이 단계가 통째로 빠지니, 처음부터 이�
 
 ```bash
 PY=/home/pi/.pyenv/bin/python3
-$PY -c "from openpibo.modules.teachlab import load_interpreter; print(load_interpreter())"
-#   <class 'tflite_runtime.interpreter.Interpreter'>  (tensorflow 가 나오면 멈출 것)
+$PY -c "from openpibo.modules.teachlab.embedder import ImageEmbedder; from openpibo.modules.pose.movenet import Movenet; ImageEmbedder('mobilenet_v3_small_embedder.tflite'); Movenet(); print('onnx ok')"
+#   onnx ok  (분류기 사진 특징·MoveNet 은 261104 부터 onnxruntime — TFLite 런타임을 안 쓴다)
 $PY -c "import numpy as np; from openpibo.vision_detect import Detect; print(Detect().detect_object(np.zeros((480,640,3),'uint8')))"
 #   []
 ```
@@ -71,7 +71,7 @@ sudo $PY /home/pi/openpibo-os/system/venv_prune.py | head -40
 
 # 2) 지운다. 지우기 전 목록을 /home/pi/venv_backup_<날짜>.txt 로 남기고, 지운 뒤 pip check 와 import 확인을 돌린다
 sudo $PY /home/pi/openpibo-os/system/venv_prune.py --apply
-#    import 확인 끝줄이 'N/N 모듈 import 됨 · 분류기 추론기: tflite_runtime.interpreter' 여야 한다
+#    import 확인 끝줄이 'N/N 모듈 import 됨 · 분류기 사진 특징·MoveNet: onnx ok' 여야 한다
 
 # 3) 서비스 다시 켜고 IDE·도구·분류기를 한 번씩 열어 본다
 sudo systemctl restart ide.service booting.service
@@ -89,11 +89,11 @@ sudo systemctl restart ide.service booting.service
 알아 둘 것:
 - **가상환경 밖은 건드리지 않는다.** `/home/pi/.pyenv` 는 시스템 패키지를 보는 가상환경이라 `gpiozero` `lgpio` `spidev` `python-apt` 등
   apt 패키지가 목록에 같이 보이지만(크기 0) 지울 대상에서 뺀다
-- 남기는 것 중 눈여겨볼 것: `lxml`(뉴스 블록), `tflite-runtime`(분류기·movenet — 없으면 TensorFlow 를 찾는다), `openvino`(얼굴 분석),
+- 남기는 것 중 눈여겨볼 것: `lxml`(뉴스 블록), `openvino`(얼굴 분석),
   `av`(picamera2 가 요구), `matplotlib`(mediapipe 가 실제로 불러온다), `sympy`(onnxruntime 이 요구), `uvicorn[standard]`(uvloop·httptools·websockets —
   socket.io 웹소켓)
 - `openpibo-face-models`(약 90MB)는 **지운다.** 얼굴 모델은 `/home/pi/.model/face` 에서 읽는다(`vision_face.py`). 이름은 예전 `setup.py` 에만 남아 있다
-- `openpibo-detect-models`(약 80MB)는 `movenet_lightning.tflite` 하나 때문에 남는다. 그 파일을 `/home/pi/.model` 로 옮기면 뺄 수 있다(아직 안 함)
+- **`tflite-runtime`·`openpibo-detect-models`(약 80MB)는 261104 부터 지운다.** 분류기 사진 특징·MoveNet 을 리포 안의 ONNX(`openpibo/modules/teachlab/`·`pose/`)로 onnxruntime 에서 돌린다 — 새 태그를 올린 **뒤에** 돌릴 것
 - 새 기능이 패키지를 쓰게 되면 스크립트의 `ROOTS` 와 `requirements.txt` 에 **둘 다** 넣을 것(파이보·PiBrain 같은 파일)
 
 **처음부터 다시 만들기(선택) — `system/venv_rebuild.sh`.** 정리 대신 가상환경을 새로 만든다. `requirements.txt` 만으로 다시 만들 수 있는지

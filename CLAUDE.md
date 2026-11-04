@@ -778,7 +778,7 @@ teach-lab 과 같은 기능(이미지·손·얼굴·포즈 가르치기)을 파�
 | 카메라 | 파이보 → 태블릿 | socket.io `camera_image`, 320×240 JPEG |
 | 특징 뽑기·학습 | 태블릿 브라우저 | MediaPipe wasm(`static/vendor/tasks-vision`) + TF.js 작은 MLP |
 | 저장 | 파이보 | `POST /api/models` → `/home/pi/mymodel/<이름>/` |
-| 추론 | 파이보 | `openpibo.vision_classify.CustomClassifier` — LiteRT(이미지) / MediaPipe(손·얼굴·포즈) + numpy |
+| 추론 | 파이보 | `openpibo.vision_classify.CustomClassifier` — onnxruntime(이미지, 261104) / MediaPipe(손·얼굴·포즈) + numpy |
 
 모델 폴더 하나에 `project.json` `classifier.json` `classifier.bin` `labels.txt` `samples.json`
 과 특징 모델 파일(`.tflite`/`.task`)이 들어간다. teach-lab 파이썬 내보내기와 같은 형식이라
@@ -798,7 +798,7 @@ teach-lab 과 같은 기능(이미지·손·얼굴·포즈 가르치기)을 파�
 ### 가져온 코드 — 두 곳을 함께 고칠 것
 
 - `classifier/static/tl/` ← teach-lab `lib/` (74f421a). 바꾼 곳은 파일 첫 줄에 적었다(경로, `mirror:false`)
-- `openpibo/modules/teachlab/` ← teach-lab `python/teachlab/`. 바꾼 곳은 `load_interpreter()` 하나
+- `openpibo/modules/teachlab/` ← teach-lab `python/teachlab/`. 바꾼 곳은 `embedder.py` 하나 — TFLite 대신 onnxruntime(261104, 아래 '기기 요구')
 - 브라우저와 파이썬이 **같은 숫자**를 내야 한다. 정규화 식(`features.js` ↔ `landmarks.py`),
   자르기(`cropTo` ↔ `crop_to`)를 한쪽만 고치면 학습한 모델이 파이보에서 엉뚱한 답을 낸다
 - 로봇 카메라는 거울이 아니다. 어느 소스도 좌우를 뒤집지 않는다
@@ -823,9 +823,17 @@ vendor 파일을 갈아 끼울 때 이 동작이 그대로인지 확인할 것.
 
 ### 기기 요구
 
-기기(260923 pip 목록)에 이미 있는 것으로 돈다: `tflite-runtime` 2.14.0 · `mediapipe` 0.10.18 ·
-`onnxruntime` 1.20.1 · numpy 1.26.4. **이 버전 그대로** 컨테이너에서 브라우저가 저장한 모델을 돌려
-답 8/8 일치를 확인했다. `load_interpreter()` 는 `tflite_runtime` 을 고른다(LiteRT 설치 불필요).
+기기에 있는 `mediapipe` 0.10.18 · `onnxruntime` 1.20.1 · numpy 1.26.4 로 돈다. 260924 에 tflite-runtime 2.14.0 으로 브라우저가 저장한 모델을 돌려
+답 8/8 일치를 확인했다.
+
+**TFLite 를 뺐다(261104, 일원화 2단계).** 사진 특징(mobilenet_v3_small)과 MoveNet 을 tf2onnx 1.17(opset 17)로 ONNX 로 바꿔 리포에 둔다 —
+`openpibo/modules/teachlab/mobilenet_v3_small_embedder.onnx`(4.2MB) · `openpibo/modules/pose/movenet_lightning.onnx`(9.4MB, 가중치 fp32 라 tflite 의 두 배).
+같은 입력 40장에서 TFLite(tflite-runtime 2.14.0)와 최대 차이 임베더 2e-5 · MoveNet 2e-6, 코사인 1.000000. 브라우저는 그대로 `.tflite` 를 쓴다(MediaPipe wasm).
+- `ImageEmbedder` 는 project.json·모델 폴더에 적힌 `mobilenet_v3_small_embedder.tflite` 이름을 보고 같은 모델의 ONNX 를 쓴다(예전 저장 모델 그대로 열림). 다른 임베더 이름은 오류
+- `Movenet()` 은 인자가 없거나 `.tflite` 면 리포 ONNX 를 쓴다. `load_interpreter()`·`TeachableMachine`(블록은 이미 꺼져 있던 TFLite 전용 클래스)을 지웠다
+- 패키지 `tflite-runtime`·`openpibo-detect-models`(movenet tflite 하나 때문에 있던 약 80MB)를 `requirements.txt`·`venv_prune.py` 에서 뺐다 — 새 태그를 올린 뒤 `venv_prune.py --apply` 로 지운다
+- edge-lab(PC)도 같은 임베더 ONNX 를 OpenVINO 로 읽는다(일원화 7단계)
+- **파이보 실기기(ARM onnxruntime)로는 아직 안 봤다** — `system/bench_models.py --only embedder,movenet`
 TensorFlow·torch 걷어내기 순서와 지울 목록은 IMAGE.md. 파이보에서 실제 추론 속도·메모리는 아직 못 쟀다.
 포즈는 한 화면에 여러 사람이 있으면 브라우저와 파이썬이 다른 사람을 잡을 수 있다(특징 코사인이 0.3 까지 떨어진 적 있음).
 
@@ -881,7 +889,7 @@ sudo /home/pi/.pyenv/bin/python3 /home/pi/openpibo-os/system/bench_models.py --f
 sudo /home/pi/.pyenv/bin/python3 /home/pi/openpibo-os/system/bench_models.py --combo   # LLM+TTS+STT+인식 함께
 ```
 
-- 대상: ed-s-320 · mobilenet_v3_small(tflite, onnx 는 파일이 생기면) · MediaPipe 손(두 손)·얼굴·자세 lite·손동작 · MoveNet · OMZ 0004·0005·0013·0003·0095 · dlib 68점+resnet · mask.onnx(파일이 생기면)
+- 대상: ed-s-320 · mobilenet_v3_small(onnx) · MediaPipe 손(두 손)·얼굴·자세 lite·손동작 · MoveNet · OMZ 0004·0005·0013·0003·0095 · dlib 68점+resnet · mask.onnx(파일이 생기면)
 - 입력: `--image` 가 없으면 카메라 한 장. 얼굴은 0004 로 찾아 30% 여유로 잘라 얼굴 모델에 넣는다. 얼굴이 없으면 결과에 '얼굴 없음'
 - `--fetch` 는 OMZ open_model_zoo 2023.0 FP16 을 `.model/face/detection/`·`.model/face/reid/` 로 받는다(이미지 작업 — 받으면 `.model/VERSION` 도 다시)
 - `--combo` 는 **서비스를 끈다**(tools·classify·llama-server@*), `llama-server@<--llm>`(기본 general) 을 띄우고 끝나면 끈다. 0.2초마다 남은 메모리 최저·스왑 최고·llama RSS 최고
@@ -914,7 +922,7 @@ sudo /home/pi/.pyenv/bin/python3 /home/pi/openpibo-os/system/bench_models.py --c
 | 얼굴 방향 | MediaPipe 계산 | 없음 |
 | 얼굴 구분 | **OpenVINO retail-0095** | dlib 빼기. `landmark_face(_vis)` 는 dlib 68점 번호 유지, `train_face`·`recognize`·`save_db`·`load_db` 이름·인자 유지, 얼굴 정보 파일 pickle → JSON/npz(예전 파일은 다시 등록 안내). 재등록은 괜찮다(사용자) |
 | 마스크 | edge-lab `mask.onnx` | 추가(teach-lab cropTo, 얼굴 30% 여유, FP32) |
-| TFLite | onnxruntime | 사진 임베더·MoveNet 을 ONNX 로, 숫자가 브라우저와 같은지 본 뒤 `load_interpreter`·tflite-runtime 빼기 |
+| TFLite | onnxruntime | **했다(261104)** — '분류기 → 기기 요구' |
 | STT | 보류 | SenseVoice 라이선스 상업 조건 **확인 필요** |
 | LLM | 모델은 기기별 | 말투·프롬프트만 맞춤 |
 
