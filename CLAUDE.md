@@ -826,13 +826,13 @@ vendor 파일을 갈아 끼울 때 이 동작이 그대로인지 확인할 것.
 기기에 있는 `mediapipe` 0.10.18 · `onnxruntime` 1.20.1 · numpy 1.26.4 로 돈다. 260924 에 tflite-runtime 2.14.0 으로 브라우저가 저장한 모델을 돌려
 답 8/8 일치를 확인했다.
 
-**분류기·MoveNet 에서 TFLite 를 뺐다(261104, 일원화 2단계).** 사진 특징(mobilenet_v3_small)과 MoveNet 을 tf2onnx 1.17(opset 17)로 ONNX 로 바꿔 리포에 둔다 —
+**TFLite 를 뺐다(261104, 일원화 2단계).** 사진 특징(mobilenet_v3_small)과 MoveNet 을 tf2onnx 1.17(opset 17)로 ONNX 로 바꿔 리포에 둔다 —
 `openpibo/modules/teachlab/mobilenet_v3_small_embedder.onnx`(4.2MB) · `openpibo/modules/pose/movenet_lightning.onnx`(9.4MB, 가중치 fp32 라 tflite 의 두 배).
 같은 입력 40장에서 TFLite(tflite-runtime 2.14.0)와 최대 차이 임베더 2e-5 · MoveNet 2e-6, 코사인 1.000000. 브라우저는 그대로 `.tflite` 를 쓴다(MediaPipe wasm).
 - `ImageEmbedder` 는 project.json·모델 폴더에 적힌 `mobilenet_v3_small_embedder.tflite` 이름을 보고 같은 모델의 ONNX 를 쓴다(예전 저장 모델 그대로 열림). 다른 임베더 이름은 오류
 - `Movenet()` 은 인자가 없거나 `.tflite` 면 리포 ONNX 를 쓴다(예전처럼 경로를 넘겨도 된다)
-- **`TeachableMachine`·`load_interpreter()` 는 그대로 둔다**(파이썬 API 호환 — 사용자가 받은 `.tflite` 를 돌리므로 TFLite 런타임을 부를 때만 찾는다). 그래서 `tflite-runtime` 은 `requirements.txt` 에 남기고,
-  `openpibo-detect-models`(movenet tflite 하나 때문에 있던 약 80MB)만 뺐다 — 새 태그를 올린 뒤 `venv_prune.py --apply` 로 지운다
+- **`TeachableMachine`(파이썬 클래스)·`load_interpreter()` 를 지웠다(261104, 사용자).** 블록(`vision_load_tm`·`vision_predict_tm`)은 전부터 정의·생성기·툴박스가 꺼져 있었고, 주석으로 남아 있던 그 코드도 세 파일(파이보·PiBrain)에서 지웠다.
+  패키지 `tflite-runtime`·`openpibo-detect-models`(movenet tflite 하나 때문에 있던 약 80MB)를 `requirements.txt`·`venv_prune.py` 에서 뺐다 — 새 태그를 올린 뒤 `venv_prune.py --apply` 로 지운다
 - edge-lab(PC)도 같은 임베더 ONNX 를 OpenVINO 로 읽는다(일원화 7단계)
 - **파이보 실기기(ARM onnxruntime)로는 아직 안 봤다** — `system/bench_models.py --only embedder,movenet`
 TensorFlow·torch 걷어내기 순서와 지울 목록은 IMAGE.md. 파이보에서 실제 추론 속도·메모리는 아직 못 쟀다.
@@ -936,7 +936,7 @@ sudo /home/pi/.pyenv/bin/python3 /home/pi/openpibo-os/system/bench_models.py --c
 - **⑦ 했다(261104, edge-lab).** edge-lab 이 로봇과 같은 `teachlab`(같은 코드·같은 모델 파일)으로 특징을 뽑고, 같은 머리(Dense 64 → 0.2 → softmax, 40회·16)로 배우고,
   로봇 형식(`project.json`·`classifier.json/bin`·`labels.txt`·`samples.json`)으로 저장한 뒤 [로봇으로 보내기] 가 이 `POST /api/models`(50010)로 보낸다(`project.app = "edge-lab"`).
   확인(컨테이너): 같은 사진에서 특징 차이 1.5e-6 이하, 보낸 모델을 `CustomClassifier` 로 돌린 답·확률이 edge-lab 과 17/17 같음. **`/api/models` 의 받는 형식을 바꾸면 edge-lab `train_routes.robot_send` 도 같이 바꿀 것**
-**파이썬 API·블록은 그대로 호환되게, 바꾸는 건 함수 안에서만(261104, 사용자).** 이름·인자·돌려주는 모양·기준값을 바꾸지 말 것 — 새 기능은 함수·블록을 더하는 것으로(예: `Face.mask_face`).
+**파이썬 API·블록은 그대로 호환되게, 바꾸는 건 함수 안에서만(261104, 사용자).** 이름·인자·돌려주는 모양·기준값을 바꾸지 말 것 — 새 기능은 함수·블록을 더하는 것으로(예: `Face.mask_face`). 예외: 블록이 이미 꺼져 있던 `TeachableMachine` 은 지웠다(사용자).
 
 ## 얼굴 (261104) — `openpibo/vision_face.py`, dlib 없음
 
