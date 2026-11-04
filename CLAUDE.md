@@ -928,6 +928,10 @@ sudo /home/pi/.pyenv/bin/python3 /home/pi/openpibo-os/system/bench_models.py --c
 
 순서: ① 실측(`system/bench_models.py`) ② TFLite → ONNX ③ 얼굴 정리 ④ 마스크 ⑤ 모델 받기 인증 ⑥ 같은 점수 점검 도구 ⑦ edge-lab 가르치기 전환.
 - **⑤ 인증은 넣지 않는다(261104, 사용자).** 분류기 `POST /api/models` 는 지금처럼 인증 없이 받는다 — edge-lab 은 사설 IP 로봇에만 보낸다
+- **⑥ 했다(261104).** 같은 사진을 로봇 · PC · 브라우저에 넣어 답·확률·특징을 견준다. `system/score_check.py`(파이보 · PiBrain · edge-lab `tools/score_check.py` **같은 파일**)가
+  `run <모델> <사진 폴더> --out x.json` 으로 결과 파일을 만들고(어디서 도는지는 스스로 안다 — openpibo 가 있으면 로봇, 아니면 edge-lab), `compare a.json b.json [c.json]` 로 견준다(다르면 끝 코드 1).
+  브라우저 몫은 `http://<로봇 IP>:50010/static/check.html`(분류기를 켠 뒤 — 같은 `tl/` 코드로 계산, 짧은 변 240 으로 줄여 넣고 [결과 파일 받기]). 화면 메뉴에는 안 넣었다(점검용).
+  확인(컨테이너, 사진 17장): 로봇 vs PC 답 17/17 · 특징 최대 차 1.0e-6, 로봇 vs 브라우저(Chromium) 답 17/17 · 확률 최대 차 0.04 · 최저 코사인 0.975(JPEG 풀기·줄이기 차이). **실기기·실제 태블릿 결과는 확인 필요**
 - **⑦ 했다(261104, edge-lab).** edge-lab 이 로봇과 같은 `teachlab`(같은 코드·같은 모델 파일)으로 특징을 뽑고, 같은 머리(Dense 64 → 0.2 → softmax, 40회·16)로 배우고,
   로봇 형식(`project.json`·`classifier.json/bin`·`labels.txt`·`samples.json`)으로 저장한 뒤 [로봇으로 보내기] 가 이 `POST /api/models`(50010)로 보낸다(`project.app = "edge-lab"`).
   확인(컨테이너): 같은 사진에서 특징 차이 1.5e-6 이하, 보낸 모델을 `CustomClassifier` 로 돌린 답·확률이 edge-lab 과 17/17 같음. **`/api/models` 의 받는 형식을 바꾸면 edge-lab `train_routes.robot_send` 도 같이 바꿀 것**
