@@ -834,7 +834,7 @@ vendor 파일을 갈아 끼울 때 이 동작이 그대로인지 확인할 것.
 - **`TeachableMachine`(파이썬 클래스)·`load_interpreter()` 를 지웠다(261104, 사용자).** 블록(`vision_load_tm`·`vision_predict_tm`)은 전부터 정의·생성기·툴박스가 꺼져 있었고, 주석으로 남아 있던 그 코드도 세 파일(파이보·PiBrain)에서 지웠다.
   패키지 `tflite-runtime`·`openpibo-detect-models`(movenet tflite 하나 때문에 있던 약 80MB)를 `requirements.txt`·`venv_prune.py` 에서 뺐다 — 새 태그를 올린 뒤 `venv_prune.py --apply` 로 지운다
 - edge-lab(PC)도 같은 임베더 ONNX 를 OpenVINO 로 읽는다(일원화 7단계)
-- **파이보 실기기(ARM onnxruntime)로는 아직 안 봤다** — `system/bench_models.py --only embedder,movenet`
+- Pi 4(PiBrain 261106) 실측: 임베더 70ms · MoveNet 75ms(onnxruntime 1.20.1) — '모델 실측 스크립트' 표. 브라우저 모델과 같은 답인지는 실기기로 아직 안 봤다(`system/score_check.py`)
 TensorFlow·torch 걷어내기 순서와 지울 목록은 IMAGE.md. 파이보에서 실제 추론 속도·메모리는 아직 못 쟀다.
 포즈는 한 화면에 여러 사람이 있으면 브라우저와 파이썬이 다른 사람을 잡을 수 있다(특징 코사인이 0.3 까지 떨어진 적 있음).
 
@@ -896,7 +896,21 @@ sudo /home/pi/.pyenv/bin/python3 /home/pi/openpibo-os/system/bench_models.py --c
 - `--combo` 는 **서비스를 끈다**(tools·classify·llama-server@*), `llama-server@<--llm>`(기본 general) 을 띄우고 끝나면 끈다. 0.2초마다 남은 메모리 최저·스왑 최고·llama RSS 최고
 - 측정 전후 온도·`vcgencmd get_throttled` 를 적는다. 저전압 비트가 서면 값을 버리고 전원부터 볼 것(파이보는 서보가 같은 전원 — 서보를 움직이지 않은 상태로 잴 것)
 - 확인(컨테이너 x86, 기기와 같은 onnxruntime 1.20.1·openvino 2024.5.0·mediapipe 0.10.18·tflite-runtime 2.14.0): 모델별 12개 돌고 없는 파일은 건너뜀.
-  dlib·`--combo` 는 컨테이너에 llama·TTS·STT 가 없어 **오류 경로만** 봤다. **Pi 4 실측 값은 아직 없다** — 받으면 이 절에 표로 적을 것
+  dlib·`--combo` 는 컨테이너에 llama·TTS·STT 가 없어 **오류 경로만** 봤다
+- **PiBrain 실측(261106, fc1a8f31 · Pi 4 · 20회 · 스레드 4 · throttled 0x0 · 54.5→65.7°C, 카메라 한 장)** — 파이보는 같은 보드라 속도는 같게 보고, 메모리는 납품 2GB 기준으로 볼 것. `--combo` 는 아직
+  | 모델 | 올림 s | 중간 ms | 최고 RSS MB |
+  |---|---|---|---|
+  | 사물 ed-s-320 | 2.11 | 376 | 181 |
+  | 사진 특징 mobilenet_v3_small (onnx) | 0.20 | 70 | 112 |
+  | MediaPipe 손(두 손) / 손동작 8종 | 1.81 / 1.76 | 206 / 205 | 229 / 203 |
+  | MediaPipe 얼굴 + 표정 | 1.56 | 71 | 172 |
+  | MediaPipe 자세 lite / MoveNet (onnx) | 1.94 / 0.16 | 201 / 75 | 233 / 114 |
+  | 얼굴 찾기 0004 → **0005** | 0.36 → 0.54 | 51 → **64** | 136 → 187 |
+  | 나이·성별 0013 / 감정 0003 | 0.23 / 0.27 | 9.6 / 8.5 (첫 회 163 / 116) | 151 / 147 |
+  | 얼굴 구분 **0095** / dlib(예전) | 0.71 / 3.32 | **33** / 489 | 156 / 178 |
+  | 마스크 mask.onnx | 0.14 | 27 | 95 |
+  - 기본 RSS(파이썬 + numpy 등) 약 64MB. 얼굴 구분은 dlib 의 약 15배 빠르다. 0005 는 0004 보다 13ms 느리고 51MB 더 쓴다
+  - 얼굴 한 명 구분(찾기 0005 + MediaPipe 얼굴 점 + 0095) ≈ 64 + 71 + 33 ≈ 170ms — 예전(0004 + dlib) ≈ 540ms
 
 ### `/home/pi/.model` 과 `requirements.txt`
 
@@ -955,7 +969,7 @@ sudo /home/pi/.pyenv/bin/python3 /home/pi/openpibo-os/system/bench_models.py --c
 - **LFW 공개 사진(성인) 1000쌍으로 비교(261104, 컨테이너 x86)**: 0095 최고 정확도 99.5%(거리 0.676), 0.6 에서 다른 사람 오인 0% · 같은 사람 놓침 2.2%.
   dlib(예전 코드와 같은 68점 → 인코딩)은 최고 97.8%(0.594)인데 **예전 기준 0.4 에서는 같은 사람을 71.6% 놓쳤다**(정확도 64.2%).
   68점 번호 맞추기는 dlib 68점과의 평균 차이가 두 눈꼬리 거리의 5.8%(중간값, p90 10.6% — 턱선은 두 모델의 정의가 달라 차이가 큰 쪽)
-- 얼굴 하나 처리(점 찾기 + 정렬 + 0095) x86 13.9ms · dlib 78.2ms. **Pi 4 속도·교실 아이 얼굴 인식률은 확인 필요** — 기준값(코사인 0.6 = 오차도 0.4)은 아이들 사진으로 다시 볼 것
+- 얼굴 하나 처리(점 찾기 + 정렬 + 0095) x86 13.9ms · dlib 78.2ms. **Pi 4(PiBrain 261106): 0095 33ms · dlib 489ms**, 찾기 0005 64ms('모델 실측 스크립트' 표). **교실 아이 얼굴 인식률은 확인 필요** — 기준값(코사인 0.6 = 오차도 0.4)은 아이들 사진으로 다시 볼 것
 - 기능 확인 17/17(컨테이너): 같은/다른 사람, 68점 모양·순서, 얼굴 없는 상자, JSON 왕복, 예전 pickle·다른 모델 거부, 나이·감정·mesh 그대로, 추적기 이동 따라감
 - 패키지 `dlib`·`openpibo-dlib-models`(68점 약 99MB + 구분 약 22MB)를 `requirements.txt`·`venv_prune.py`·`venv_rebuild.sh`(컴파일 목록)에서 뺐다 — 새 태그를 올린 뒤 `venv_prune.py --apply`
 - **마스크 `mask_face(img, item)` (261104, 일원화 4단계)** → `{"mask": True/False, "score": %, "box"}`. edge-lab 과 같은 `/home/pi/.model/mask/mask.onnx`(임베더 + 분류기 한 개)를 onnxruntime 으로,
