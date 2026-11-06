@@ -133,26 +133,18 @@ $PY -m pip check
 | `object` | **`ed-s-320.onnx`** 하나(easydetect ed-s COCO, 이름·conf 는 파일 안 메타데이터, HF `.model/object/ed-s-320.onnx`). 예전 사물 인식 가중치와 그 고지 파일은 **지운다**(261026) |
 | `hand` | 그대로 |
 | `mask` | **`mask.onnx`**(261104 — 마스크 판별 `Face.mask_face`, edge-lab 과 같은 파일, HF `leeyunjai/edge-lab` 의 `mask/mask.onnx`, 4,453,442 B, sha256 `bd3624be…37010`). 없으면 `mask_face` 만 오류(처음 부를 때 올린다) |
-| `face` | `detection/face-detection-retail-0005.{xml,bin}`(261104 — 0004 대신) · `age-gender/` · `emotion/` · `landmark/face_landmarker.task` · **`reid/face-reidentification-retail-0095.{xml,bin}`**(261104 — 얼굴 구분, dlib 대신). 0005·0095 는 OMZ 2023.0 FP16 — 아래 명령으로 넣는다. **코드보다 먼저 넣을 것** — 없으면 `Face()` 가 파일 이름을 담은 오류로 멈춘다. 0004 는 지워도 된다 |
+| `face` | `detection/face-detection-retail-0005.{xml,bin}`(261104 — 0004 대신) · `age-gender/` · `emotion/` · `landmark/face_landmarker.task` · **`reid/face-reidentification-retail-0095.{xml,bin}`**(261104 — 얼굴 구분, dlib 대신). 0005·0095 는 OMZ 2023.0 FP16 — `system/fetch_models.sh` 로 넣는다. **코드보다 먼저 넣을 것** — 없으면 `Face()` 가 파일 이름을 담은 오류로 멈춘다. 0004 는 지워도 된다 |
 | (지움) | `classifier/`(예전 TF 가중치), `tts/assets/{.git,audio_samples,img}`, fp32 `onnx` |
 
-**261104 에 새로 쓰는 모델 넣기 — 기기 밖에서 받아 `/home/pi/.model` 에 넣는다.** 파이보·PiBrain 은 오프라인 전용이라
-리포 코드는 모델을 내려받지 않는다(사용자 261104 — main 소스에 다운로드 코드를 넣지 말 것). 이미지 작업할 때 인터넷이 되는 곳에서 한 번:
+**261104 에 새로 쓰는 모델 넣기 — `system/fetch_models.sh`(이미지 작업, 사람이 돌린다).** 로봇이 돌 때 실행되는 코드는 오프라인 전용이라
+모델을 내려받지 않는다(사용자 261104). 받는 건 이 스크립트 하나다 — 얼굴 0005·0095(OMZ 2023.0 FP16) · 마스크 `mask.onnx`, 있으면 건너뛴다:
 
 ```bash
-M=/home/pi/.model
-OMZ=https://storage.openvinotoolkit.org/repositories/open_model_zoo/2023.0/models_bin/1
-sudo mkdir -p $M/face/detection $M/face/reid $M/mask
-for e in xml bin; do
-  sudo curl -fL -o $M/face/detection/face-detection-retail-0005.$e $OMZ/face-detection-retail-0005/FP16/face-detection-retail-0005.$e
-  sudo curl -fL -o $M/face/reid/face-reidentification-retail-0095.$e $OMZ/face-reidentification-retail-0095/FP16/face-reidentification-retail-0095.$e
-done
-sudo curl -fL -o $M/mask/mask.onnx https://huggingface.co/leeyunjai/edge-lab/resolve/main/mask/mask.onnx
-sha256sum $M/mask/mask.onnx     # bd3624be…37010 이어야 한다
-ls -l $M/face/detection $M/face/reid $M/mask
+sudo bash /home/pi/openpibo-os/system/fetch_models.sh            # 인터넷이 될 때 기기에서 → /home/pi/.model
+bash system/fetch_models.sh ./model                               # 또는 PC 에서 받아 USB·scp 로 /home/pi/.model 에 넣기
 ```
 
-기기에 인터넷이 없으면 PC 에서 같은 주소로 받아 USB·`scp` 로 같은 자리에 넣는다. 넣은 뒤 아래 `VERSION` 목록을 다시 만든다.
+넣은 뒤 아래 `VERSION` 목록을 다시 만든다.
 
 
 ```bash

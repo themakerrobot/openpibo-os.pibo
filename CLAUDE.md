@@ -892,7 +892,7 @@ sudo /home/pi/.pyenv/bin/python3 /home/pi/openpibo-os/system/bench_models.py --c
 
 - 대상: ed-s-320 · mobilenet_v3_small(onnx) · MediaPipe 손(두 손)·얼굴·자세 lite·손동작 · MoveNet(onnx) · OMZ 0004·0005·0013·0003·0095 · dlib 68점+resnet(예전 비교용, 지운 뒤엔 건너뜀) · mask.onnx
 - 입력: `--image` 가 없으면 카메라 한 장. 얼굴은 0004 로 찾아 30% 여유로 잘라 얼굴 모델에 넣는다. 얼굴이 없으면 결과에 '얼굴 없음'
-- **인터넷을 쓰지 않는다.** 모델(얼굴 0005·0095 · 마스크)은 IMAGE.md '261104 에 새로 쓰는 모델 넣기' 명령으로 `/home/pi/.model` 에 미리 넣는다. **파이보·PiBrain 은 오프라인 전용 — 리포 코드(main)에 모델을 내려받는 코드를 넣지 말 것(261104, 사용자).** 예전 `--fetch` 는 그래서 지웠다
+- **인터넷을 쓰지 않는다.** **파이보·PiBrain 은 오프라인 전용 — 로봇이 돌 때 실행되는 코드(라이브러리·서비스·이 실측)는 모델을 내려받지 않는다(261104, 사용자).** 모델(얼굴 0005·0095 · 마스크)은 이미지 작업 때 `system/fetch_models.sh` 로 `/home/pi/.model` 에 넣는다(사람이 따로 돌리는 도구 — 리포에 있어도 된다). 예전 `--fetch` 는 그래서 뺐다
 - `--combo` 는 **서비스를 끈다**(tools·classify·llama-server@*), `llama-server@<--llm>`(기본 general) 을 띄우고 끝나면 끈다. 0.2초마다 남은 메모리 최저·스왑 최고·llama RSS 최고
 - 측정 전후 온도·`vcgencmd get_throttled` 를 적는다. 저전압 비트가 서면 값을 버리고 전원부터 볼 것(파이보는 서보가 같은 전원 — 서보를 움직이지 않은 상태로 잴 것)
 - 확인(컨테이너 x86, 기기와 같은 onnxruntime 1.20.1·openvino 2024.5.0·mediapipe 0.10.18·tflite-runtime 2.14.0): 모델별 12개 돌고 없는 파일은 건너뜀.
@@ -962,7 +962,7 @@ sudo /home/pi/.pyenv/bin/python3 /home/pi/openpibo-os/system/bench_models.py --c
   얼굴 상자 둘레 30% 를 붙여 자르고 teach-lab `crop_to`(= TM cropTo, edge-lab `MaskCls._prep` 과 같은 쌍선형) 224, 0~255 float 그대로. 종류 이름은 파일 메타데이터 `edge-lab.classes`. 처음 부를 때 올린다.
   같은 자른 그림에서 edge-lab(OpenVINO f32)과 확률 최대 차이 1.2e-6, 답 120/120 일치. LFW 맨얼굴 60/60 no mask, 그려 넣은 마스크 60/60 mask(진짜 마스크 사진은 확인 필요).
   **블록은 아직 없다** — 파이썬·블록 이름 맞추기(일원화 8단계) 때 같이 정한다
-- **0005·0095 파일이 `/home/pi/.model/face/` 에 먼저 있어야 한다**(IMAGE.md '261104 에 새로 쓰는 모델 넣기' — 코드는 내려받지 않는다). 없으면 `Face()` 가 파일 이름을 담은 오류
+- **0005·0095 파일이 `/home/pi/.model/face/` 에 먼저 있어야 한다**(`sudo bash system/fetch_models.sh` — 이미지 작업. 실행 코드는 내려받지 않는다). 없으면 `Face()` 가 파일 이름을 담은 오류
 
 ## 사물 인식 (261026) — easydetect ed 모델 파일
 
