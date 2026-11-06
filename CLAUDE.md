@@ -977,7 +977,7 @@ sudo /home/pi/.pyenv/bin/python3 /home/pi/openpibo-os/system/bench_models.py --c
   같은 자른 그림에서 edge-lab(OpenVINO f32)과 확률 최대 차이 1.2e-6, 답 120/120 일치. LFW 맨얼굴 60/60 no mask, 그려 넣은 마스크 60/60 mask(진짜 마스크 사진은 확인 필요).
   **블록은 아직 없다** — 파이썬·블록 이름 맞추기(일원화 8단계) 때 같이 정한다
 - **0005·0095 파일이 `/home/pi/.model/face/` 에 먼저 있어야 한다**(`sudo bash system/fetch_models.sh` — 이미지 작업. 실행 코드는 내려받지 않는다). 없으면 `Face()` 가 파일 이름을 담은 오류
-- **얼굴 등록·구분 웹 `system/face_web.py`(261106, 파이보·PiBrain 같은 파일)** — 손으로 띄우는 시험 화면(메뉴에 없음, 유닛 없음). 도구·분류기를 끄고 `sudo /home/pi/.pyenv/bin/python3 /home/pi/openpibo-os/system/face_web.py` → `http://<IP>:50070`. 이름 넣고 [등록](가장 큰 얼굴) · 이름·오차도 상자 · 지우기 · 기준 막대. 얼굴 정보는 `/home/pi/face_web.json`(`Face.save_db` 형식)에 바뀔 때마다 저장, 보는 화면이 10초 없으면 인식을 쉰다. 확인(컨테이너, LFW 가짜 카메라): 같은 사람 0.13~0.15 · 다른 사람 0.57~0.68 · 390px 넘침 0. **실기기 확인 필요**
+- **얼굴 등록·구분 웹 `system/face_web.py`(261106, 파이보·PiBrain 같은 파일)** — 손으로 띄우는 시험 화면(메뉴에 없음, 유닛 없음). 도구·분류기를 끄고 `sudo /home/pi/.pyenv/bin/python3 /home/pi/openpibo-os/system/face_web.py` → `http://<IP>:50070`. 이름 넣고 [등록](가장 큰 얼굴) · 이름·오차도 상자 · 지우기 · 기준 막대. 얼굴 정보는 `/home/pi/face_web.json`(`Face.save_db` 형식)에 바뀔 때마다 저장, 보는 화면이 10초 없으면 인식을 쉰다. 화면은 카메라 그림 그대로(짧은 변 480, JPEG 85 — `--short 240` 으로 줄임). 확인(컨테이너, LFW 가짜 카메라): 같은 사람 0.13~0.15 · 다른 사람 0.57~0.68 · 390px 넘침 0. **실기기 확인 필요**
 
 ## 사물 인식 (261026) — easydetect ed 모델 파일
 
