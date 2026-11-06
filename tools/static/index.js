@@ -247,23 +247,6 @@ socket.on("onoff", function (data) {
 });
 
 const getVisions = (socket) => {
-  $("#v_img").on("click", (evt) => {
-    let rect = evt.target.getBoundingClientRect();
-    x = Math.floor(evt.clientX - rect.left);
-    y = Math.floor(evt.clientY - rect.top);
-    w = Math.floor(rect.right - rect.left);
-    h = Math.floor(rect.bottom - rect.top);
-    cx = Math.floor((640 * x) / w);
-    cy = Math.floor((480 * y) / h);
-
-    x1 = cx<100?0:cx-100;
-    y1 = cy<100?0:cy-100;
-    x2 = x1+200>640?640:x1+200;
-    y2 = y1+200>480?480:y1+200;
-
-    socket.emit("object_tracker_init", {x1:x1,y1:y1, x2:x2, y2:y2});
-  });
-
   let img_x = 0;
   let img_y = 0;
   $("#v_img").on("mousemove", (evt) => {
@@ -294,7 +277,7 @@ const getVisions = (socket) => {
     camera: "camera", grayscale: "circle-half-stroke", canny: "draw-polygon", cartoon: "palette", sketch_rgb: "pencil",
     detail: "magnifying-glass-plus", edgePreservingFilter: "water", qr: "qrcode", face: "face-smile",
     face_landmark: "location-crosshairs", object: "box", hand: "hand", pose: "person-walking",
-    track: "arrows-to-dot", marker: "thumbtack"
+    marker: "thumbtack"
   };
   const vTiles = document.getElementById("v_tiles");
   const showVisionFunc = (v) => {
@@ -313,7 +296,7 @@ const getVisions = (socket) => {
   /* 준비 상태(260929): 서버가 [로봇 연결됨] 뒤에 카메라 → 사물·손 인식 → 얼굴 인식 순으로 올리며
      vision_state 를 보낸다. 카메라 칸 위에 단계·막대·경과 초를 보이고, 아직 안 올라온 기능 타일에는 '준비 중' 을 단다
      (눌러 둘 수는 있다 — 올라오면 그때부터 결과가 나온다) */
-  const NEEDS = { face: "face", face_landmark: "face", qr: "detect", object: "detect", hand: "detect", pose: "detect", track: "detect", marker: "detect" };
+  const NEEDS = { face: "face", face_landmark: "face", qr: "detect", object: "detect", hand: "detect", pose: "detect", marker: "detect" };
   const vBoot = document.createElement("div"); vBoot.className = "v-boot"; vBoot.hidden = true;
   vBoot.innerHTML = `<div class="v-boot__row"><i class="fa-solid fa-spinner fa-spin"></i><span class="v-boot__txt"></span><span class="v-boot__n"></span></div><div class="v-boot__bar"><i></i></div>`;
   document.querySelector("#article_vision .v-stage").before(vBoot);

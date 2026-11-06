@@ -30,7 +30,6 @@ class Pibo:
     logging.info('Class INIT')
     self.emit = emit_func
     self.mymodel_path = "/home/pi/mymodel"
-    self.trackX, self.trackY = 0, 0
     self.imgX, self.imgY = 0,0
     self.marker_length = 2
     self.motion_d = [0, 0, -80, 0, 0, 0, 0, 0, 80, 0] # current d value
@@ -95,7 +94,7 @@ class Pibo:
 
   # 기능마다 필요한 모델. 아직 안 올라왔으면 카메라 화면만 보낸다
   NEEDS_FACE = ('face', 'face_landmark')
-  NEEDS_DET = ('qr', 'object', 'hand', 'pose', 'track', 'marker')
+  NEEDS_DET = ('qr', 'object', 'hand', 'pose', 'marker')
 
   def vision_loop(self):
     while True:
@@ -131,8 +130,6 @@ class Pibo:
           img, res = self.hand_detect()
         elif self.vision_type == "pose":
           img, res = self.pose_detect()
-        elif self.vision_type == "track":
-          img, res = self.track_object()
         elif self.vision_type == "marker":
           img, res = self.detect_marker()
         else:
@@ -235,23 +232,6 @@ class Pibo:
     im = self.frame.copy()
     self.det.detect_pose_vis(im, self.det.detect_pose(im))
     return im, ''
-
-  def object_tracker_init(self, d):
-    if self.det is None or self.frame is None:
-      return
-    im = self.frame.copy()
-    if self.det.tracker is not None:
-      del self.det.tracker
-
-    self.det.object_tracker_init(im, (d['x1'], d['y1'], d['x2'], d['y2']))
- 
-  def track_object(self):
-    im = self.frame.copy()
-    colors = (100,0,200)
-    if self.det.tracker is not None:
-      x1,y1,x2,y2 = self.det.track_object(im)
-      self.cam.rectangle(im, (x1,y1), (x2,y2), colors,3)
-    return im, ""
 
   def detect_marker(self):
     im = self.frame.copy()

@@ -234,18 +234,6 @@ async def marker_length(sid, d=None):
   if v is not None:
     pibo.marker_length = v
 
-@app.sio.on('object_tracker_init')
-async def object_tracker_init(sid, d=None):
-  if pibo is None:
-    return
-  if not isinstance(d, dict):
-    return
-  box = {k: to_num(d.get(k), 0, 4096) for k in ('x1', 'y1', 'x2', 'y2')}
-  if None in box.values():
-    return
-  if pibo.vision_type == "track":
-    pibo.object_tracker_init(box)
-
 @app.sio.on('update_img_pointer')
 async def update_img_pointer(sid, d=None):
   if pibo is None or not isinstance(d, dict):

@@ -963,7 +963,7 @@ sudo /home/pi/.pyenv/bin/python3 /home/pi/openpibo-os/system/bench_models.py --c
 | 얼굴 구분 `train_face` `recognize` | OMZ face-reidentification-retail-**0095**(숫자 256개, L2) | MediaPipe 점 5개(두 눈 가운데·코끝·입 끝 둘)로 128x128 정렬(OMZ 기준점, 닮음 변환). 점을 못 찾으면 상자만 잘라 넣는다 |
 | 오차도 `score` | 코사인 거리 × 2/3(`SCORE_SCALE`) — **기본 `face.threshold = 0.4` 그대로**(코사인 0.6 이 0.4) | 예전 dlib 유클리드 크기에 맞춰 학생 코드의 `score < 0.4` 같은 비교가 그대로 통한다. 낮을수록 비슷한 건 같다 |
 | 얼굴 정보 파일 `save_db` `load_db` | **JSON**(`format: openpibo-facedb`, `model: face-reidentification-retail-0095`) | pickle 을 열지 않는다. 예전 파일·다른 모델 파일은 '얼굴을 다시 등록해 주세요' 오류. 파일 이름은 넘긴 그대로(확장자 안 붙임) |
-| 사물 따라가기 `object_tracker_init` `track_object` | OpenCV **CSRT**(opencv-contrib) | 전엔 `dlib.correlation_tracker`. 놓치면 마지막 상자를 그대로 돌려준다 |
+| ~~사물 따라가기~~ | — | **261106 에 지웠다(사용자)** — `object_tracker_init`·`track_object`·`track_object_vis`, 블록 3개, 파이보 도구 [카메라] '사물 추적' 타일. 아래 '사물 추적 삭제' |
 
 - **파이썬 API·블록 호환(261104, 사용자): 이름·인자·돌려주는 모양·기준값을 바꾸지 않고 함수 안에서만 바꾼다.** 블록·`examples/vision_face1.json`·`vision_face2.json` 그대로. 달라진 건 `get_db()` 의 숫자 개수(128 → 256)와 얼굴 정보 파일 형식(다시 등록 — 사용자 확인)뿐
 - **LFW 공개 사진(성인) 1000쌍으로 비교(261104, 컨테이너 x86)**: 0095 최고 정확도 99.5%(거리 0.676), 0.6 에서 다른 사람 오인 0% · 같은 사람 놓침 2.2%.
@@ -977,6 +977,8 @@ sudo /home/pi/.pyenv/bin/python3 /home/pi/openpibo-os/system/bench_models.py --c
   같은 자른 그림에서 edge-lab(OpenVINO f32)과 확률 최대 차이 1.2e-6, 답 120/120 일치. LFW 맨얼굴 60/60 no mask, 그려 넣은 마스크 60/60 mask(진짜 마스크 사진은 확인 필요).
   **블록은 아직 없다** — 파이썬·블록 이름 맞추기(일원화 8단계) 때 같이 정한다
 - **0005·0095 파일이 `/home/pi/.model/face/` 에 먼저 있어야 한다**(`sudo bash system/fetch_models.sh` — 이미지 작업. 실행 코드는 내려받지 않는다). 없으면 `Face()` 가 파일 이름을 담은 오류
+- **사물 추적 삭제(261106, 사용자 — 쓸모가 작다는 판단, 사물 인식이 대신한다)**: 두 리포의 `Detect.object_tracker_init`·`track_object`·`track_object_vis`(261104 에 CSRT 로 바꿨던 것), IDE 블록 `vision_object_tracker_init`·`vision_object_track`·`vision_object_track_vis`(정의·생성기·툴박스·`ko.js`/`en.js` 문구·블록 가이드 그림),
+  파이보 도구의 '사물 추적' 타일·클릭 처리·`object_tracker_init` 소켓. API 호환 규칙의 예외다(사용자). **예전 프로그램은 그대로 열린다** — `customblock_callback.js` 끝 불러오기 감싸개가 추적 블록을 걷어낸다(설정·표시 블록은 빼고 뒤를 당기고, 추적하기 값 블록은 칸을 비움. 컨테이너 Blockly 로 확인). 파이썬에서 부르면 AttributeError
 - **얼굴 등록·구분 웹 `system/face_web.py`(261106, 파이보·PiBrain 같은 파일)** — 손으로 띄우는 시험 화면(메뉴에 없음, 유닛 없음). 도구·분류기를 끄고 `sudo /home/pi/.pyenv/bin/python3 /home/pi/openpibo-os/system/face_web.py` → `http://<IP>:50070`. 이름 넣고 [등록](가장 큰 얼굴) · 이름·오차도 상자 · 지우기 · 기준 막대. 얼굴 정보는 `/home/pi/face_web.json`(`Face.save_db` 형식)에 바뀔 때마다 저장, 보는 화면이 10초 없으면 인식을 쉰다. 화면은 카메라 그림 그대로(짧은 변 480, JPEG 85 — `--short 240` 으로 줄임). 확인(컨테이너, LFW 가짜 카메라): 같은 사람 0.13~0.15 · 다른 사람 0.57~0.68 · 390px 넘침 0. **실기기 확인 필요**
 
 ## 사물 인식 (261026) — easydetect ed 모델 파일
