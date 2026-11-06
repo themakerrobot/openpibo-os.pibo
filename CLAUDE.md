@@ -629,7 +629,7 @@ IDE 의 [도구][대화][분류기] 는 누르는 **그 순간** 이름 붙인 �
 [대화 서버 시작하기(LLM)]                ← 예전 블록 그대로 — 고른 모델, 안 골랐으면 general
 ```
 
-| 이름(표시) | 별칭 링크(`/home/pi/.model/llm/`) → 파일 | 도구 | 시스템 글 |
+| 이름(표시) | 파일(`/home/pi/.model/llm/`, 261106 부터 링크 아닌 실제 파일) ← 원래 판 | 도구 | 시스템 글 |
 |---|---|---|---|
 | `general`(일반) | `general.gguf` → `gemma-3-1b-it-Q4_K_M.gguf`(806,058,272 B) | **없음** | 블록이 준 것 / 대화 화면은 `SYSTEM` |
 | `themaker-ko`(더메이커 KO) | `themaker-ko.gguf` → `themaker-0.8b-Q4_K_M.gguf`(337,040,032 B) | **있음**(불빛·보기·움직이기) | 대화 화면: `tools.SYSTEM` + 도구 목록 / 블록: 준 것 |
@@ -643,7 +643,7 @@ IDE 의 [도구][대화][분류기] 는 누르는 **그 순간** 이름 붙인 �
   고르기 전엔 상태 줄을 숨기고 빈 화면이 '위에서 대화 모델을 골라 주세요.'(`chat_pick_model`). 새로 고쳐도 서버의 `model` 로 선택이 남는다. [다시 켜기] 는 같은 모델로 `switch_model`.
   시스템 글은 `pick_system(모델)` — 이름이나 **링크가 가리키는 실제 파일 이름**에 `themaker` 가 있으면(`is_tool_model`) `tools.SYSTEMS[ko|en]`, 아니면 `DEVICE_SYSTEM`(PiBrain 은 이름만 바꿈). general 링크를 다른 모델로 바꿔도 맞게. `--model-dir` 은 시험용(미리보기는 가짜 파일)
 - **템플릿 유닛 `llama-server@.service`**(리포 밖, 이미지 작업 — IMAGE.md): `-m /home/pi/.model/llm/%i.gguf`, `Restart=no`, `[Install]` 없음(enable 안 됨 — `static`).
-  템플릿끼리는 서로 끄지 않으므로 켜기 전에 늘 다 끈다. **이 코드를 기기에 올리기 전에 유닛·별칭 링크가 있어야 한다** — 없으면 대화 화면도 블록도 모델을 못 띄운다
+  템플릿끼리는 서로 끄지 않으므로 켜기 전에 늘 다 끈다. **이 코드를 기기에 올리기 전에 유닛·모델 파일이 있어야 한다**(261106 부터 `general.gguf` 등은 링크가 아니라 실제 파일 — 판 이름은 `.model/VERSION` 의 `llm/<이름>.gguf = …` 줄) — 없으면 대화 화면도 블록도 모델을 못 띄운다
 - **끄는 곳(`ide/run_ide.py`)은 전부 `systemctl stop 'llama-server@*'`** — `/tools` `/classifier` `/hwtest` `/kids` `/llm` 켜기·끄기, 코드 실행(`execute`·`executeb`). [정지] 는 `pkill llama-server`.
   새로 끄는 곳을 만들면 `@*` 를 빠뜨리지 말 것(모델 둘이 램에 올라간다)
 - **도구(261029, 대화 화면만)**: 더메이커를 고르면 도구 3개(불빛·보기·움직이기)를 실제로 실행한다. 학습 PC 리포 `themakerrobot/openpibo-chat`(브랜치 `claude/inspiring-curie-s3a7wn`, a9072ff)의
@@ -738,8 +738,8 @@ IDE [대화] 는 llama-server 기본 웹 화면이 아니라 **우리 대화 웹
     **옮긴 뒤 링크 `llm/llm-model.gguf` 가 없어 서비스가 바로 죽었다**(`failed`, `--log-disable` 이라 이유가 안 남음 — 로그 없이 직접 돌려 'No such file' 확인). `ln -sfn` 으로 다시 만들어 해결.
     `.model/VERSION` 대조는 실제 파일만 보므로 링크가 없어도 통과한다 — 옮긴 뒤엔 `ls -laL /home/pi/.model/llm/llm-model.gguf` 를 따로 볼 것
   - 시험 PiBrain 은 RAM 7.7GB 지만 납품품은 2GB 라 메모리 판단은 파이보(1.8GB)와 같게 한다(사용자)
-- **모델 바꾸기(재학습 때마다, 261029 개정)**: gguf 파일만 갈아 끼운다 — 새 파일을 `/home/pi/.model/llm/` 에 넣고 별칭 링크(`themaker-ko.gguf` · `themaker-en.gguf`)를 그 파일로(`ln -sfn`),
-  옛 gguf 지우기, `.model/VERSION` sha256 목록 다시 만들기(IMAGE.md). 유닛·리포 코드는 별칭 이름만 보므로 안 바뀐다.
+- **모델 바꾸기(재학습 때마다, 261106 개정)**: 새 gguf 를 **`themaker-ko.gguf`·`themaker-en.gguf` 이름으로 덮어쓴다**(링크 아님 — HF `.model/llm/` 에도 이 이름으로 올린다) + `.model/VERSION` 의 `llm/<이름>.gguf = <원래 파일 이름>` 줄을 고친다. (261029~261105 의 방식: 새 파일을 넣고 별칭 링크를 그 파일로 `ln -sfn`)
+  `.model/VERSION` sha256 목록 다시 만들기(IMAGE.md). 유닛·리포 코드는 모델 이름(`themaker-ko` 등)만 보므로 안 바뀐다.
   더메이커는 시스템 글을 안 보내므로(GGUF 템플릿이 학습 글을 넣음) 학습 글이 바뀌어도 리포는 그대로다. `SYSTEM` 은 젬마3 에만 간다.
   261026 판 `pibo-qwen3.5-0.8b-school-small-Q4_K_M.gguf` 는 339,212,576 바이트, HF `leeyunjai/themaker` 의 `.model/llm/` 에 올림(261028, sha256 `ca312fda…`).
   새 판도 같은 자리에 올릴 것(`huggingface-cli upload leeyunjai/themaker <파일> .model/llm/<파일>`). **링크 `llm-model.gguf` 는 올리지 않는다** — scp·업로드 도구가 링크를 따라가 같은 파일을 한 벌 더 만든다
@@ -915,7 +915,7 @@ sudo /home/pi/.pyenv/bin/python3 /home/pi/openpibo-os/system/bench_models.py --c
 ### `/home/pi/.model` 과 `requirements.txt`
 
 - `/home/pi/.model` 은 리포 밖(이미지)이다. 구성과 파일별 sha256 은 그 폴더의 `VERSION`. 코드가 읽는 것: `tts/assets/{onnx,voice_styles}`,
-  `stt/`, `llm/{general,themaker-ko,themaker-en}.gguf`(별칭 링크, 261029), `object/ed-s-320.onnx`, `hand/*.task`, `face/{detection,age-gender,emotion,landmark,reid}`(261104 — 0005·0095, '얼굴 (261104)').
+  `stt/`, `llm/{general,themaker-ko,themaker-en}.gguf`(261106 부터 실제 파일 — 판은 `VERSION`, 261029~ 별칭 링크였다), `object/ed-s-320.onnx`, `hand/*.task`, `face/{detection,age-gender,emotion,landmark,reid}`(261104 — 0005·0095, '얼굴 (261104)').
   `classifier/`(예전 TF 가중치)는 260930 에 지웠다(아무도 안 씀)
 - 모델은 `leeyunjai/themaker`(HF)에서 손으로 받는다. **`git clone` 말고 `huggingface-cli download`** — clone 은 `.git/lfs` 에 한 벌을 더 남긴다(이번에 약 400MB)
 - `requirements.txt`(리포 맨 위): 리포 코드가 직접 import 하는 패키지만, 기기 버전으로. `test/requirements.txt` 는 260923 전체 스냅숏(TF·torch 포함)
