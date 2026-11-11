@@ -629,7 +629,7 @@ IDE 의 [도구][대화][분류기] 는 누르는 **그 순간** 이름 붙인 �
 [대화 서버 시작하기(LLM)]                ← 예전 블록 그대로 — 고른 모델, 안 골랐으면 general
 ```
 
-| 이름(표시) | 별칭 링크(`/home/pi/.model/llm/`) → 파일 | 도구 | 시스템 글 |
+| 이름(표시) | 파일(`/home/pi/.model/llm/`, 261106 부터 링크 아닌 실제 파일) ← 원래 판 | 도구 | 시스템 글 |
 |---|---|---|---|
 | `general`(일반) | `general.gguf` → `gemma-3-1b-it-Q4_K_M.gguf`(806,058,272 B) | **없음** | 블록이 준 것 / 대화 화면은 `SYSTEM` |
 | `themaker-ko`(더메이커 KO) | `themaker-ko.gguf` → `themaker-0.8b-Q4_K_M.gguf`(337,040,032 B) | **있음**(불빛·보기·움직이기) | 대화 화면: `tools.SYSTEM` + 도구 목록 / 블록: 준 것 |
@@ -643,7 +643,7 @@ IDE 의 [도구][대화][분류기] 는 누르는 **그 순간** 이름 붙인 �
   고르기 전엔 상태 줄을 숨기고 빈 화면이 '위에서 대화 모델을 골라 주세요.'(`chat_pick_model`). 새로 고쳐도 서버의 `model` 로 선택이 남는다. [다시 켜기] 는 같은 모델로 `switch_model`.
   시스템 글은 `pick_system(모델)` — 이름이나 **링크가 가리키는 실제 파일 이름**에 `themaker` 가 있으면(`is_tool_model`) `tools.SYSTEMS[ko|en]`, 아니면 `DEVICE_SYSTEM`(PiBrain 은 이름만 바꿈). general 링크를 다른 모델로 바꿔도 맞게. `--model-dir` 은 시험용(미리보기는 가짜 파일)
 - **템플릿 유닛 `llama-server@.service`**(리포 밖, 이미지 작업 — IMAGE.md): `-m /home/pi/.model/llm/%i.gguf`, `Restart=no`, `[Install]` 없음(enable 안 됨 — `static`).
-  템플릿끼리는 서로 끄지 않으므로 켜기 전에 늘 다 끈다. **이 코드를 기기에 올리기 전에 유닛·별칭 링크가 있어야 한다** — 없으면 대화 화면도 블록도 모델을 못 띄운다
+  템플릿끼리는 서로 끄지 않으므로 켜기 전에 늘 다 끈다. **이 코드를 기기에 올리기 전에 유닛·모델 파일이 있어야 한다**(261106 부터 `general.gguf` 등은 링크가 아니라 실제 파일 — 판 이름은 `.model/VERSION` 의 `llm/<이름>.gguf = …` 줄) — 없으면 대화 화면도 블록도 모델을 못 띄운다
 - **끄는 곳(`ide/run_ide.py`)은 전부 `systemctl stop 'llama-server@*'`** — `/tools` `/classifier` `/hwtest` `/kids` `/llm` 켜기·끄기, 코드 실행(`execute`·`executeb`). [정지] 는 `pkill llama-server`.
   새로 끄는 곳을 만들면 `@*` 를 빠뜨리지 말 것(모델 둘이 램에 올라간다)
 - **도구(261029, 대화 화면만)**: 더메이커를 고르면 도구 3개(불빛·보기·움직이기)를 실제로 실행한다. 학습 PC 리포 `themakerrobot/openpibo-chat`(브랜치 `claude/inspiring-curie-s3a7wn`, a9072ff)의
@@ -738,8 +738,8 @@ IDE [대화] 는 llama-server 기본 웹 화면이 아니라 **우리 대화 웹
     **옮긴 뒤 링크 `llm/llm-model.gguf` 가 없어 서비스가 바로 죽었다**(`failed`, `--log-disable` 이라 이유가 안 남음 — 로그 없이 직접 돌려 'No such file' 확인). `ln -sfn` 으로 다시 만들어 해결.
     `.model/VERSION` 대조는 실제 파일만 보므로 링크가 없어도 통과한다 — 옮긴 뒤엔 `ls -laL /home/pi/.model/llm/llm-model.gguf` 를 따로 볼 것
   - 시험 PiBrain 은 RAM 7.7GB 지만 납품품은 2GB 라 메모리 판단은 파이보(1.8GB)와 같게 한다(사용자)
-- **모델 바꾸기(재학습 때마다, 261029 개정)**: gguf 파일만 갈아 끼운다 — 새 파일을 `/home/pi/.model/llm/` 에 넣고 별칭 링크(`themaker-ko.gguf` · `themaker-en.gguf`)를 그 파일로(`ln -sfn`),
-  옛 gguf 지우기, `.model/VERSION` sha256 목록 다시 만들기(IMAGE.md). 유닛·리포 코드는 별칭 이름만 보므로 안 바뀐다.
+- **모델 바꾸기(재학습 때마다, 261106 개정)**: 새 gguf 를 **`themaker-ko.gguf`·`themaker-en.gguf` 이름으로 덮어쓴다**(링크 아님 — HF `.model/llm/` 에도 이 이름으로 올린다) + `.model/VERSION` 의 `llm/<이름>.gguf = <원래 파일 이름>` 줄을 고친다. (261029~261105 의 방식: 새 파일을 넣고 별칭 링크를 그 파일로 `ln -sfn`)
+  `.model/VERSION` sha256 목록 다시 만들기(IMAGE.md). 유닛·리포 코드는 모델 이름(`themaker-ko` 등)만 보므로 안 바뀐다.
   더메이커는 시스템 글을 안 보내므로(GGUF 템플릿이 학습 글을 넣음) 학습 글이 바뀌어도 리포는 그대로다. `SYSTEM` 은 젬마3 에만 간다.
   261026 판 `pibo-qwen3.5-0.8b-school-small-Q4_K_M.gguf` 는 339,212,576 바이트, HF `leeyunjai/themaker` 의 `.model/llm/` 에 올림(261028, sha256 `ca312fda…`).
   새 판도 같은 자리에 올릴 것(`huggingface-cli upload leeyunjai/themaker <파일> .model/llm/<파일>`). **링크 `llm-model.gguf` 는 올리지 않는다** — scp·업로드 도구가 링크를 따라가 같은 파일을 한 벌 더 만든다
@@ -778,7 +778,7 @@ teach-lab 과 같은 기능(이미지·손·얼굴·포즈 가르치기)을 파�
 | 카메라 | 파이보 → 태블릿 | socket.io `camera_image`, 320×240 JPEG |
 | 특징 뽑기·학습 | 태블릿 브라우저 | MediaPipe wasm(`static/vendor/tasks-vision`) + TF.js 작은 MLP |
 | 저장 | 파이보 | `POST /api/models` → `/home/pi/mymodel/<이름>/` |
-| 추론 | 파이보 | `openpibo.vision_classify.CustomClassifier` — LiteRT(이미지) / MediaPipe(손·얼굴·포즈) + numpy |
+| 추론 | 파이보 | `openpibo.vision_classify.CustomClassifier` — onnxruntime(이미지, 261104) / MediaPipe(손·얼굴·포즈) + numpy |
 
 모델 폴더 하나에 `project.json` `classifier.json` `classifier.bin` `labels.txt` `samples.json`
 과 특징 모델 파일(`.tflite`/`.task`)이 들어간다. teach-lab 파이썬 내보내기와 같은 형식이라
@@ -798,7 +798,7 @@ teach-lab 과 같은 기능(이미지·손·얼굴·포즈 가르치기)을 파�
 ### 가져온 코드 — 두 곳을 함께 고칠 것
 
 - `classifier/static/tl/` ← teach-lab `lib/` (74f421a). 바꾼 곳은 파일 첫 줄에 적었다(경로, `mirror:false`)
-- `openpibo/modules/teachlab/` ← teach-lab `python/teachlab/`. 바꾼 곳은 `load_interpreter()` 하나
+- `openpibo/modules/teachlab/` ← teach-lab `python/teachlab/`. 바꾼 곳은 `embedder.py` 하나 — TFLite 대신 onnxruntime(261104, 아래 '기기 요구')
 - 브라우저와 파이썬이 **같은 숫자**를 내야 한다. 정규화 식(`features.js` ↔ `landmarks.py`),
   자르기(`cropTo` ↔ `crop_to`)를 한쪽만 고치면 학습한 모델이 파이보에서 엉뚱한 답을 낸다
 - 로봇 카메라는 거울이 아니다. 어느 소스도 좌우를 뒤집지 않는다
@@ -823,9 +823,18 @@ vendor 파일을 갈아 끼울 때 이 동작이 그대로인지 확인할 것.
 
 ### 기기 요구
 
-기기(260923 pip 목록)에 이미 있는 것으로 돈다: `tflite-runtime` 2.14.0 · `mediapipe` 0.10.18 ·
-`onnxruntime` 1.20.1 · numpy 1.26.4. **이 버전 그대로** 컨테이너에서 브라우저가 저장한 모델을 돌려
-답 8/8 일치를 확인했다. `load_interpreter()` 는 `tflite_runtime` 을 고른다(LiteRT 설치 불필요).
+기기에 있는 `mediapipe` 0.10.18 · `onnxruntime` 1.20.1 · numpy 1.26.4 로 돈다. 260924 에 tflite-runtime 2.14.0 으로 브라우저가 저장한 모델을 돌려
+답 8/8 일치를 확인했다.
+
+**TFLite 를 뺐다(261104, 일원화 2단계).** 사진 특징(mobilenet_v3_small)과 MoveNet 을 tf2onnx 1.17(opset 17)로 ONNX 로 바꿔 리포에 둔다 —
+`openpibo/modules/teachlab/mobilenet_v3_small_embedder.onnx`(4.2MB) · `openpibo/modules/pose/movenet_lightning.onnx`(9.4MB, 가중치 fp32 라 tflite 의 두 배).
+같은 입력 40장에서 TFLite(tflite-runtime 2.14.0)와 최대 차이 임베더 2e-5 · MoveNet 2e-6, 코사인 1.000000. 브라우저는 그대로 `.tflite` 를 쓴다(MediaPipe wasm).
+- `ImageEmbedder` 는 project.json·모델 폴더에 적힌 `mobilenet_v3_small_embedder.tflite` 이름을 보고 같은 모델의 ONNX 를 쓴다(예전 저장 모델 그대로 열림). 다른 임베더 이름은 오류
+- `Movenet()` 은 인자가 없거나 `.tflite` 면 리포 ONNX 를 쓴다(예전처럼 경로를 넘겨도 된다)
+- **`TeachableMachine`(파이썬 클래스)·`load_interpreter()` 를 지웠다(261104, 사용자).** 블록(`vision_load_tm`·`vision_predict_tm`)은 전부터 정의·생성기·툴박스가 꺼져 있었고, 주석으로 남아 있던 그 코드도 세 파일(파이보·PiBrain)에서 지웠다.
+  패키지 `tflite-runtime`·`openpibo-detect-models`(movenet tflite 하나 때문에 있던 약 80MB)를 `requirements.txt`·`venv_prune.py` 에서 뺐다 — 새 태그를 올린 뒤 `venv_prune.py --apply` 로 지운다
+- edge-lab(PC)도 같은 임베더 ONNX 를 OpenVINO 로 읽는다(일원화 7단계)
+- Pi 4(PiBrain 261106) 실측: 임베더 70ms · MoveNet 75ms(onnxruntime 1.20.1) — '모델 실측 스크립트' 표. 브라우저 모델과 같은 답인지는 실기기로 아직 안 봤다(`system/score_check.py`)
 TensorFlow·torch 걷어내기 순서와 지울 목록은 IMAGE.md. 파이보에서 실제 추론 속도·메모리는 아직 못 쟀다.
 포즈는 한 화면에 여러 사람이 있으면 브라우저와 파이썬이 다른 사람을 잡을 수 있다(특징 코사인이 0.3 까지 떨어진 적 있음).
 
@@ -871,16 +880,106 @@ TensorFlow·torch 걷어내기 순서와 지울 목록은 IMAGE.md. 파이보에
 - 인식 5.2초 음성 1.33초, 합성 5.2초 문장 6.05초(int8). 대화 한 바퀴는 합성이 가장 느린 고리다 — 줄이려면 문장 단위로 쪼개 첫 문장부터 말하기
 - 실제 대화 한 바퀴(녹음 → STT → LLM 생성 → TTS → 재생)에서의 시간·스왑은 **아직 안 쟀다**
 
+### 모델 실측 스크립트 (261104) — `system/bench_models.py`
+
+로봇 연동 일원화(아래 '로봇 연동 일원화') 1단계. 모델마다 새 파이썬 프로세스로 올림 시간·첫 회·중간·p90(ms)·RSS(기본·최고)를 재고
+`/home/pi/bench_<호스트>_<날짜시각>.json` 으로 남긴다. **파이보·PiBrain 같은 파일**(고치면 같이).
+
+```bash
+sudo /home/pi/.pyenv/bin/python3 /home/pi/openpibo-os/system/bench_models.py           # 모델별
+sudo /home/pi/.pyenv/bin/python3 /home/pi/openpibo-os/system/bench_models.py --combo   # LLM+TTS+STT+인식 함께
+```
+
+- 대상: ed-s-320 · mobilenet_v3_small(onnx) · MediaPipe 손(두 손)·얼굴·자세 lite·손동작 · MoveNet(onnx) · OMZ 0004·0005·0013·0003·0095 · dlib 68점+resnet(예전 비교용, 지운 뒤엔 건너뜀) · mask.onnx
+- 입력: `--image` 가 없으면 카메라 한 장. 얼굴은 0004 로 찾아 30% 여유로 잘라 얼굴 모델에 넣는다. 얼굴이 없으면 결과에 '얼굴 없음'
+- **인터넷을 쓰지 않는다.** **파이보·PiBrain 은 오프라인 전용 — 로봇이 돌 때 실행되는 코드(라이브러리·서비스·이 실측)는 모델을 내려받지 않는다(261104, 사용자).** 모델(얼굴 0005·0095 · 마스크)은 이미지 작업 때 `system/fetch_models.sh` 로 `/home/pi/.model` 에 넣는다(사람이 따로 돌리는 도구 — 리포에 있어도 된다). 예전 `--fetch` 는 그래서 뺐다
+- `--combo` 는 **서비스를 끈다**(tools·classify·llama-server@*), `llama-server@<--llm>`(기본 general) 을 띄우고 끝나면 끈다. 0.2초마다 남은 메모리 최저·스왑 최고·llama RSS 최고
+- 측정 전후 온도·`vcgencmd get_throttled` 를 적는다. 저전압 비트가 서면 값을 버리고 전원부터 볼 것(파이보는 서보가 같은 전원 — 서보를 움직이지 않은 상태로 잴 것)
+- 확인(컨테이너 x86, 기기와 같은 onnxruntime 1.20.1·openvino 2024.5.0·mediapipe 0.10.18·tflite-runtime 2.14.0): 모델별 12개 돌고 없는 파일은 건너뜀.
+  dlib·`--combo` 는 컨테이너에 llama·TTS·STT 가 없어 **오류 경로만** 봤다
+- **PiBrain 실측(261106, fc1a8f31 · Pi 4 · 20회 · 스레드 4 · throttled 0x0 · 54.5→65.7°C, 카메라 한 장)** — 파이보는 같은 보드라 속도는 같게 보고, 메모리는 납품 2GB 기준으로 볼 것. `--combo` 는 아직
+  | 모델 | 올림 s | 중간 ms | 최고 RSS MB |
+  |---|---|---|---|
+  | 사물 ed-s-320 | 2.11 | 376 | 181 |
+  | 사진 특징 mobilenet_v3_small (onnx) | 0.20 | 70 | 112 |
+  | MediaPipe 손(두 손) / 손동작 8종 | 1.81 / 1.76 | 206 / 205 | 229 / 203 |
+  | MediaPipe 얼굴 + 표정 | 1.56 | 71 | 172 |
+  | MediaPipe 자세 lite / MoveNet (onnx) | 1.94 / 0.16 | 201 / 75 | 233 / 114 |
+  | 얼굴 찾기 0004 → **0005** | 0.36 → 0.54 | 51 → **64** | 136 → 187 |
+  | 나이·성별 0013 / 감정 0003 | 0.23 / 0.27 | 9.6 / 8.5 (첫 회 163 / 116) | 151 / 147 |
+  | 얼굴 구분 **0095** / dlib(예전) | 0.71 / 3.32 | **33** / 489 | 156 / 178 |
+  | 마스크 mask.onnx | 0.14 | 27 | 95 |
+  - 기본 RSS(파이썬 + numpy 등) 약 64MB. 얼굴 구분은 dlib 의 약 15배 빠르다. 0005 는 0004 보다 13ms 느리고 51MB 더 쓴다
+  - 얼굴 한 명 구분(찾기 0005 + MediaPipe 얼굴 점 + 0095) ≈ 64 + 71 + 33 ≈ 170ms — 예전(0004 + dlib) ≈ 540ms
+
 ### `/home/pi/.model` 과 `requirements.txt`
 
 - `/home/pi/.model` 은 리포 밖(이미지)이다. 구성과 파일별 sha256 은 그 폴더의 `VERSION`. 코드가 읽는 것: `tts/assets/{onnx,voice_styles}`,
-  `stt/`, `llm/{general,themaker-ko,themaker-en}.gguf`(별칭 링크, 261029), `object/ed-s-320.onnx`, `hand/*.task`, `face/{detection,age-gender,emotion,landmark}`.
+  `stt/`, `llm/{general,themaker-ko,themaker-en}.gguf`(261106 부터 실제 파일 — 판은 `VERSION`, 261029~ 별칭 링크였다), `object/ed-s-320.onnx`, `hand/*.task`, `face/{detection,age-gender,emotion,landmark,reid}`(261104 — 0005·0095, '얼굴 (261104)').
   `classifier/`(예전 TF 가중치)는 260930 에 지웠다(아무도 안 씀)
 - 모델은 `leeyunjai/themaker`(HF)에서 손으로 받는다. **`git clone` 말고 `huggingface-cli download`** — clone 은 `.git/lfs` 에 한 벌을 더 남긴다(이번에 약 400MB)
 - `requirements.txt`(리포 맨 위): 리포 코드가 직접 import 하는 패키지만, 기기 버전으로. `test/requirements.txt` 는 260923 전체 스냅숏(TF·torch 포함)
 - **안 쓰는 패키지 걷어내기는 `system/venv_prune.py`(260930).** 기기에서 돌리면 `ROOTS`+`requirements.txt` 와 그 의존만 남기고 나머지를 목록으로 보여 주고,
   `--apply` 로 지운다(백업 목록·pip check·import 확인까지). 260930 두 기기 site-packages 5.5~5.6GB 의 대부분이 TF·torch·MeloTTS 잔재다.
   mediapipe 0.10.18 은 jax 를 불러오지 않는다(지우고 확인함, `--jax`). 패키지를 새로 쓰게 되면 `ROOTS` 와 `requirements.txt` 둘 다에 넣을 것. 자세한 건 IMAGE.md
+
+## 로봇 연동 일원화 (261104 착수) — edge-lab(PC) · 파이보 · PiBrain
+
+**같은 기능은 같은 파일 형식 · 같은 특징 계산 · 같은 결과 모양, 모델 크기만 기기별**(PC 크게, 로봇 작게). PC 에서 가르친 AI 가 로봇에서 그대로 돌게 한다.
+
+| 기능 | 기준 | 로봇에서 할 일 |
+|---|---|---|
+| 사물 인식 · 학습 | easydetect `.onnx` 하나 · easydetect-lab | 없음(이미 같다). 로봇 ed-s-320, PC ed-m-640 |
+| 분류 — 사진 특징 · 손 · 몸 · 표정 · 저장 파일 | **로봇(teach-lab) 방식** | 없음 — edge-lab 이 바꾼다 |
+| 손동작 8종 · 나이·성별·감정 · TTS | 그대로 | 없음 |
+| 자세 보기 | 결과 모양만 COCO 17점 | 모델은 기기별(로봇 MoveNet) |
+| 얼굴 찾기 | **retail-0005** | **했다(261104)** — '얼굴 (261104)'. Pi 속도는 실측으로 볼 것 |
+| 얼굴 방향 | MediaPipe 계산 | 없음 |
+| 얼굴 구분 | **OpenVINO retail-0095** | **했다(261104)** — '얼굴 (261104)'. dlib 빼기. `landmark_face(_vis)` 는 dlib 68점 번호 유지, `train_face`·`recognize`·`save_db`·`load_db` 이름·인자 유지, 얼굴 정보 파일 pickle → JSON/npz(예전 파일은 다시 등록 안내). 재등록은 괜찮다(사용자) |
+| 마스크 | edge-lab `mask.onnx` | **했다(261104)** — `Face.mask_face`, '얼굴 (261104)' |
+| TFLite | onnxruntime | **했다(261104)** — '분류기 → 기기 요구' |
+| STT | 보류 | SenseVoice 라이선스 상업 조건 **확인 필요** |
+| LLM | 모델은 기기별 | 말투·프롬프트만 맞춤 |
+
+순서: ① 실측(`system/bench_models.py`) ② TFLite → ONNX ③ 얼굴 정리 ④ 마스크 ⑤ 모델 받기 인증 ⑥ 같은 점수 점검 도구 ⑦ edge-lab 가르치기 전환.
+- **⑤ 인증은 넣지 않는다(261104, 사용자).** 분류기 `POST /api/models` 는 지금처럼 인증 없이 받는다 — edge-lab 은 사설 IP 로봇에만 보낸다
+- **⑥ 했다(261104).** 같은 사진을 로봇 · PC · 브라우저에 넣어 답·확률·특징을 견준다. `system/score_check.py`(파이보 · PiBrain · edge-lab `tools/score_check.py` **같은 파일**)가
+  `run <모델> <사진 폴더> --out x.json` 으로 결과 파일을 만들고(어디서 도는지는 스스로 안다 — openpibo 가 있으면 로봇, 아니면 edge-lab), `compare a.json b.json [c.json]` 로 견준다(다르면 끝 코드 1).
+  브라우저 몫은 `http://<로봇 IP>:50010/static/check.html`(분류기를 켠 뒤 — 같은 `tl/` 코드로 계산, 짧은 변 240 으로 줄여 넣고 [결과 파일 받기]). 화면 메뉴에는 안 넣었다(점검용).
+  확인(컨테이너, 사진 17장): 로봇 vs PC 답 17/17 · 특징 최대 차 1.0e-6, 로봇 vs 브라우저(Chromium) 답 17/17 · 확률 최대 차 0.04 · 최저 코사인 0.975(JPEG 풀기·줄이기 차이). **실기기·실제 태블릿 결과는 확인 필요**
+- **⑦ 했다(261104, edge-lab).** edge-lab 이 로봇과 같은 `teachlab`(같은 코드·같은 모델 파일)으로 특징을 뽑고, 같은 머리(Dense 64 → 0.2 → softmax, 40회·16)로 배우고,
+  로봇 형식(`project.json`·`classifier.json/bin`·`labels.txt`·`samples.json`)으로 저장한 뒤 [로봇으로 보내기] 가 이 `POST /api/models`(50010)로 보낸다(`project.app = "edge-lab"`).
+  확인(컨테이너): 같은 사진에서 특징 차이 1.5e-6 이하, 보낸 모델을 `CustomClassifier` 로 돌린 답·확률이 edge-lab 과 17/17 같음. **`/api/models` 의 받는 형식을 바꾸면 edge-lab `train_routes.robot_send` 도 같이 바꿀 것**
+**파이썬 API·블록은 그대로 호환되게, 바꾸는 건 함수 안에서만(261104, 사용자).** 이름·인자·돌려주는 모양·기준값을 바꾸지 말 것 — 새 기능은 함수·블록을 더하는 것으로(예: `Face.mask_face`). 예외: 블록이 이미 꺼져 있던 `TeachableMachine` 은 지웠다(사용자).
+
+## 얼굴 (261104) — `openpibo/vision_face.py`, dlib 없음
+
+일원화 3단계. **파이보·PiBrain 같은 파일**(차이는 `detect_mesh_vis` 글자 위치 한 줄 — 파이보 y-40, PiBrain y-30).
+
+| 기능 | 모델 | 바뀐 것 |
+|---|---|---|
+| 얼굴 찾기 `detect_face` | OMZ face-detection-retail-**0005** | 0004 → 0005. 입출력 모양이 같아 코드는 경로만 |
+| 얼굴 점 `landmark_face` | MediaPipe 얼굴 점 478개에서 **dlib 68점 번호로 골라** 돌려준다(`MP_TO_DLIB68`) | 학생 코드의 점 번호(예: 36·45 눈꼬리, 8 턱 끝)가 그대로. 상자 둘레 25% 넓혀 잘라 찾는다. 못 찾아도 예전(dlib)처럼 늘 68점 — 상자에 평균 얼굴 점(`MEAN68`, LFW 300장 평균)을 맞춰 돌려준다 |
+| 얼굴 구분 `train_face` `recognize` | OMZ face-reidentification-retail-**0095**(숫자 256개, L2) | MediaPipe 점 5개(두 눈 가운데·코끝·입 끝 둘)로 128x128 정렬(OMZ 기준점, 닮음 변환). 점을 못 찾으면 상자만 잘라 넣는다 |
+| 오차도 `score` | 코사인 거리 × 2/3(`SCORE_SCALE`) — **기본 `face.threshold = 0.4` 그대로**(코사인 0.6 이 0.4) | 예전 dlib 유클리드 크기에 맞춰 학생 코드의 `score < 0.4` 같은 비교가 그대로 통한다. 낮을수록 비슷한 건 같다 |
+| 얼굴 정보 파일 `save_db` `load_db` | **JSON**(`format: openpibo-facedb`, `model: face-reidentification-retail-0095`) | pickle 을 열지 않는다. 예전 파일·다른 모델 파일은 '얼굴을 다시 등록해 주세요' 오류. 파일 이름은 넘긴 그대로(확장자 안 붙임) |
+| ~~사물 따라가기~~ | — | **261106 에 지웠다(사용자)** — `object_tracker_init`·`track_object`·`track_object_vis`, 블록 3개, 파이보 도구 [카메라] '사물 추적' 타일. 아래 '사물 추적 삭제' |
+
+- **파이썬 API·블록 호환(261104, 사용자): 이름·인자·돌려주는 모양·기준값을 바꾸지 않고 함수 안에서만 바꾼다.** 블록·`examples/vision_face1.json`·`vision_face2.json` 그대로. 달라진 건 `get_db()` 의 숫자 개수(128 → 256)와 얼굴 정보 파일 형식(다시 등록 — 사용자 확인)뿐
+- **LFW 공개 사진(성인) 1000쌍으로 비교(261104, 컨테이너 x86)**: 0095 최고 정확도 99.5%(거리 0.676), 0.6 에서 다른 사람 오인 0% · 같은 사람 놓침 2.2%.
+  dlib(예전 코드와 같은 68점 → 인코딩)은 최고 97.8%(0.594)인데 **예전 기준 0.4 에서는 같은 사람을 71.6% 놓쳤다**(정확도 64.2%).
+  68점 번호 맞추기는 dlib 68점과의 평균 차이가 두 눈꼬리 거리의 5.8%(중간값, p90 10.6% — 턱선은 두 모델의 정의가 달라 차이가 큰 쪽)
+- 얼굴 하나 처리(점 찾기 + 정렬 + 0095) x86 13.9ms · dlib 78.2ms. **Pi 4(PiBrain 261106): 0095 33ms · dlib 489ms**, 찾기 0005 64ms('모델 실측 스크립트' 표). **교실 아이 얼굴 인식률은 확인 필요** — 기준값(코사인 0.6 = 오차도 0.4)은 아이들 사진으로 다시 볼 것
+- 기능 확인 17/17(컨테이너): 같은/다른 사람, 68점 모양·순서, 얼굴 없는 상자, JSON 왕복, 예전 pickle·다른 모델 거부, 나이·감정·mesh 그대로, 추적기 이동 따라감
+- 패키지 `dlib`·`openpibo-dlib-models`(68점 약 99MB + 구분 약 22MB)를 `requirements.txt`·`venv_prune.py`·`venv_rebuild.sh`(컴파일 목록)에서 뺐다 — 새 태그를 올린 뒤 `venv_prune.py --apply`
+- **마스크 `mask_face(img, item)` (261104, 일원화 4단계)** → `{"mask": True/False, "score": %, "box"}`. edge-lab 과 같은 `/home/pi/.model/mask/mask.onnx`(임베더 + 분류기 한 개)를 onnxruntime 으로,
+  얼굴 상자 둘레 30% 를 붙여 자르고 teach-lab `crop_to`(= TM cropTo, edge-lab `MaskCls._prep` 과 같은 쌍선형) 224, 0~255 float 그대로. 종류 이름은 파일 메타데이터 `edge-lab.classes`. 처음 부를 때 올린다.
+  같은 자른 그림에서 edge-lab(OpenVINO f32)과 확률 최대 차이 1.2e-6, 답 120/120 일치. LFW 맨얼굴 60/60 no mask, 그려 넣은 마스크 60/60 mask(진짜 마스크 사진은 확인 필요).
+  **블록은 아직 없다** — 파이썬·블록 이름 맞추기(일원화 8단계) 때 같이 정한다
+- **0005·0095 파일이 `/home/pi/.model/face/` 에 먼저 있어야 한다**(`sudo bash system/fetch_models.sh` — 이미지 작업. 실행 코드는 내려받지 않는다). 없으면 `Face()` 가 파일 이름을 담은 오류
+- **사물 추적 삭제(261106, 사용자 — 쓸모가 작다는 판단, 사물 인식이 대신한다)**: 두 리포의 `Detect.object_tracker_init`·`track_object`·`track_object_vis`(261104 에 CSRT 로 바꿨던 것), IDE 블록 `vision_object_tracker_init`·`vision_object_track`·`vision_object_track_vis`(정의·생성기·툴박스·`ko.js`/`en.js` 문구·블록 가이드 그림),
+  파이보 도구의 '사물 추적' 타일·클릭 처리·`object_tracker_init` 소켓. API 호환 규칙의 예외다(사용자). **예전 프로그램은 그대로 열린다** — `customblock_callback.js` 끝 불러오기 감싸개가 추적 블록을 걷어낸다(설정·표시 블록은 빼고 뒤를 당기고, 추적하기 값 블록은 칸을 비움. 컨테이너 Blockly 로 확인). 파이썬에서 부르면 AttributeError
+- **얼굴 등록·구분 웹 `system/face_web.py`(261106, 파이보·PiBrain 같은 파일)** — 손으로 띄우는 시험 화면(메뉴에 없음, 유닛 없음). 도구·분류기를 끄고 `sudo /home/pi/.pyenv/bin/python3 /home/pi/openpibo-os/system/face_web.py` → `http://<IP>:50070`. 이름 넣고 [등록](가장 큰 얼굴) · 이름·오차도 상자 · 지우기 · 기준 막대. 얼굴 정보는 `/home/pi/face_web.json`(`Face.save_db` 형식)에 바뀔 때마다 저장, 보는 화면이 10초 없으면 인식을 쉰다. 화면은 카메라 그림 그대로(짧은 변 480, JPEG 85 — `--short 240` 으로 줄임). 확인(컨테이너, LFW 가짜 카메라): 같은 사람 0.13~0.15 · 다른 사람 0.57~0.68 · 390px 넘침 0. **실기기 확인 필요**
 
 ## 사물 인식 (261026) — easydetect ed 모델 파일
 

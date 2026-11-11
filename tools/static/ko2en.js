@@ -43,7 +43,6 @@ const translations = {
   v_object:               { ko: "사물 인식",    en: "Object detection" },
   v_hand:                 { ko: "손동작 인식",  en: "Hand gesture" },
   v_pose:                 { ko: "포즈 인식",    en: "Pose detection" },
-  v_track:                { ko: "사물 추적",    en: "Object tracking" },
   v_marker:               { ko: "마커 인식",    en: "Marker detection" },
   v_marker_length:        { ko: "마커 길이",    en: "Marker length" },
   save_image:      { ko: "사진 저장", en: "Save photo" },

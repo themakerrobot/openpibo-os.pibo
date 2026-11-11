@@ -1,6 +1,6 @@
 import subprocess
 import openpibo_models
-# 카메라·얼굴·인식(vision_camera / vision_face / vision_detect)은 무거워서(dlib·OpenVINO·MediaPipe)
+# 카메라·얼굴·인식(vision_camera / vision_face / vision_detect)은 무거워서(OpenVINO·MediaPipe)
 # 여기서 불러오지 않는다. 로봇 연결(모터·소리)을 먼저 알리고 vision_start 가 이어서 불러온다(260929)
 from openpibo.audio import Audio
 from openpibo.motion import Motion
@@ -30,7 +30,6 @@ class Pibo:
     logging.info('Class INIT')
     self.emit = emit_func
     self.mymodel_path = "/home/pi/mymodel"
-    self.trackX, self.trackY = 0, 0
     self.imgX, self.imgY = 0,0
     self.marker_length = 2
     self.motion_d = [0, 0, -80, 0, 0, 0, 0, 0, 80, 0] # current d value
@@ -47,7 +46,7 @@ class Pibo:
     self.vision_sleep = True
 
     # 준비 순서(260929): 모터·소리 → [로봇 연결됨] → 카메라 → 사물·손 인식 → 얼굴 인식.
-    # 전엔 얼굴(dlib 모델 약 120MB·OpenVINO 3개 컴파일·MediaPipe)까지 다 올린 뒤에야 연결됨이 떠서,
+    # 전엔 얼굴(당시 dlib 모델 약 120MB·OpenVINO 3개 컴파일·MediaPipe)까지 다 올린 뒤에야 연결됨이 떠서,
     # 동작 탭만 쓸 사람도 한참 기다렸다. 카메라 쪽은 vision_state 로 단계를 알린다(도구 [카메라] 탭에 표시)
     self.cam = None
     self.fac = None
@@ -95,7 +94,7 @@ class Pibo:
 
   # 기능마다 필요한 모델. 아직 안 올라왔으면 카메라 화면만 보낸다
   NEEDS_FACE = ('face', 'face_landmark')
-  NEEDS_DET = ('qr', 'object', 'hand', 'pose', 'track', 'marker')
+  NEEDS_DET = ('qr', 'object', 'hand', 'pose', 'marker')
 
   def vision_loop(self):
     while True:
@@ -131,8 +130,6 @@ class Pibo:
           img, res = self.hand_detect()
         elif self.vision_type == "pose":
           img, res = self.pose_detect()
-        elif self.vision_type == "track":
-          img, res = self.track_object()
         elif self.vision_type == "marker":
           img, res = self.detect_marker()
         else:
@@ -235,23 +232,6 @@ class Pibo:
     im = self.frame.copy()
     self.det.detect_pose_vis(im, self.det.detect_pose(im))
     return im, ''
-
-  def object_tracker_init(self, d):
-    if self.det is None or self.frame is None:
-      return
-    im = self.frame.copy()
-    if self.det.tracker is not None:
-      del self.det.tracker
-
-    self.det.object_tracker_init(im, (d['x1'], d['y1'], d['x2'], d['y2']))
- 
-  def track_object(self):
-    im = self.frame.copy()
-    colors = (100,0,200)
-    if self.det.tracker is not None:
-      x1,y1,x2,y2 = self.det.track_object(im)
-      self.cam.rectangle(im, (x1,y1), (x2,y2), colors,3)
-    return im, ""
 
   def detect_marker(self):
     im = self.frame.copy()

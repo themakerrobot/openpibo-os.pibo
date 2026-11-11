@@ -46,8 +46,8 @@ pyenv 를 새로 만들면 이 단계가 통째로 빠지니, 처음부터 이�
 
 ```bash
 PY=/home/pi/.pyenv/bin/python3
-$PY -c "from openpibo.modules.teachlab import load_interpreter; print(load_interpreter())"
-#   <class 'tflite_runtime.interpreter.Interpreter'>  (tensorflow 가 나오면 멈출 것)
+$PY -c "from openpibo.modules.teachlab.embedder import ImageEmbedder; from openpibo.modules.pose.movenet import Movenet; ImageEmbedder('mobilenet_v3_small_embedder.tflite'); Movenet(); print('onnx ok')"
+#   onnx ok  (분류기 사진 특징·MoveNet 은 261104 부터 onnxruntime — TFLite 런타임을 안 쓴다)
 $PY -c "import numpy as np; from openpibo.vision_detect import Detect; print(Detect().detect_object(np.zeros((480,640,3),'uint8')))"
 #   []
 ```
@@ -71,7 +71,7 @@ sudo $PY /home/pi/openpibo-os/system/venv_prune.py | head -40
 
 # 2) 지운다. 지우기 전 목록을 /home/pi/venv_backup_<날짜>.txt 로 남기고, 지운 뒤 pip check 와 import 확인을 돌린다
 sudo $PY /home/pi/openpibo-os/system/venv_prune.py --apply
-#    import 확인 끝줄이 'N/N 모듈 import 됨 · 분류기 추론기: tflite_runtime.interpreter' 여야 한다
+#    import 확인 끝줄이 'N/N 모듈 import 됨 · 분류기 사진 특징·MoveNet: onnx ok' 여야 한다
 
 # 3) 서비스 다시 켜고 IDE·도구·분류기를 한 번씩 열어 본다
 sudo systemctl restart ide.service booting.service
@@ -89,16 +89,16 @@ sudo systemctl restart ide.service booting.service
 알아 둘 것:
 - **가상환경 밖은 건드리지 않는다.** `/home/pi/.pyenv` 는 시스템 패키지를 보는 가상환경이라 `gpiozero` `lgpio` `spidev` `python-apt` 등
   apt 패키지가 목록에 같이 보이지만(크기 0) 지울 대상에서 뺀다
-- 남기는 것 중 눈여겨볼 것: `lxml`(뉴스 블록), `tflite-runtime`(분류기·movenet — 없으면 TensorFlow 를 찾는다), `openvino`(얼굴 분석),
+- 남기는 것 중 눈여겨볼 것: `lxml`(뉴스 블록), `openvino`(얼굴 분석),
   `av`(picamera2 가 요구), `matplotlib`(mediapipe 가 실제로 불러온다), `sympy`(onnxruntime 이 요구), `uvicorn[standard]`(uvloop·httptools·websockets —
   socket.io 웹소켓)
 - `openpibo-face-models`(약 90MB)는 **지운다.** 얼굴 모델은 `/home/pi/.model/face` 에서 읽는다(`vision_face.py`). 이름은 예전 `setup.py` 에만 남아 있다
-- `openpibo-detect-models`(약 80MB)는 `movenet_lightning.tflite` 하나 때문에 남는다. 그 파일을 `/home/pi/.model` 로 옮기면 뺄 수 있다(아직 안 함)
+- **`tflite-runtime`·`openpibo-detect-models`(약 80MB)는 261104 부터 지운다.** 분류기 사진 특징·MoveNet 을 리포 안의 ONNX(`openpibo/modules/teachlab/`·`pose/`)로 onnxruntime 에서 돌린다 — 새 태그를 올린 **뒤에** 돌릴 것
 - 새 기능이 패키지를 쓰게 되면 스크립트의 `ROOTS` 와 `requirements.txt` 에 **둘 다** 넣을 것(파이보·PiBrain 같은 파일)
 
 **처음부터 다시 만들기(선택) — `system/venv_rebuild.sh`.** 정리 대신 가상환경을 새로 만든다. `requirements.txt` 만으로 다시 만들 수 있는지
 확인할 때 쓴다(새 OS 로 이미지를 처음부터 만들 때). 옛 가상환경은 `/home/pi/.pyenv.old` 로 옮겨 두고, 지금 버전 목록(`pip freeze`)을
-제약으로 줘서 같은 버전으로 설치한 뒤 import 확인·dlib 실행까지 본다. **어느 단계든 실패하면 옛 것으로 되돌린다.**
+제약으로 줘서 같은 버전으로 설치한 뒤 import 확인까지 본다. **어느 단계든 실패하면 옛 것으로 되돌린다.**
 
 ```bash
 sudo bash /home/pi/openpibo-os/system/venv_rebuild.sh            # 인터넷 필요, 약 1.5GB 받는다
@@ -106,11 +106,10 @@ sudo bash /home/pi/openpibo-os/system/venv_rebuild.sh rollback   # 되돌리기
 sudo rm -rf /home/pi/.pyenv.old                                  # 잘 되면 옛 것 지우기
 ```
 
-- PyPI 에 aarch64 wheel 이 없어 **컴파일하는 것 5개**: `dlib`(오래 걸린다) · `RPi.GPIO` · `rpi-ws281x` · `PiDNG` · `python-prctl`(picamera2 의존).
+- PyPI 에 aarch64 wheel 이 없어 **컴파일하는 것 4개**: `RPi.GPIO` · `rpi-ws281x` · `PiDNG` · `python-prctl`(picamera2 의존). `dlib` 은 261104 에 뺐다(얼굴 구분 → OpenVINO retail-0095).
   빌드 도구(`build-essential` `cmake` `libcap-dev` `python3-dev`)는 두 기기에 이미 있다(260930 확인)
 - 컴파일한 wheel 은 `/home/pi/wheels` 에 남는다. **램이 큰 PiBrain(7.6GB)에서 먼저 돌리고 그 폴더를 파이보(1.8GB)로 복사**하면 파이보는 컴파일하지 않는다.
-  다른 기기에서 만든 dlib 이 그 CPU 에서 도는지는 스크립트가 dlib 을 한 번 돌려 확인한다(안 되면 되돌리고 그 wheel 을 지우라고 알린다)
-- 가상환경은 `--system-site-packages` 로 만든다(`libcamera` 는 apt 의 `python3-libcamera`). `RPi.GPIO`·`picamera2`·`rpi_ws281x`·`dlib` 은 가상환경 안 pip 설치본을 쓴다(260930 두 기기 확인)
+- 가상환경은 `--system-site-packages` 로 만든다(`libcamera` 는 apt 의 `python3-libcamera`). `RPi.GPIO`·`picamera2`·`rpi_ws281x` 는 가상환경 안 pip 설치본을 쓴다(260930 두 기기 확인)
 - 컨테이너에서 성공·실패(자동 되돌리기)·`rollback` 경로를 시험했다. **기기에서는 아직 안 돌렸다**
 
 ### 파이썬 패키지 · 모델 폴더 (260930~, 이미지당 1회)
@@ -130,10 +129,23 @@ $PY -m pip check
 | `tts/assets/onnx` | Supertonic 3 **int8** 변환본(`leeyunjai/edge-lab` `tts-int8`, vocoder 만 fp32, 약 178MB) + `tts.json` `unicode_indexer.json` |
 | `tts/assets` | `voice_styles/`(F1~F5·M1~M5) · `LICENSE` · `LICENSE-OpenRAIL-M.txt` · `MODIFICATIONS.md`(변환 고지 — 변형 모델이라 필요) |
 | `stt` | `model.int8.onnx` `tokens.txt`(sherpa-onnx `sense-voice-zh-en-ja-ko-yue-int8-2024-07-17`) · `silero_vad.onnx` · `LICENSE-SenseVoice` |
-| `llm` | `gemma-3-1b-it-Q4_K_M.gguf`(806,058,272 B) · `themaker-0.8b-Q4_K_M.gguf`(337,040,032 B) · (오면) `themaker-en-0.8b-Q4_K_M.gguf` + 별칭 링크 `general.gguf` `themaker-ko.gguf` `themaker-en.gguf`(받은 뒤 `ln -sfn` 으로 만든다 — 링크는 HF 에 올리지 않는다, 261029). 예전 `pibo-qwen3.5-…gguf`·링크 `llm-model.gguf` 는 없다. 서버는 `/home/pi/.llama.cpp` 빌드 |
+| `llm` | **`general.gguf` · `themaker-ko.gguf` · `themaker-en.gguf` 실제 파일 세 개**(261106 — 링크가 아니라 모델 이름으로 된 파일. HF 에도 이 이름으로 올린다). 어느 판인지는 `VERSION` 의 `## sha256` 위 `llm/<이름>.gguf = <원래 파일 이름>` 줄에 적는다(지금 general = `gemma-3-1b-it-Q4_K_M`, themaker-ko = `themaker-0.8b-Q4_K_M`). 261029~261105 에는 판 이름 파일 + 별칭 링크였다. 예전 `pibo-qwen3.5-…gguf`·링크 `llm-model.gguf` 는 없다. 서버는 `/home/pi/.llama.cpp` 빌드 |
 | `object` | **`ed-s-320.onnx`** 하나(easydetect ed-s COCO, 이름·conf 는 파일 안 메타데이터, HF `.model/object/ed-s-320.onnx`). 예전 사물 인식 가중치와 그 고지 파일은 **지운다**(261026) |
-| `hand` `face` | 그대로 |
+| `hand` | 그대로 |
+| `mask` | **`mask.onnx`**(261104 — 마스크 판별 `Face.mask_face`, edge-lab 과 같은 파일, HF `leeyunjai/edge-lab` 의 `mask/mask.onnx`, 4,453,442 B, sha256 `bd3624be…37010`). 없으면 `mask_face` 만 오류(처음 부를 때 올린다) |
+| `face` | `detection/face-detection-retail-0005.{xml,bin}`(261104 — 0004 대신) · `age-gender/` · `emotion/` · `landmark/face_landmarker.task` · **`reid/face-reidentification-retail-0095.{xml,bin}`**(261104 — 얼굴 구분, dlib 대신). 0005·0095 는 OMZ 2023.0 FP16 — `system/fetch_models.sh` 로 넣는다. **코드보다 먼저 넣을 것** — 없으면 `Face()` 가 파일 이름을 담은 오류로 멈춘다. 0004 는 지워도 된다 |
 | (지움) | `classifier/`(예전 TF 가중치), `tts/assets/{.git,audio_samples,img}`, fp32 `onnx` |
+
+**261104 에 새로 쓰는 모델 넣기 — `system/fetch_models.sh`(이미지 작업, 사람이 돌린다).** 로봇이 돌 때 실행되는 코드는 오프라인 전용이라
+모델을 내려받지 않는다(사용자 261104). 받는 건 이 스크립트 하나다 — 얼굴 0005·0095(OMZ 2023.0 FP16) · 마스크 `mask.onnx`, 있으면 건너뛴다:
+
+```bash
+sudo bash /home/pi/openpibo-os/system/fetch_models.sh            # 인터넷이 될 때 기기에서 → /home/pi/.model
+bash system/fetch_models.sh ./model                               # 또는 PC 에서 받아 USB·scp 로 /home/pi/.model 에 넣기
+```
+
+넣은 뒤 아래 `VERSION` 목록을 다시 만든다.
+
 
 ```bash
 # 사물 인식 모델(easydetect ed). object/ 에는 ed-s-320.onnx 하나만 둔다(예전 가중치·고지 파일은 지운다). 넣은 뒤 VERSION 의 sha256 목록을 다시 만든다
@@ -177,8 +189,8 @@ StandardOutput=journal
 StandardError=journal
 ```
 
-모델별 별칭 링크: `cd /home/pi/.model/llm && sudo ln -sfn gemma-3-1b-it-Q4_K_M.gguf general.gguf && sudo ln -sfn themaker-0.8b-Q4_K_M.gguf themaker-ko.gguf && sudo ln -sfn themaker-en-0.8b-Q4_K_M.gguf themaker-en.gguf`
-(영문 파일이 오기 전엔 `themaker-en.gguf` 가 깨진 링크 — 대화 화면에 '(없음)', `set_llm_model` 은 '파일이 아직 없어요'). 그 뒤 `sudo systemctl daemon-reload`.
+모델 파일: `/home/pi/.model/llm/` 에 `general.gguf`·`themaker-ko.gguf`·`themaker-en.gguf` 를 **실제 파일로** 둔다(261106 — HF 에서 이 이름으로 받는다. 예전 별칭 링크는 링크를 그 파일로 바꿨다).
+새 판으로 바꿀 땐 같은 이름으로 덮어쓰고 `VERSION` 의 `llm/<이름>.gguf = <원래 파일 이름>` 줄과 sha256 목록을 다시 만든다. 영문 파일이 없으면 대화 화면에 '(없음)', `set_llm_model` 은 '파일이 아직 없어요'. 그 뒤 `sudo systemctl daemon-reload`.
 
 - `[Install]` 이 없어 enable 되지 않는다(`systemctl is-enabled llama-server@general` → `static`). 대화 화면·`Speech.start_llm()` 이 켜고, IDE 가 끈다
 - 템플릿끼리는 서로 끄지 않는다 — 켜는 쪽(코드)이 늘 `systemctl stop 'llama-server@*'` 를 먼저 한다(램 2GB 라 하나만)
