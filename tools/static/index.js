@@ -365,6 +365,26 @@ const getVisions = (socket) => {
   /* 얼굴 구분(261113): [얼굴 구분] 타일을 고르면 아래 패널이 보인다. 등록·지우기·내보내기·가져오기는 REST(/face/*),
      인식 결과는 다른 타일처럼 stream 으로 온다. 얼굴 정보는 로봇의 /home/pi/code/facedb 라 IDE 블록이 그대로 불러 쓴다 */
   const face = { names: [], ready: false, busy: false };
+
+  // 목록 접기(261113): 평소엔 '등록한 얼굴 · N명' 한 줄. 펼침 상태는 브라우저에 기억한다.
+  // 내보내기·가져오기·모두 지우기는 '⋯' 메뉴, 긴 안내는 '?' 를 눌러 펼친다(태블릿엔 마우스 올리기가 없다)
+  const fFold = document.getElementById("face_fold"), fList = document.getElementById("face_list");
+  const fNote = document.getElementById("face_note"), fHelp = document.getElementById("face_help_bt");
+  const fMenuBt = document.getElementById("face_menu_bt"), fMenu = document.getElementById("face_menu");
+  const setFold = (v) => {
+    fList.hidden = !v; fFold.setAttribute("aria-expanded", v ? "true" : "false");
+    try { localStorage.setItem("pibo_face_list", v ? "1" : "0"); } catch (e) {}
+  };
+  let foldInit = false;
+  try { foldInit = localStorage.getItem("pibo_face_list") === "1"; } catch (e) {}
+  setFold(foldInit);
+  fFold.addEventListener("click", () => setFold(fList.hidden));
+  fHelp.addEventListener("click", () => { fNote.hidden = !fNote.hidden; fHelp.setAttribute("aria-expanded", fNote.hidden ? "false" : "true"); });
+  const closeMenu = () => { fMenu.hidden = true; fMenuBt.setAttribute("aria-expanded", "false"); };
+  fMenuBt.addEventListener("click", (e) => { e.stopPropagation(); fMenu.hidden = !fMenu.hidden; fMenuBt.setAttribute("aria-expanded", fMenu.hidden ? "false" : "true"); });
+  fMenu.addEventListener("click", () => closeMenu());
+  document.addEventListener("click", (e) => { if (!fMenu.hidden && !fMenu.contains(e.target)) closeMenu(); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !fMenu.hidden) closeMenu(); });
   const faceMsg = (key, kind, ...args) => {
     const el = document.getElementById("face_msg");
     el.textContent = key ? t(key, ...args) : "";
@@ -396,6 +416,9 @@ const getVisions = (socket) => {
     document.getElementById("face_train_bt").disabled = face.busy;
     const ph = document.getElementById("face_name");
     ph.placeholder = t("face_name_ph"); ph.setAttribute("aria-label", t("face_name_ph"));
+    document.getElementById("face_n").textContent = t("face_people", face.names.length);
+    fHelp.title = t("face_help"); fHelp.setAttribute("aria-label", fHelp.title);
+    fMenuBt.title = t("face_more"); fMenuBt.setAttribute("aria-label", fMenuBt.title);
   };
 
   // 기준(261113): 낮출수록 엄격(같은 사람도 '?' 가 되기 쉽다), 올릴수록 느슨(다른 사람을 잘못 알아보기 쉽다). 놓을 때 보낸다
