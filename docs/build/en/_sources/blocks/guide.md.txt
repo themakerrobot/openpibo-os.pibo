@@ -34,7 +34,7 @@ Everything runs **inside piBo**. Only the [Collect] category needs the internet,
 | Display | 11 |
 | Speech | 7 |
 | Vision | 16 |
-| Recognition | 36 |
+| Recognition | 33 |
 | Utilities | 12 |
 
 ## piBo blocks
@@ -175,7 +175,7 @@ Save text to the screen.
 
 Save the selected image to the screen.
 
-<img src="img/oled_draw_image.png" alt="Save image [Select folder ▾] ([sample]) . [jpg ▾] to screen" width="674" class="blk">
+<img src="img/oled_draw_image.png" alt="Save image [Select folder ▾] ([image]) . [jpg ▾] to screen" width="663" class="blk">
 
 Save the given image to the screen.
 
