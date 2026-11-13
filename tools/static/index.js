@@ -277,7 +277,7 @@ const getVisions = (socket) => {
     camera: "camera", grayscale: "circle-half-stroke", canny: "draw-polygon", cartoon: "palette", sketch_rgb: "pencil",
     detail: "magnifying-glass-plus", edgePreservingFilter: "water", qr: "qrcode", face: "face-smile",
     face_landmark: "location-crosshairs", object: "box", hand: "hand", pose: "person-walking",
-    marker: "thumbtack"
+    marker: "thumbtack", face_id: "id-badge"
   };
   const vTiles = document.getElementById("v_tiles");
   const showVisionFunc = (v) => {
@@ -296,7 +296,7 @@ const getVisions = (socket) => {
   /* 준비 상태(260929): 서버가 [로봇 연결됨] 뒤에 카메라 → 사물·손 인식 → 얼굴 인식 순으로 올리며
      vision_state 를 보낸다. 카메라 칸 위에 단계·막대·경과 초를 보이고, 아직 안 올라온 기능 타일에는 '준비 중' 을 단다
      (눌러 둘 수는 있다 — 올라오면 그때부터 결과가 나온다) */
-  const NEEDS = { face: "face", face_landmark: "face", qr: "detect", object: "detect", hand: "detect", pose: "detect", marker: "detect" };
+  const NEEDS = { face: "face", face_landmark: "face", face_id: "face", qr: "detect", object: "detect", hand: "detect", pose: "detect", marker: "detect" };
   const vBoot = document.createElement("div"); vBoot.className = "v-boot"; vBoot.hidden = true;
   vBoot.innerHTML = `<div class="v-boot__row"><i class="fa-solid fa-spinner fa-spin"></i><span class="v-boot__txt"></span><span class="v-boot__n"></span></div><div class="v-boot__bar"><i></i></div>`;
   document.querySelector("#article_vision .v-stage").before(vBoot);
@@ -361,6 +361,127 @@ const getVisions = (socket) => {
   });
 
   $("#v_capture").on("click", () => downloadOrAlert("/download_img", "capture.jpg"));
+
+  /* 얼굴 구분(261113): [얼굴 구분] 타일을 고르면 아래 패널이 보인다. 등록·지우기·내보내기·가져오기는 REST(/face/*),
+     인식 결과는 다른 타일처럼 stream 으로 온다. 얼굴 정보는 로봇의 /home/pi/code/facedb 라 IDE 블록이 그대로 불러 쓴다 */
+  const face = { names: [], ready: false, busy: false };
+
+  // 목록 접기(261113): 평소엔 '등록한 얼굴 · N명' 한 줄. 펼침 상태는 브라우저에 기억한다.
+  // 내보내기·가져오기·모두 지우기는 '⋯' 메뉴, 긴 안내는 '?' 를 눌러 펼친다(태블릿엔 마우스 올리기가 없다)
+  const fFold = document.getElementById("face_fold"), fList = document.getElementById("face_list");
+  const fNote = document.getElementById("face_note"), fHelp = document.getElementById("face_help_bt");
+  const fMenuBt = document.getElementById("face_menu_bt"), fMenu = document.getElementById("face_menu");
+  const setFold = (v) => {
+    fList.hidden = !v; fFold.setAttribute("aria-expanded", v ? "true" : "false");
+    try { localStorage.setItem("pibo_face_list", v ? "1" : "0"); } catch (e) {}
+  };
+  let foldInit = false;
+  try { foldInit = localStorage.getItem("pibo_face_list") === "1"; } catch (e) {}
+  setFold(foldInit);
+  fFold.addEventListener("click", () => setFold(fList.hidden));
+  fHelp.addEventListener("click", () => { fNote.hidden = !fNote.hidden; fHelp.setAttribute("aria-expanded", fNote.hidden ? "false" : "true"); });
+  const closeMenu = () => { fMenu.hidden = true; fMenuBt.setAttribute("aria-expanded", "false"); };
+  fMenuBt.addEventListener("click", (e) => { e.stopPropagation(); fMenu.hidden = !fMenu.hidden; fMenuBt.setAttribute("aria-expanded", fMenu.hidden ? "false" : "true"); });
+  fMenu.addEventListener("click", () => closeMenu());
+  document.addEventListener("click", (e) => { if (!fMenu.hidden && !fMenu.contains(e.target)) closeMenu(); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !fMenu.hidden) closeMenu(); });
+  const faceMsg = (key, kind, ...args) => {
+    const el = document.getElementById("face_msg");
+    el.textContent = key ? t(key, ...args) : "";
+    el.dataset.kind = kind || "";
+  };
+  const paintFace = () => {
+    const ul = document.getElementById("face_list");
+    ul.textContent = "";
+    if (!face.names.length) {
+      const li = document.createElement("li"); li.className = "v-faceid__empty"; li.textContent = t("face_empty");
+      ul.appendChild(li);
+    }
+    face.names.forEach(({ name, count }) => {
+      const li = document.createElement("li");
+      const nm = document.createElement("span"); nm.className = "v-faceid__name"; nm.textContent = name;
+      const ct = document.createElement("span"); ct.className = "v-faceid__count"; ct.textContent = t("face_count", count);
+      const del = document.createElement("button"); del.type = "button"; del.className = "v-faceid__del";
+      del.title = t("face_delete", name); del.setAttribute("aria-label", del.title);
+      del.innerHTML = '<i class="fa-solid fa-xmark"></i>';
+      del.addEventListener("click", async () => {
+        if (await confirm_popup(t("face_confirm_delete", name))) faceCall("/face/delete", { name });
+      });
+      nm.addEventListener("click", () => { document.getElementById("face_name").value = name; });
+      li.append(nm, ct, del);
+      ul.appendChild(li);
+    });
+    document.getElementById("face_clear_bt").disabled = !face.names.length;
+    document.getElementById("face_export_bt").classList.toggle("is-disabled", !face.names.length);
+    document.getElementById("face_train_bt").disabled = face.busy;
+    const ph = document.getElementById("face_name");
+    ph.placeholder = t("face_name_ph"); ph.setAttribute("aria-label", t("face_name_ph"));
+    document.getElementById("face_n").textContent = t("face_people", face.names.length);
+    fHelp.title = t("face_help"); fHelp.setAttribute("aria-label", fHelp.title);
+    fMenuBt.title = t("face_more"); fMenuBt.setAttribute("aria-label", fMenuBt.title);
+  };
+
+  // 기준(261113): 낮출수록 엄격(같은 사람도 '?' 가 되기 쉽다), 올릴수록 느슨(다른 사람을 잘못 알아보기 쉽다). 놓을 때 보낸다
+  const thIn = document.getElementById("face_th"), thVal = document.getElementById("face_th_val");
+  let thDrag = false;
+  const showTh = (v) => { thVal.textContent = Number(v).toFixed(2); };
+  thIn.addEventListener("input", () => { thDrag = true; showTh(thIn.value); });
+  thIn.addEventListener("change", () => { thDrag = false; faceCall("/face/threshold", { value: Number(thIn.value) }); });
+  const faceTake = (r) => {
+    face.names = r.names || []; face.ready = !!r.ready;
+    if (typeof r.threshold === "number" && !thDrag) { thIn.value = r.threshold; showTh(r.threshold); }
+    if (r.error) faceMsg("face_err_db", "err", r.error);
+    paintFace();
+    return r;
+  };
+  const faceCall = async (url, body, raw) => {
+    face.busy = true; paintFace();
+    try {
+      const res = await fetch(url, body === undefined ? {} : {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: raw ? body : JSON.stringify(body),
+      });
+      const r = faceTake(await res.json());
+      if (r.msg) faceMsg(r.msg, r.ok ? "ok" : "err", r.count, r.name);
+      else if (r.ok) faceMsg("");
+      return r;
+    } catch (e) {
+      faceMsg("face_err_net", "err");
+      return {};
+    } finally {
+      face.busy = false; paintFace();
+    }
+  };
+  const faceLoad = () => faceCall("/face/list");
+  const train = async () => {
+    const inp = document.getElementById("face_name");
+    const name = inp.value.trim();
+    if (!name) { faceMsg("face_err_name", "err"); inp.focus(); return; }
+    await faceCall("/face/train", { name });
+  };
+  document.getElementById("face_train_bt").addEventListener("click", train);
+  document.getElementById("face_name").addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && !e.isComposing) { e.preventDefault(); train(); }
+  });
+  document.getElementById("face_clear_bt").addEventListener("click", async () => {
+    if (await confirm_popup(t("face_confirm_clear"))) faceCall("/face/delete", { name: "*" });
+  });
+  document.getElementById("face_export_bt").addEventListener("click", (e) => {
+    if (!face.names.length) { e.preventDefault(); faceMsg("face_empty", "err"); }
+  });
+  document.getElementById("face_import_bt").addEventListener("click", () => document.getElementById("face_import_file").click());
+  document.getElementById("face_import_file").addEventListener("change", async (e) => {
+    const f = e.target.files[0]; e.target.value = "";
+    if (!f) return;
+    if (face.names.length && !(await confirm_popup(t("face_confirm_import")))) return;
+    faceCall("/face/import", await f.text(), true);
+  });
+  // 타일을 고를 때마다 목록을 다시 받는다(다른 화면·IDE 에서 바꿨을 수 있다)
+  $("#v_func_type").on("change", function () { if ($(this).val() === "face_id") faceLoad(); });
+  socket.on("disp_vision", (v) => { if (v === "face_id") faceLoad(); });
+  window.refreshFace = paintFace;
+  paintFace();
 
   $("#v_upload_tm").on("change", (e) => {
     let formData = new FormData();
@@ -1253,6 +1374,7 @@ language.addEventListener("change", () => {
   if (window.updateSamplesToggle) window.updateSamplesToggle();
   if (window.refreshMotorPanel) window.refreshMotorPanel();
   if (window.refreshVisionState) window.refreshVisionState();
+  if (window.refreshFace) window.refreshFace();
   localStorage.setItem("language", lang);
 });
 
