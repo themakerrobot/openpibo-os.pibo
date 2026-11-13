@@ -131,7 +131,7 @@ const translations = {
   recognition: { ko: "인식",   en: "Recognition" },
   utils:       { ko: "기타",   en: "Utilities" },
   // 블록 기본값(customblock_toolbox.js)
-  mymotion:       { ko: "내 동작",          en: "my motion" },
+  mymotion:       { ko: "동작 이름",        en: "my motion" },
   filename:       { ko: "파일 이름",        en: "Filename" },
   image_filename: { ko: "이미지 파일 이름", en: "Image filename" },
   audio_filename: { ko: "소리 파일 이름",   en: "Audio filename" },
