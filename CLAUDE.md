@@ -29,6 +29,8 @@ Pibo 로봇 OS. Raspberry Pi(`pi` 유저, `/home/pi/openpibo-os`)에서 서비�
 | `global` | 영문(해외) 배포판 — 필리핀·말레이시아 | **개발 금지.** `main`을 merge만 한다. 차이는 `GLOBAL_DELTA.md` |
 | `260624` | GitHub Pages 배포 운영 중 | **절대 건드리지 말 것.** push·force-push·merge 전부 금지 |
 
+**`main`·`global` 은 늘 최신으로 둔다(261113, 사용자).** 작업 브랜치에 push 할 때마다 `main` 에 merge(가능하면 fast-forward)·push 하고, 이어서 `global` 에 `main` 을 merge 해 push 한다. merge 뒤 `ko2en.js` 3종 1행(`blang = 'en'`)·`git diff --name-status main global`(델타 16개)·모드 차이 0줄을 볼 것. 태그는 여전히 사람이 찍는다
+
 `global` 은 **예전 `ph` 브랜치의 이름만 바꾼 것**이다(260930, PiBrain 과 맞춤). 히스토리는 그대로 이어져서 로그에
 `Merge branch 'main' into ph` 같은 옛 제목이 남아 있다. `ph` 브랜치는 지운다(커밋은 전부 `global` 에 들어 있다. 웹 세션은 브랜치 삭제가 403 이라 사람이 지운다).
 국가가 아니라 언어·배포 구분이라 나라 이름을 쓰지 않는다.
