@@ -1,6 +1,6 @@
 from fastapi_socketio import SocketManager
 from fastapi import FastAPI,Request,UploadFile,File,Body
-from fastapi.responses import HTMLResponse,FileResponse,JSONResponse,RedirectResponse
+from fastapi.responses import HTMLResponse,FileResponse,JSONResponse,RedirectResponse,Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
@@ -233,6 +233,63 @@ async def marker_length(sid, d=None):
   v = to_num(d, 0.1, 100, float)
   if v is not None:
     pibo.marker_length = v
+
+# ── [얼굴 구분] 타일(261113) ─────────────────────────────────
+# PiBrain 도구와 같은 REST 모양이다(몸통은 openpibo/modules/face_tool.py — 두 리포 같은 파일).
+# 얼굴 정보는 /home/pi/code/facedb — IDE 블록 [얼굴 사전 불러오기] 의 기본값과 같다
+def _face_tool():
+  return pibo.face_tool if pibo is not None else None
+
+def _face_list(ft, ok=True, msg='', count=0, name=''):
+  return JSONResponse({'ok': ok, 'msg': msg, 'count': count, 'name': name, 'names': ft.names() if ft else [],
+                       'ready': ft is not None, 'error': ft.error if ft else ''})
+
+@app.get('/face/list')
+async def face_list():
+  return _face_list(_face_tool())
+
+@app.post('/face/train')
+async def face_train(body: dict = Body(...)):
+  ft = _face_tool()
+  if ft is None:
+    return _face_list(None, False, 'face_err_loading')
+  img = None if pibo.frame is None else pibo.frame.copy()
+  ok, msg, count = await asyncio.to_thread(ft.train, img, body.get('name', ''))
+  if ok:
+    return _face_list(ft, True, 'face_trained', count, msg)
+  return _face_list(ft, False, msg)
+
+@app.post('/face/delete')
+async def face_delete(body: dict = Body(...)):
+  ft = _face_tool()
+  if ft is None:
+    return _face_list(None, False, 'face_err_loading')
+  await asyncio.to_thread(ft.delete, str(body.get('name', '')))
+  return _face_list(ft)
+
+@app.get('/face/export')
+async def face_export():
+  ft = _face_tool()
+  if ft is None:
+    return JSONResponse({'ok': False, 'msg': 'face_err_loading'}, status_code=503)
+  data = await asyncio.to_thread(ft.export_bytes)
+  return Response(content=data, media_type='application/json',
+                  headers={'Content-Disposition': 'attachment; filename="facedb.json"'})
+
+@app.post('/face/import')
+async def face_import(request: Request):
+  ft = _face_tool()
+  if ft is None:
+    return _face_list(None, False, 'face_err_loading')
+  data = await request.body()
+  if len(data) > 5 * 1024 * 1024:
+    return _face_list(ft, False, 'face_err_file')
+  try:
+    await asyncio.to_thread(ft.import_bytes, data)
+  except Exception as e:
+    logging.error(f'[face_import] {e}')
+    return _face_list(ft, False, 'face_err_file')
+  return _face_list(ft, True, 'face_imported')
 
 @app.sio.on('update_img_pointer')
 async def update_img_pointer(sid, d=None):

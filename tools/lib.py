@@ -50,6 +50,7 @@ class Pibo:
     # 동작 탭만 쓸 사람도 한참 기다렸다. 카메라 쪽은 vision_state 로 단계를 알린다(도구 [카메라] 탭에 표시)
     self.cam = None
     self.fac = None
+    self.face_tool = None   # [얼굴 구분] 타일(261113) — 얼굴 인식이 올라오면 만든다
     self.det = None
     self.frame = None
     self.res_img = None
@@ -86,6 +87,11 @@ class Pibo:
       self._vision_step(3, 'vs_face', detect=True)
       from openpibo.vision_face import Face
       self.fac = Face()
+      try:
+        from openpibo.modules.face_tool import FaceTool
+        self.face_tool = FaceTool(self.fac, font_path=openpibo_models.filepath("KDL.ttf"))
+      except Exception as ex:
+        logging.error(f'[face_tool] {ex}')
       self._vision_step(3, 'vs_ready', face=True)
     except Exception as ex:
       logging.error(f'[vision_start] Error: {ex}')
@@ -93,7 +99,7 @@ class Pibo:
       asyncio.run(self.emit('vision_state', dict(self.vision_state), callback=None))
 
   # 기능마다 필요한 모델. 아직 안 올라왔으면 카메라 화면만 보낸다
-  NEEDS_FACE = ('face', 'face_landmark')
+  NEEDS_FACE = ('face', 'face_landmark', 'face_id')
   NEEDS_DET = ('qr', 'object', 'hand', 'pose', 'marker')
 
   def vision_loop(self):
@@ -124,6 +130,9 @@ class Pibo:
           img, res = self.face_detect()
         elif self.vision_type == "face_landmark":
           img, res = self.face_landmark()
+        elif self.vision_type == "face_id":
+          img = self.frame.copy()
+          res = self.face_tool.process(img) if self.face_tool else ''
         elif self.vision_type == "object":
           img, res = self.object_detect()
         elif self.vision_type == "hand":

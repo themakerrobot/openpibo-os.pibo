@@ -1179,3 +1179,31 @@ main > div.content.pb-pane {
 .pb-shell main button,
 .pb-shell main label[for],
 .pb-shell main input[type="submit"] { line-height: 1.2; white-space: nowrap; }
+
+/* ── [카메라] 얼굴 구분 패널 (261113) — [얼굴 구분] 타일일 때만 ── */
+#article_vision:not([data-func="face_id"]) .v-faceid { display: none; }
+.v-faceid { display: flex; flex-direction: column; gap: 8px; margin: 0 0 14px; }
+.v-faceid__add { display: flex; gap: 8px; flex-wrap: wrap; }
+.v-faceid__add .pb-btn { flex: 0 0 auto; }
+.v-faceid__add input { flex: 1 1 160px; min-width: 0; height: var(--ctl-md, 40px); padding: 0 12px;
+  border: 1px solid var(--v2-line-2); border-radius: var(--r-ctl, 8px); background: var(--v2-raise); color: var(--v2-ink); font: inherit; font-size: 14px; }
+.v-faceid__add input:focus { outline: 2px solid var(--v2-accent); outline-offset: 1px; }
+.v-faceid__msg { min-height: 18px; font-size: 13px; color: var(--v2-ink-3); }
+.v-faceid__msg[data-kind="ok"] { color: var(--v2-accent-ink); }
+.v-faceid__msg[data-kind="err"] { color: var(--v2-red); }
+.v-faceid__head { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.v-faceid__tools { display: flex; gap: 4px; flex-wrap: wrap; }
+.v-faceid__tools .pb-btn { height: var(--ctl-sm, 32px); padding: 0 10px; font-size: 13px; }
+.v-faceid__tools a.pb-btn { color: var(--v2-ink); }
+.v-faceid__tools .is-disabled { opacity: .45; pointer-events: none; }
+.v-faceid__danger, .v-faceid__danger > i { color: var(--v2-red) !important; }
+.v-faceid__list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; max-height: 220px; overflow: auto; }
+.v-faceid__list li { display: flex; align-items: center; gap: 8px; padding: 6px 6px 6px 12px;
+  border: 1px solid var(--v2-line); border-radius: var(--r-ctl, 8px); background: var(--v2-raise); }
+.v-faceid__name { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 700; font-size: 14px; cursor: pointer; }
+.v-faceid__count { font-size: 12px; color: var(--v2-ink-3); white-space: nowrap; }
+.v-faceid__list .v-faceid__del { min-width: 0 !important; width: 28px; height: 28px; padding: 0 !important; margin: 0 !important;
+  border: 0 !important; border-radius: 6px; background: transparent !important; color: var(--v2-ink-3) !important; box-shadow: none !important; cursor: pointer; }
+.v-faceid__list .v-faceid__del:hover { background: var(--v2-hover) !important; color: var(--v2-red) !important; }
+.v-faceid__list li.v-faceid__empty { justify-content: center; color: var(--v2-ink-3); font-size: 13px; border-style: dashed; background: transparent; padding: 10px; }
+.v-faceid__note { margin: 0; font-size: 12px; line-height: 1.5; color: var(--v2-ink-3); white-space: normal; }
