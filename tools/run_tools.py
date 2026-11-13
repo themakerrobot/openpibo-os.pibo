@@ -242,7 +242,7 @@ def _face_tool():
 
 def _face_list(ft, ok=True, msg='', count=0, name=''):
   return JSONResponse({'ok': ok, 'msg': msg, 'count': count, 'name': name, 'names': ft.names() if ft else [],
-                       'ready': ft is not None, 'error': ft.error if ft else ''})
+                       'threshold': ft.threshold if ft else 0.4, 'ready': ft is not None, 'error': ft.error if ft else ''})
 
 @app.get('/face/list')
 async def face_list():
@@ -265,6 +265,17 @@ async def face_delete(body: dict = Body(...)):
   if ft is None:
     return _face_list(None, False, 'face_err_loading')
   await asyncio.to_thread(ft.delete, str(body.get('name', '')))
+  return _face_list(ft)
+
+@app.post('/face/threshold')
+async def face_threshold(body: dict = Body(...)):
+  ft = _face_tool()
+  if ft is None:
+    return _face_list(None, False, 'face_err_loading')
+  try:
+    ft.set_threshold(body.get('value', 0.4))
+  except (TypeError, ValueError):
+    return _face_list(ft, False, 'face_err_threshold')
   return _face_list(ft)
 
 @app.get('/face/export')

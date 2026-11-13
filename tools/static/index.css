@@ -1207,3 +1207,9 @@ main > div.content.pb-pane {
 .v-faceid__list .v-faceid__del:hover { background: var(--v2-hover) !important; color: var(--v2-red) !important; }
 .v-faceid__list li.v-faceid__empty { justify-content: center; color: var(--v2-ink-3); font-size: 13px; border-style: dashed; background: transparent; padding: 10px; }
 .v-faceid__note { margin: 0; font-size: 12px; line-height: 1.5; color: var(--v2-ink-3); white-space: normal; }
+
+.v-faceid__th { display: flex; align-items: center; gap: 8px; font-size: 13px; flex-wrap: wrap; }
+.v-faceid__th label { font-weight: 700; white-space: nowrap; }
+#v_faceid .v-faceid__th input[type="range"] { flex: 1 1 80px; min-width: 0; width: auto; }
+.v-faceid__thend { color: var(--v2-ink-3); font-size: 12px; white-space: nowrap; }
+.v-faceid__th b { min-width: 3em; text-align: right; font-variant-numeric: tabular-nums; }

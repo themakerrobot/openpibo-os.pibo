@@ -397,8 +397,16 @@ const getVisions = (socket) => {
     const ph = document.getElementById("face_name");
     ph.placeholder = t("face_name_ph"); ph.setAttribute("aria-label", t("face_name_ph"));
   };
+
+  // 기준(261113): 낮출수록 엄격(같은 사람도 '?' 가 되기 쉽다), 올릴수록 느슨(다른 사람을 잘못 알아보기 쉽다). 놓을 때 보낸다
+  const thIn = document.getElementById("face_th"), thVal = document.getElementById("face_th_val");
+  let thDrag = false;
+  const showTh = (v) => { thVal.textContent = Number(v).toFixed(2); };
+  thIn.addEventListener("input", () => { thDrag = true; showTh(thIn.value); });
+  thIn.addEventListener("change", () => { thDrag = false; faceCall("/face/threshold", { value: Number(thIn.value) }); });
   const faceTake = (r) => {
     face.names = r.names || []; face.ready = !!r.ready;
+    if (typeof r.threshold === "number" && !thDrag) { thIn.value = r.threshold; showTh(r.threshold); }
     if (r.error) faceMsg("face_err_db", "err", r.error);
     paintFace();
     return r;
