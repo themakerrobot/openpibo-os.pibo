@@ -154,90 +154,55 @@ class Pibo:
         logging.error(f'[vision_loop] send Error: {ex}')
       time.sleep(0.5)
 
+  # 인식 결과 그리기는 라이브러리 함수(…_vis)를 그대로 쓴다 — PiBrain 도구·IDE 블록과 같은 모양·색(261113).
+  # 전엔 사물(빨강 상자·파랑 이름표)·얼굴(첫 얼굴만, 영문 putText)·QR 을 여기서 따로 그렸고 자세는 결과 글자가 없었다.
+  # 결과 글자 모양도 PiBrain 도구(run_tools.process_frame)와 같다
   def face_detect(self):
     im = self.frame.copy()
     items = self.fac.detect_face(im)
+    self.fac.detect_face_vis(im, items)
     res = ''
-
-    if len(items) > 0:
-      x1,y1,x2,y2 = items[0]
-      face = self.fac.analyze_face(im, items[0])
-      colors = (200,100,0) if face['gender'] == 'Male' else (100,200,0)
-      self.cam.rectangle(im, (x1,y1), (x2, y2), colors, 3)
-      self.cam.putText(im, f"{face['gender']}, {face['age']}, {face['emotion']}", (x1+10, y1+20),0.6,colors,2)
-      res += f"{face['gender']}, {face['age']}, {face['emotion']} ({x1}, {y1})"
+    if items:
+      info = self.fac.analyze_face(im, max(items, key=lambda x: (x[2]-x[0])*(x[3]-x[1])))
+      res = f"{info['gender']}, {info['age']}, {info['emotion']}"
     return im, res
 
   def face_landmark(self):
     im = self.frame.copy()
-    res = self.fac.detect_mesh(im)
-    self.fac.detect_mesh_vis(im, res)
-
-    return im, ",".join([f"{d['distance']} cm / {d['direction']}" for d in res])
+    mesh = self.fac.detect_mesh(im)
+    self.fac.detect_mesh_vis(im, mesh)
+    return im, ' | '.join([f"{d['distance']}cm/{d['direction']}" for d in mesh])
 
   def object_detect(self):
     im = self.frame.copy()
     items = self.det.detect_object(im)
-    res = ''
-
-    colors = (100,100,200)
-    for obj in items:
-      x1,y1,x2,y2 = obj['box']
-      self.cam.rectangle(im, (x1,y1), (x2, y2),colors,3)
-      res += '[{}-({},{})] '.format(obj['name'], x1, y1)
-    if items:
-      # 이름표는 PIL 로 그린다 — easydetect 모델은 이름이 한글일 수 있고 cv2.putText 는 한글을 못 그린다(261026)
-      pil = Image.fromarray(im)
-      draw = ImageDraw.Draw(pil)
-      font = self.label_font()
-      for obj in items:
-        x1,y1,_,_ = obj['box']
-        text = f'{obj["name"]} {obj["score"]}'
-        l, t, r, b = draw.textbbox((0, 0), text, font=font)
-        w, h = r - l + 8, b - t + 6
-        top = y1 - h if y1 - h >= 0 else y1
-        draw.rectangle((x1, top, x1 + w, top + h), fill=colors)
-        draw.text((x1 + 4 - l, top + 3 - t), text, font=font, fill=(255,255,255))
-      im[:] = np.array(pil)
-    return im, res
-
-  def label_font(self):
-    if getattr(self, '_label_font', None) is None:
-      self._label_font = ImageFont.truetype(openpibo_models.filepath("KDL.ttf"), 22)
-    return self._label_font
+    self.det.detect_object_vis(im, items)
+    return im, ' | '.join([f"{i['name']}({i['score']}%)" for i in items])
 
   def hand_detect(self):
     im = self.frame.copy()
-    res = self.det.recognize_hand_gesture(im)
-    self.det.recognize_hand_gesture_vis(im, res)
-
-    return im, ",".join([f"{d['name']} / {d['score']}" for d in res])
+    items = self.det.recognize_hand_gesture(im)
+    self.det.recognize_hand_gesture_vis(im, items)
+    return im, ' | '.join([f"{i['name']}({i['score']})" for i in items])
 
   def qr_detect(self):
     im = self.frame.copy()
     items = self.det.detect_qr(im)
-    res = ''
-
-    for item in items:
-      if item['type'] != '':
-        x1,y1,x2,y2 = item['box']
-        colors = (100,0,200)
-        self.cam.rectangle(im, (x1,y1), (x2, y2),colors,3)
-        self.cam.putText(im, 'QR', (x1+10, y1+20),0.6,colors,2)
-        res += '[{}-{} / ({},{})] '.format(item['data'], item['type'], x1, y1)
-
-    return im, res
+    self.det.detect_qr_vis(im, items)
+    return im, ' | '.join([f"{i['data']}({i['type']})" for i in items if i['type']])
 
   def pose_detect(self):
     im = self.frame.copy()
-    self.det.detect_pose_vis(im, self.det.detect_pose(im))
-    return im, ''
+    result = self.det.detect_pose(im)
+    self.det.detect_pose_vis(im, result)
+    poses = self.det.analyze_pose(result)
+    return im, ' | '.join(poses) if poses else ''
 
   def detect_marker(self):
     im = self.frame.copy()
-    res = self.det.detect_marker(im, self.marker_length)
-    self.det.detect_marker_vis(im, res)
-    return im, " ".join([ f'({d["id"]})-{d["distance"]}cm' for d in res])
+    items = self.det.detect_marker(im, self.marker_length)
+    self.det.detect_marker_vis(im, items)
+    return im, ' | '.join([f"id:{i['id']} {i['distance']}cm" for i in items])
 
   def imwrite(self, name):
     if self.cam is None or self.res_img is None:
