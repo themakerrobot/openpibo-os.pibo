@@ -5,7 +5,7 @@ Class:
 :meth:`~openpibo.vision_detect.putTextPIL`
 :obj:`~openpibo.vision_detect.Detect`
 """
-import cv2,requests
+import cv2
 import os,math
 import numpy as np
 from pyzbar import pyzbar
