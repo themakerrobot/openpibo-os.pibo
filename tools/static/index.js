@@ -573,7 +573,9 @@ const getMotions = (socket) => {
     });
   }
 
-  /* v2 [동작]: 로봇 사진 위에는 번호 점(현재 각도)만, 조작은 사진 옆 패널에서 한다.
+  /* v2 [동작]: 로봇 사진 위 번호 점 안의 숫자가 곧 입력칸이다(261116 — 모션 만들 때 모터 10개를 빨리 넣게).
+     점 숫자를 누르고 바로 쳐서 Enter → 보내고 다음 모터로. 마지막 모터에서 Enter 면 [추가·수정] 으로 간다.
+     옆 패널에는 고른 모터 이름·레인지·범위와 시간·[추가·수정] 만 둔다(예전 큰 숫자칸·±1·±5 는 뺐다).
      예전 모터 칸 10개(#mN_value/#mN_range)는 v2 에서 숨기고 값 저장소로 그대로 쓴다 — 표 클릭·원래자세 등
      기존 코드가 그 값을 바꾸면 아래 sync 가 읽어 온다. 로봇에 보내는 건 기존과 같은 set_motor 한 가지.
      점 위치는 pibo_body.min.png(840×1145) 기준 %. 로봇 기준 오른쪽(M0~M3)이 화면 왼쪽이다 */
@@ -586,23 +588,25 @@ const getMotions = (socket) => {
     const stage = document.createElement("div"); stage.className = "mstage";
     img.parentNode.insertBefore(body, img); body.appendChild(stage); stage.appendChild(img);
     const dots = {};
+    const ins = {};
     MDOT.forEach(([m, x, y]) => {
-      const d = document.createElement("button");
-      d.type = "button"; d.className = "mdot"; d.dataset.m = m;
+      const d = document.createElement("div");
+      d.className = "mdot"; d.dataset.m = m;
       d.style.left = `${x}%`; d.style.top = `${y}%`;
-      d.innerHTML = `<b>${m}</b><span class="mdot__v"></span>`;
-      d.addEventListener("click", () => select(m));
-      stage.appendChild(d); dots[m] = d;
+      // type=number: 태블릿에서 '-' 가 있는 숫자 자판이 뜬다(inputmode=numeric 은 '-' 가 없는 기기가 있다)
+      d.innerHTML = `<b>${m}</b><input class="mdot__in" type="number" step="1" autocomplete="off" />`;
+      const inp = d.querySelector("input");
+      inp.setAttribute("aria-label", `M${m}`);
+      d.addEventListener("mousedown", (e) => { if (e.target !== inp) { e.preventDefault(); inp.focus(); } });
+      stage.appendChild(d); dots[m] = d; ins[m] = inp;
     });
     const panel = document.createElement("div"); panel.className = "mpanel";
     panel.innerHTML = `<div class="mpanel__name" id="mp_name"></div>
-      <div class="mpanel__val"><input type="number" id="mp_num" inputmode="numeric" /><span>°</span></div>
       <input type="range" id="mp_range" />
-      <div class="mpanel__steps"><button type="button" data-d="-5">−5</button><button type="button" data-d="-1">−1</button><button type="button" data-d="1">+1</button><button type="button" data-d="5">+5</button></div>
       <div class="mpanel__lim" id="mp_lim"></div>`;
     const side = document.createElement("div"); side.className = "mside";
     body.appendChild(side); side.appendChild(panel);
-    const mpNum = panel.querySelector("#mp_num"), mpRange = panel.querySelector("#mp_range");
+    const mpRange = panel.querySelector("#mp_range");
     const lim = (m) => [Number($(`#m${m}_range`).attr("min")), Number($(`#m${m}_range`).attr("max"))];
     const cur = (m) => Number($(`#m${m}_value`).val()) || 0;
     let sel = 2, dragging = false, sendTimer = 0;
@@ -618,24 +622,23 @@ const getMotions = (socket) => {
     };
     const paint = () => {
       MDOT.forEach(([m]) => {
-        dots[m].querySelector(".mdot__v").textContent = $(`#m${m}_value`).val() === "" ? "–" : cur(m);
+        if (document.activeElement !== ins[m]) ins[m].value = $(`#m${m}_value`).val() === "" ? "" : cur(m);
         gauge(m);
         dots[m].setAttribute("aria-pressed", m === sel ? "true" : "false");
       });
       const [lo, hi] = lim(sel);
       panel.querySelector("#mp_name").textContent = t(`motor_m${sel}`);
       panel.querySelector("#mp_lim").textContent = `${lo} ~ ${hi}`;
-      mpRange.min = lo; mpRange.max = hi; mpNum.min = lo; mpNum.max = hi;
+      mpRange.min = lo; mpRange.max = hi;
       if (!dragging) mpRange.value = cur(sel);
-      if (document.activeElement !== mpNum) mpNum.value = cur(sel);
     };
     const select = (m) => { sel = m; paint(); };
     const store = (m, v) => {                     // 저장소(숨긴 칸)와 점을 같이 바꾼다
       $(`#m${m}_value`).val(v); $(`#m${m}_range`).val(v);
-      dots[m].querySelector(".mdot__v").textContent = v;
+      if (document.activeElement !== ins[m]) ins[m].value = v;
       gauge(m);
     };
-    const setVal = (v) => { store(sel, v); mpRange.value = v; mpNum.value = v; };
+    const setVal = (v) => { store(sel, v); mpRange.value = v; ins[sel].value = v; };
     const send = (now) => {                       // [±] 를 빠르게 눌러도 서보 명령은 모아서 한 번
       clearTimeout(sendTimer);
       const m = sel;
@@ -645,18 +648,49 @@ const getMotions = (socket) => {
     const nudge = (d) => { const [lo, hi] = lim(sel); setVal(Math.max(lo, Math.min(hi, cur(sel) + d))); send(false); };
     mpRange.addEventListener("input", () => { dragging = true; setVal(Number(mpRange.value)); });
     mpRange.addEventListener("change", () => { dragging = false; send(true); });
-    panel.querySelectorAll(".mpanel__steps button").forEach((b) => b.addEventListener("click", () => nudge(Number(b.dataset.d))));
-    const commitNum = async () => {
-      const v = Number(mpNum.value), [lo, hi] = lim(sel);
-      if (mpNum.value === "" || isNaN(v) || v < lo || v > hi) {
-        mpNum.value = cur(sel);
-        await alert_popup(translations["range_warn"][lang](lo, hi));
-        return;
+    // 점 숫자칸: 들어가면 그 모터를 고르고 글자를 전부 골라 둔다(바로 치면 바뀐다).
+    // 나갈 때·Enter 때 보낸다. 범위 밖이면 경고창 없이 끝값으로 맞추고 잠깐 빨갛게(빨리 넣는 중에 창이 뜨면 흐름이 끊긴다)
+    const ORDER = MDOT.map(([m]) => m);
+    const commit = (m) => {
+      const inp = ins[m], [lo, hi] = lim(m), raw = inp.value.trim();
+      if (raw === "" || isNaN(Number(raw))) { inp.value = cur(m); return; }
+      let v = Math.round(Number(raw));
+      if (v < lo || v > hi) {
+        v = Math.max(lo, Math.min(hi, v));
+        dots[m].classList.remove("is-clamped"); void dots[m].offsetWidth; dots[m].classList.add("is-clamped");
       }
-      if (v !== cur(sel)) { setVal(v); send(true); }
+      inp.value = v;
+      if (v !== cur(m) || $(`#m${m}_value`).val() === "") {
+        store(m, v); if (m === sel) mpRange.value = v;
+        socket.emit("set_motor", { idx: m, pos: v });
+      }
     };
-    mpNum.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); mpNum.blur(); } });
-    mpNum.addEventListener("blur", commitNum);
+    const focusDot = (m) => { const i = ins[m]; i.focus(); i.select(); };
+    MDOT.forEach(([m]) => {
+      const inp = ins[m];
+      // 눌러서 들어올 때 마우스를 떼는 순간 커서가 찍혀 '전부 고름' 이 풀리므로, 들어온 직후 한 번은 mouseup 을 막는다
+      let justFocused = false;
+      inp.addEventListener("focus", () => { select(m); inp.select(); justFocused = true; setTimeout(() => { justFocused = false; }, 400); });
+      inp.addEventListener("mouseup", (e) => { if (justFocused) { e.preventDefault(); justFocused = false; } });
+      inp.addEventListener("blur", () => commit(m));
+      inp.addEventListener("keydown", (e) => {
+        if (e.isComposing) return;
+        const i = ORDER.indexOf(m);
+        if (e.key === "Enter") {
+          e.preventDefault(); commit(m);
+          if (e.shiftKey) focusDot(ORDER[(i + ORDER.length - 1) % ORDER.length]);
+          else if (i === ORDER.length - 1) addBt.focus();      // 마지막 모터 다음은 [추가·수정] — Enter 한 번 더 누르면 표에 넣는다
+          else focusDot(ORDER[i + 1]);
+        } else if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+          e.preventDefault(); commit(m);
+          nudge((e.key === "ArrowUp" ? 1 : -1) * (e.shiftKey ? 5 : 1));
+          inp.value = cur(m); inp.select();
+        } else if (e.key === "Escape") {
+          e.preventDefault(); inp.value = cur(m); inp.blur();
+        }
+      });
+      inp.addEventListener("wheel", (e) => { if (document.activeElement === inp) e.preventDefault(); }, { passive: false });   // 휠로 값이 몰래 바뀌지 않게
+    });
     // 표 클릭·원래자세·불러오기 등이 숨긴 칸 값을 바꾸면 따라간다(이벤트 없이 .val() 로 바꾸는 코드가 많다)
     let last = "";
     setInterval(() => {
@@ -742,8 +776,8 @@ const getMotions = (socket) => {
       if (await confirm_popup(t("confirm_frame_delete", ms / 1000))) socket.emit("delete_frame", ms);
     });
 
-    // 키보드(노트북): ← → 모터 고르기, ↑ ↓ 1°(Shift 5°), Enter [추가하기]. 입력칸·팝업에 있을 때는 건드리지 않는다
-    const ORDER = MDOT.map(([m]) => m);
+    // 키보드(노트북, 점 숫자칸 밖): ← → 모터 고르기(그 점 숫자칸으로 들어감), ↑ ↓ 1°(Shift 5°), Enter [추가·수정].
+    // 점 숫자칸 안의 키는 위 commit 쪽이 맡는다. 다른 입력칸·팝업에 있을 때는 건드리지 않는다
     document.addEventListener("keydown", (e) => {
       if (e.ctrlKey || e.metaKey || e.altKey || e.isComposing) return;
       if (document.getElementById("article_motion").offsetParent === null) return;
@@ -753,7 +787,7 @@ const getMotions = (socket) => {
       if (tag === "BUTTON" && !tg.closest(".mstage, .mpanel")) return;
       if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
         const i = ORDER.indexOf(sel);
-        select(ORDER[(i + (e.key === "ArrowRight" ? 1 : ORDER.length - 1)) % ORDER.length]);
+        focusDot(ORDER[(i + (e.key === "ArrowRight" ? 1 : ORDER.length - 1)) % ORDER.length]);
       } else if (e.key === "ArrowUp" || e.key === "ArrowDown") {
         nudge((e.key === "ArrowUp" ? 1 : -1) * (e.shiftKey ? 5 : 1));
       } else if (e.key === "Enter") {
