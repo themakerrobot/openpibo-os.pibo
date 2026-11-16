@@ -150,6 +150,7 @@ bash system/fetch_models.sh ./model                               # 또는 PC �
 ```bash
 # 사물 인식 모델(easydetect ed). object/ 에는 ed-s-320.onnx 하나만 둔다(예전 가중치·고지 파일은 지운다). 넣은 뒤 VERSION 의 sha256 목록을 다시 만든다
 ls -la /home/pi/.model/object/                   # ed-s-320.onnx 하나
+sha256sum /home/pi/.model/object/ed-s-320.onnx   # 261116 8비트 판: c019e6d72168f916c1038ec0059656db851030c8fda261aa3b4c26fe806ba040
 $PY -c "import onnxruntime as o; s=o.InferenceSession('/home/pi/.model/object/ed-s-320.onnx'); m=s.get_modelmeta().custom_metadata_map; print(s.get_inputs()[0].shape, [x.name for x in s.get_outputs()], m.get('easydetect.conf'), m['easydetect.names'][:40])"
 #   [1, 3, 320, 320] ['boxes', 'scores'] None {"0": "person", "1": "bicycle", ...
 cd /home/pi/.model
