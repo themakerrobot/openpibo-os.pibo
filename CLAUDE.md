@@ -924,6 +924,7 @@ sudo /home/pi/.pyenv/bin/python3 /home/pi/openpibo-os/system/bench_models.py --c
 - **안 쓰는 패키지 걷어내기는 `system/venv_prune.py`(260930).** 기기에서 돌리면 `ROOTS`+`requirements.txt` 와 그 의존만 남기고 나머지를 목록으로 보여 주고,
   `--apply` 로 지운다(백업 목록·pip check·import 확인까지). 260930 두 기기 site-packages 5.5~5.6GB 의 대부분이 TF·torch·MeloTTS 잔재다.
   mediapipe 0.10.18 은 jax 를 불러오지 않는다(지우고 확인함, `--jax`). 패키지를 새로 쓰게 되면 `ROOTS` 와 `requirements.txt` 둘 다에 넣을 것. 자세한 건 IMAGE.md
+  **261116: 두 기기(파이보 cd488e95 · PiBrain fc1a8f31) 모두 4개(`dlib`·`openpibo-dlib-models`·`openpibo-detect-models`·`tflite-runtime`, 약 221MB)를 지웠다** — 남김 105개, import 38/38, 분류기 onnx ok. `pip check` 의 'mediapipe requires jax' 두 줄은 예상된 것(jax 를 안 불러온다). 남은 선택 항목 pandas·scikit-learn·seaborn(약 143MB)은 리포 코드가 안 쓰지만 학생 수업용으로 남겨 둠
 
 ## 로봇 연동 일원화 (261104 착수) — edge-lab(PC) · 파이보 · PiBrain
 
