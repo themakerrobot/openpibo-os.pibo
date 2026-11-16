@@ -117,7 +117,7 @@ const translations = {
   add_or_edit:  { ko: "추가·수정", en: "Add or update" },
   scene_help:   { ko: "누를 때마다 시간 +0.5초", en: "Time +0.5 s on each press" },
   add_or_edit_tip: { ko: "지금 자세를 이 시간에 넣어요. 표에 같은 시간이 있으면 그 줄을 고쳐요.", en: "Puts this pose at this time. If the table already has this time, that row is updated." },
-  scene_keys:   { ko: "← → 모터 · ↑ ↓ 1° (Shift 5°) · Enter 추가·수정", en: "← → motor · ↑ ↓ 1° (Shift 5°) · Enter add or update" },
+  scene_keys:   { ko: "점 숫자에 바로 입력 · Enter 다음 모터 · ↑ ↓ 1° (Shift 5°)", en: "Type on the dots · Enter next motor · ↑ ↓ 1° (Shift 5°)" },
   frames_empty_v2: {
     ko: "표가 비어 있어요. 왼쪽에서 자세를 잡고 [추가·수정]을 누르세요.",
     en: "The table is empty. Pose the robot on the left and press [Add or update]."
