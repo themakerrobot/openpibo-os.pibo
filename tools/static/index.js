@@ -575,7 +575,9 @@ const getMotions = (socket) => {
 
   /* v2 [동작]: 로봇 사진 위 번호 점 안의 숫자가 곧 입력칸이다(261116 — 모션 만들 때 모터 10개를 빨리 넣게).
      점 숫자를 누르고 바로 쳐서 Enter → 보내고 다음 모터로. 마지막 모터에서 Enter 면 [추가·수정] 으로 간다.
-     옆 패널에는 고른 모터 이름·레인지·범위와 시간·[추가·수정] 만 둔다(예전 큰 숫자칸·±1·±5 는 뺐다).
+     레인지는 고른 점 바로 옆에 같은 높이로 붙는 한 줄 상자로(261116, 사용자 — 점마다 따로 있는 것처럼). 점 10개에 다 붙이면 그림을 가린다.
+     위아래로 펴면 작은 화면(1024·태블릿 세로)에서 아래 점 입력칸을 덮어서 옆으로 편다.
+     시간·[추가·수정] 은 [처음 자세] 줄 오른쪽(261116, 사용자). 옆 패널은 없앴다(예전 큰 숫자칸·±1·±5·패널 레인지) — 그만큼 그림이 커진다.
      예전 모터 칸 10개(#mN_value/#mN_range)는 v2 에서 숨기고 값 저장소로 그대로 쓴다 — 표 클릭·원래자세 등
      기존 코드가 그 값을 바꾸면 아래 sync 가 읽어 온다. 로봇에 보내는 건 기존과 같은 set_motor 한 가지.
      점 위치는 pibo_body.min.png(840×1145) 기준 %. 로봇 기준 오른쪽(M0~M3)이 화면 왼쪽이다 */
@@ -600,13 +602,21 @@ const getMotions = (socket) => {
       d.addEventListener("mousedown", (e) => { if (e.target !== inp) { e.preventDefault(); inp.focus(); } });
       stage.appendChild(d); dots[m] = d; ins[m] = inp;
     });
-    const panel = document.createElement("div"); panel.className = "mpanel";
-    panel.innerHTML = `<div class="mpanel__name" id="mp_name"></div>
-      <input type="range" id="mp_range" />
-      <div class="mpanel__lim" id="mp_lim"></div>`;
-    const side = document.createElement("div"); side.className = "mside";
-    body.appendChild(side); side.appendChild(panel);
-    const mpRange = panel.querySelector("#mp_range");
+    const slide = document.createElement("div"); slide.className = "mslide";
+    slide.innerHTML = `<input type="range" id="mp_range" step="1" />`;   // 이름·범위는 title 로(한 줄 상자라 자리가 없다 — 작은 화면에서 옆 점과 겹쳤다)
+    stage.appendChild(slide);
+    const DOTXY = {}; MDOT.forEach(([m, x, y]) => { DOTXY[m] = [x, y]; });
+    // 펴는 쪽: 바깥 팔(2·3 / 8·9)은 몸 안쪽으로, 다리(1·0 / 7·6)·머리(5·4)는 옆 점과 반대쪽으로 — 다른 점과 안 겹친다
+    const TOLEFT = { 8: 1, 9: 1, 1: 1, 0: 1 };
+    const placeSlide = () => {
+      const d = dots[sel]; if (!stage.clientWidth || !d.offsetWidth) return;
+      const sr = stage.getBoundingClientRect(), dr = d.getBoundingClientRect();
+      const left = TOLEFT[sel] ? dr.left - sr.left - 4 - slide.offsetWidth : dr.right - sr.left + 4;
+      slide.style.left = `${Math.round(left)}px`;
+      slide.style.top = `${Math.round(dr.top - sr.top + (dr.height - slide.offsetHeight) / 2)}px`;
+      slide.dataset.side = TOLEFT[sel] ? "left" : "right";
+    };
+    const mpRange = slide.querySelector("#mp_range");
     const lim = (m) => [Number($(`#m${m}_range`).attr("min")), Number($(`#m${m}_range`).attr("max"))];
     const cur = (m) => Number($(`#m${m}_value`).val()) || 0;
     let sel = 2, dragging = false, sendTimer = 0;
@@ -627,10 +637,10 @@ const getMotions = (socket) => {
         dots[m].setAttribute("aria-pressed", m === sel ? "true" : "false");
       });
       const [lo, hi] = lim(sel);
-      panel.querySelector("#mp_name").textContent = t(`motor_m${sel}`);
-      panel.querySelector("#mp_lim").textContent = `${lo} ~ ${hi}`;
+      slide.title = `${t(`motor_m${sel}`)} · ${lo} ~ ${hi}`;
       mpRange.min = lo; mpRange.max = hi;
       if (!dragging) mpRange.value = cur(sel);
+      placeSlide();
     };
     const select = (m) => { sel = m; paint(); };
     const store = (m, v) => {                     // 저장소(숨긴 칸)와 점을 같이 바꾼다
@@ -714,18 +724,18 @@ const getMotions = (socket) => {
          오른쪽 [반복 · 실행 · 정지 · (이 줄 지우기) · 표 비우기] / 표 / 저장 칸 */
     const addBox = document.createElement("div"); addBox.className = "mpanel__add";
     addBox.innerHTML = `<div class="mpanel__time"><span data-key="time"></span><span id="ms_time_slot"></span></div>
-      <span id="ms_add_slot"></span>
-      <div class="mpanel__hint" data-key="scene_help"></div>`;
-    panel.appendChild(addBox);
+      <span id="ms_add_slot"></span>`;
     const delBt = document.createElement("button");
     delBt.type = "button"; delBt.id = "ms_delete"; delBt.hidden = true;
     delBt.innerHTML = `<i class="fa-solid fa-delete-left"></i><span data-key="scene_delete"></span>`;   // [표 비우기](휴지통)와 다른 아이콘
     const clearBt = document.getElementById("init_frame_bt");
     clearBt.parentNode.insertBefore(delBt, clearBt);
     const mhead = document.createElement("div"); mhead.className = "mhead";
-    mhead.innerHTML = `<span class="mhead__keys" data-key="scene_keys"></span>`;
     mhead.prepend(document.getElementById("init_bt"));
+    mhead.appendChild(addBox);                         // [처음 자세] ······ 시간 [  ]초 [+ 추가·수정]
     sec.insertBefore(mhead, body);
+    const keys = document.createElement("div"); keys.className = "mhead__keys"; keys.dataset.key = "scene_keys";   // 키 안내는 그림 아래 한 줄(노트북만)
+    body.appendChild(keys);
     const topRow = sec.querySelector(":scope > div:first-child");   // 예전 윗줄(시간·추가하기). 요소만 옮기고 숨긴다
     const timeIn = document.getElementById("m_time_val");
     addBox.querySelector("#ms_time_slot").append(timeIn, topRow.querySelector(".motion-unit"));
@@ -736,13 +746,13 @@ const getMotions = (socket) => {
     // 사진 크기: 가운데 줄 높이·폭에 맞춘다(그림 비율 840×1145). 점은 % 자리라 따라온다
     const fitStage = () => {
       if (window.innerWidth <= 900 || !body.clientHeight) { stage.style.width = ""; return; }
-      const col = getComputedStyle(body).flexDirection === "column";   // 1199px 이하: 패널이 사진 아래
-      const w = col ? Math.min((body.clientHeight - side.offsetHeight - 12) / 1.363, body.clientWidth - 24, 520)   // 점이 그림 밖으로 조금 나간다
-                    : Math.min(body.clientHeight / 1.363, body.clientWidth - side.offsetWidth - 14, 520);
+      const w = Math.min((body.clientHeight - 24) / 1.363, body.clientWidth - 60, 560);   // 아래 24px 는 키 안내 줄. 점·레인지 상자가 그림 밖으로 조금 나간다
       stage.style.width = `${Math.max(180, Math.floor(w))}px`;
+      placeSlide();
     };
     if (window.ResizeObserver) new ResizeObserver(fitStage).observe(body);
     window.addEventListener("resize", fitStage);
+    window.addEventListener("resize", () => requestAnimationFrame(placeSlide));   // 900px 이하에선 fitStage 가 일찍 끝난다
     addBt.querySelector("span").dataset.key = "add_or_edit";   // 같은 시간이면 그 줄을 바꾸므로 [추가·수정] (v1 은 [추가하기] 그대로)
     document.querySelector("#article_motion .motion-empty").dataset.key = "frames_empty_v2";
     const tr8 = () => document.querySelectorAll("#article_motion [data-key]").forEach((e) => {
@@ -784,7 +794,7 @@ const getMotions = (socket) => {
       if (["alertPopup", "confirmPopup", "promptPopup"].some((id) => { const p = document.getElementById(id); return p && p.style.display !== "none"; })) return;
       const tg = e.target, tag = tg.tagName;
       if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || tg.isContentEditable) return;
-      if (tag === "BUTTON" && !tg.closest(".mstage, .mpanel")) return;
+      if (tag === "BUTTON" && !tg.closest(".mstage, .mhead")) return;
       if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
         const i = ORDER.indexOf(sel);
         focusDot(ORDER[(i + (e.key === "ArrowRight" ? 1 : ORDER.length - 1)) % ORDER.length]);
