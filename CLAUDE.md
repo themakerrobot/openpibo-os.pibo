@@ -1016,7 +1016,8 @@ easydetect-lab 지시서(`docs/pibo-integration.md`, 473dbe3) 그대로다. **�
 - **ed-s-320 8비트 판(261116)**: easydetect 가 같은 이름으로 HF 파일을 바꿨다 — ONNX Runtime QDQ 8비트(Conv 만, stem·디코더는 float), 26.7MB, sha256 `c019e6d7…a040`.
   입력 `images` float 0~1 · 출력 `boxes`/`scores` · 메타데이터(이름 80개, conf 0.50)·lab `pibo/detect.py` 가 그대로라 **코드는 고칠 것 없다**.
   확인(컨테이너, onnxruntime 1.20.1 = 기기 버전): 사진 23장에서 `EdOnnx` 와 lab `detect.py` 의 이름·점수·상자 23/23 같음(차 0px), `Detect.detect_object` 두 리포 같음.
-  easydetect 기록으로는 Pi 4 에서 318ms · COCO mAP50-95 0.384(예전 float 376ms, 아래 실측 표). **기기에는 새 파일을 넣고 `.model/VERSION` sha256 을 다시 만들 것**(IMAGE.md) — 실측은 `bench_models.py --only ed_s_320`
+  easydetect 기록으로는 Pi 4 에서 318ms · COCO mAP50-95 0.384. **기기에는 새 파일을 넣고 `.model/VERSION` sha256 을 다시 만들 것**(IMAGE.md) — 실측은 `bench_models.py --only ed_s_320`
+  **파이보 실측(261116, cd488e95, 20회·스레드 4)**: 올림 1.08초 · 첫 회 326ms · 중간 316ms · p90 354ms · 최고 RSS 177MB(예전 float PiBrain 376ms·181MB). throttled 0xe0000(부팅 뒤 클럭 제한·스로틀·온도 제한 있었음, 저전압 없음), 57.0→67.2°C — 소프트 온도 한계(60°C) 위라 후반에 클럭이 내려갔을 수 있다. 파이보 냉각(방열판·통풍) **확인 필요**
 - 포즈는 MoveNet 그대로, mediapipe 는 `load_hand_gesture_model` 에서 처음 import 한다(손 제스처를 안 쓰면 안 올라온다)
 
 ---
