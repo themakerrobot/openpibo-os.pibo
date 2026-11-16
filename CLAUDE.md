@@ -1018,6 +1018,7 @@ easydetect-lab 지시서(`docs/pibo-integration.md`, 473dbe3) 그대로다. **�
   확인(컨테이너, onnxruntime 1.20.1 = 기기 버전): 사진 23장에서 `EdOnnx` 와 lab `detect.py` 의 이름·점수·상자 23/23 같음(차 0px), `Detect.detect_object` 두 리포 같음.
   easydetect 기록으로는 Pi 4 에서 318ms · COCO mAP50-95 0.384. **기기에는 새 파일을 넣고 `.model/VERSION` sha256 을 다시 만들 것**(IMAGE.md) — 실측은 `bench_models.py --only ed_s_320`
   **파이보 실측(261116, cd488e95, 20회·스레드 4)**: 올림 1.08초 · 첫 회 326ms · 중간 316ms · p90 354ms · 최고 RSS 177MB(예전 float PiBrain 376ms·181MB). throttled 0xe0000(부팅 뒤 클럭 제한·스로틀·온도 제한 있었음, 저전압 없음), 57.0→67.2°C — 소프트 온도 한계(60°C) 위라 후반에 클럭이 내려갔을 수 있다. 파이보 냉각(방열판·통풍) **확인 필요**
+  **PiBrain 실측(261116, fc1a8f31, 같은 조건)**: 올림 1.04초 · 첫 회 296ms · 중간 290ms · p90 310ms · 최고 RSS 179MB, throttled 0x0, 50.1→62.3°C. 같은 보드에서 파이보가 26ms(약 9%) 느린 건 열로 클럭이 내려간 탓으로 본다(파이보만 throttled 비트가 섰다). 깨끗한 값은 290ms — 예전 float 376ms 보다 약 23% 빠르다
 - 포즈는 MoveNet 그대로, mediapipe 는 `load_hand_gesture_model` 에서 처음 import 한다(손 제스처를 안 쓰면 안 올라온다)
 
 ---
