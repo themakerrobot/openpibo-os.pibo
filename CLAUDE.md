@@ -129,7 +129,7 @@ git tag -d <태그> ...           # 로컬 삭제
   허용형뿐이다. **GPL·AGPL 코드를 넣으면 리포 전체를 다시 GPL 로 내야 한다** — 넣지 말 것. 비상업·연구 전용 라이선스도 안 된다
 - IDE [더보기] → **소스 코드 · 라이선스 (Apache-2.0)**(`#source_bt`). Apache-2.0 은 소스 공개 의무가 없지만 링크는 그대로 둔다(사용자).
   링크는 기기 버전(`piBo_260930v2` → 태그 `260930v2`)의 GitHub 트리. 버전 형식이 다르면 리포 첫 화면
-- 사물 인식 모델은 easydetect ed(Apache-2.0)다 — 아래 '사물 인식'. 기본 COCO 가중치의 라이선스는 HF 모델 카드로 **확인 필요**.
+- 사물 인식 모델은 easydetect ed(Apache-2.0)다 — 아래 '사물 인식'. 기본 COCO 가중치도 Apache-2.0 이다(HF 모델 카드 — D-FINE 공식 가중치를 바꾸지 않고 옮긴 것과 그 미세조정, COCO 주석은 CC BY 4.0, 261116 확인).
   대화 모델(Qwen3.5 0.8B 미세조정)의 기반 모델 라이선스도 **확인 필요**(모델은 리포 밖이라 리포 라이선스와는 별개)
 - PiBrain 도 같은 LICENSE·고지·소스 링크다(태그 형식 `YYMMDDvN` / `-gl`)
 
@@ -1012,7 +1012,11 @@ easydetect-lab 지시서(`docs/pibo-integration.md`, 473dbe3) 그대로다. **�
   conf 0.45)와 같은 가중치의 640 판이 사진 12장에서 `detect.py` 와 이름·점수·상자(차 0px) 같음, 가짜 파일(로짓·확률·클래스 4개·메타데이터 없음·640·COCO 이름) 같음,
   파일 conf 0.30 이면 0.5 아래 상자도 나옴, sigmoid 두 번 안 함, 오류 네 가지, 열 번 바꿔도 RSS 그대로, 한글 그리기.
   lab 화면(torch, best.pt)과는 17개 중 16개 — 하나는 0.6150(torch)·0.61501(ONNX)로 반올림 경계였고 `detect.py` 도 같은 차이.
-  **진짜 `ed-s-320.onnx`(사람·컵)와 파이보 실측은 확인 필요** — 컨테이너에서 HF 모델 파일 다운로드가 막혀 있다
+  **파이보 실측은 확인 필요**
+- **ed-s-320 8비트 판(261116)**: easydetect 가 같은 이름으로 HF 파일을 바꿨다 — ONNX Runtime QDQ 8비트(Conv 만, stem·디코더는 float), 26.7MB, sha256 `c019e6d7…a040`.
+  입력 `images` float 0~1 · 출력 `boxes`/`scores` · 메타데이터(이름 80개, conf 0.50)·lab `pibo/detect.py` 가 그대로라 **코드는 고칠 것 없다**.
+  확인(컨테이너, onnxruntime 1.20.1 = 기기 버전): 사진 23장에서 `EdOnnx` 와 lab `detect.py` 의 이름·점수·상자 23/23 같음(차 0px), `Detect.detect_object` 두 리포 같음.
+  easydetect 기록으로는 Pi 4 에서 318ms · COCO mAP50-95 0.384(예전 float 376ms, 아래 실측 표). **기기에는 새 파일을 넣고 `.model/VERSION` sha256 을 다시 만들 것**(IMAGE.md) — 실측은 `bench_models.py --only ed_s_320`
 - 포즈는 MoveNet 그대로, mediapipe 는 `load_hand_gesture_model` 에서 처음 import 한다(손 제스처를 안 쓰면 안 올라온다)
 
 ---
