@@ -759,7 +759,8 @@ IDE [대화] 는 llama-server 기본 웹 화면이 아니라 **우리 대화 웹
 설계·차시·도전 규칙·확인 필요는 **파이보 리포 `KIDS.md`**.
 
 - **IDE [로봇 놀이] 버튼으로 연다(261028, 사용자 — 시험 편하게. 안 쓰기로 하면 `ide/templates/index.html` 의 `#kids_bt` 만 지우면 된다).** 대기 페이지 `launch.html?svc=kids` → `/kids?enable=on`(IDE 가 `kids_proc` 로 띄움) → 50060. 체험 앱 상단바 [IDE], 탭을 닫으면 `beforeunload` 가 `/kids?enable=off`(keepalive). `LAUNCH_VER` 261028v1. 손으로 띄울 때는 `sudo /home/pi/.pyenv/bin/python3 kids/run_kids.py --device <제품>`
-- **아이 프로필**: 번호(선생님이 정한 수, **기본 4** — 로봇 한 대를 모둠이 같이 쓰는 기준, 261028 사용자. 잠금에서 최대 40) + 그림. 재주·별·도달 기록·키우기가 `/home/pi/.kids/p/<번호>/` 에 따로. 운영 전제는 '같은 아이 = 같은 번호 로봇'
+- **저장 한 벌(261116, 사용자)**: 번호·그림 고르기를 뺐다 — 앱을 켜면 바로 처음 화면, 저장은 `/home/pi/.kids/p/1/` 하나. 반이 바뀌면 선생님 잠금 [처음부터 하기]
+- **카드 더(261116, 사용자)**: 동작·이동·내 동작(도구에서 저장한 `mymotion.json`, 파이보) · 내가 쓴 말(20자) · 화면(그림·글자, `kids/screen.py`) · 사진 찍기 · 센서 '~할 때까지'(파이보 터치·PIR, PiBrain 버튼) · '만약 ~하면'(3초 동안 살핌, 주사위) · 차시 9(이벤트)·10(조건). 자세한 건 파이보 리포 `KIDS.md` '0-1'. **실기기 확인 필요** — 터치·PIR 읽기, 동작 이름, 카메라
 - **차시·도전은 `kids/content.json` 만 고친다**(`concepts` `lessons` `challenges`, 정답형 `want`·열린형 조건 열쇠). 코드는 안 바뀐다
 - 재주 한도: 24개 · 3겹 · 펼쳐 300번 · 줄 20장. 자기 자신을 부르는 재주(`cycle`)·쓰이는 재주 지우기는 막는다. [블록으로 보기] 에서 재주는 IDE **함수 블록**
 - 로봇 말은 처음 한 번 6~15초라 **`kids/make_voice.py --device <제품>` 으로 미리** 만든다. 문구는 IDE `ko2en.js` 끝의 `kids_*` 키(두 리포 같은 블록)
@@ -1400,6 +1401,7 @@ v1 전용 CSS(`index.css` `fontello.css` `cobalt.css` `duotone-light.css`), [새
 - IDE 상단바: 1439px 이하는 [전체화면] 을 아이콘만, 1299px 이하는 앱 버튼 모두 아이콘만(영문에서 [전체화면] 글자가 [더보기] 를 덮었다)
 
 **화면 규칙**
+- **앱을 나가거나 다른 앱으로 옮기면 로봇 화면은 무조건 IP 화면(261116, 사용자).** IDE `run_ide.py` 의 `show_ip(keep)` — `/tools` `/classifier` `/llm` `/kids` `/hwtest` 의 켜기·끄기와 코드 [정지] 때, 끄이는 앱(유닛·대화 웹·체험 앱·검수)이 다 내려간 뒤(최대 20초 기다림) `network_disp.py` 를 띄운다. 코드 실행을 시작할 때는 하지 않는다(학생 프로그램이 그린 것을 덮지 않게). 체험 앱 안에서도 처음 화면으로 돌아오면 IP 화면
 - **상단바 왼쪽 로고를 누르면 로봇 화면(파이보 OLED · PiBrain LCD)이 IP 화면으로 돌아간다(261030, 사용자).** 키트 `pibo-ui.js` 의 `screenReset` 이 모든 앱의 `.pb-header__brand`·IDE `.v2-brand` 에 걸고, IDE(80) `POST /screen_reset` 이 `system/network_disp.py` 를 띄운다([출력 지우기] 의 화면 초기화와 같은 일, 여러 번 눌러도 하나만). 로봇 놀이 키우기 화면도 IP 로 덮는다
 - 상단바: 모든 앱 48px + 아래 1px 선, 왼쪽 `[제품 아이콘] piBo · 도구`(IDE 는 `piBo 메이커`), 오른쪽 순서 (앱 동작) · IDE · 전체화면 · 밝기 · 언어. 언어는 늘 **지금 언어를 보여 주는 select**
 - 브라우저 탭 제목: `<html data-product="piBo|PiBrain">` + `<title data-key=…>` 에 앱 이름만 — 키트 `fixTitle` 이 ` · piBo` 를 붙인다(IDE 는 앞에). `도구 · piBo` / `Tools · PiBrain`, `piBo 메이커`, `도움말 · piBo`, `H/W 검수 · piBo`
