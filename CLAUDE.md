@@ -851,11 +851,14 @@ TensorFlow·torch 걷어내기 순서와 지울 목록은 IMAGE.md. 파이보에
   (자기 전용 onnxruntime 을 따로 싣는다 — 기기 onnxruntime 1.20.1·numpy 1.26 은 안 건드린다). 모델은 `/home/pi/.model/stt`
 - `listen(timeout, filename, end_silence=0.8)`: `arecord -D plug:dmic_sv -c2 -r 16000 -f S32_LE -t raw`(Audio.record 와 같은 장치)를
   흘려받아 VAD 로 **말이 끝나면(0.8초 조용) 멈춘다.** `timeout` 은 최대 대기. 말이 없으면 빈 문자열. 소리가 작으면 최대 20배 키운다
-- `transcribe(audio, sr)`: 25초 넘는 소리는 VAD 로 말 단위로 잘라 받아 적는다(통째로 넣으면 글자가 뒤섞였다)
+- `transcribe(audio, sr)`: 25초 넘는 소리는 VAD 로 말 단위로 잘라 받아 적는다(통째로 넣으면 글자가 뒤섞였다).
+  **말 구간이 하나도 없으면 빈 글자(261118)** — 무음·잡음을 그냥 넣으면 '그.' 같은 글자를 지어냈다(컨테이너 재현). edge-lab `speech_routes._SenseVoice` 와 같은 계산(두 리포 같은 코드)
 - **`Speech.stt(filename, timeout, verbose)` 와 블록 `speech_stt` 는 예전(서버 STT) 이름·입력 그대로**다. 옛 프로그램이 그대로 열린다.
   블록 앞의 번개(인터넷 필요) 그림만 뺐다. 모델은 처음 부를 때 한 번 올린다(파이보에서 5~12초)
 - sherpa-onnx 한국어 스트리밍 zipformer 는 쓰지 않는다(빈 결과 버그, k2-fsa/sherpa-onnx#2886). Moonshine 한국어 Tiny/Base 는
-  비상업 라이선스라 뺐다. SenseVoice 모델 라이선스(FunASR)의 상업 조건은 **확인 필요**
+  비상업 라이선스라 뺐다. **SenseVoice 모델은 FunASR Model License 1.1(Alibaba, 261118 원문 확인)** — 쓰기·복사·고치기·나눠 주기 허락, 비상업 조항 없음.
+  의무는 출처·저작자 표시와 모델 이름 유지(int8 변환본도 파생물). 개정판이 자동 적용되는 조항(6)·준거법 빈칸(7)이 있어 계약에 넣을지는 법무 판단.
+  기기의 `.model/stt/LICENSE-SenseVoice` 는 링크 한 줄뿐이라 원문(edge-lab `tools/licenses/FunASR-MODEL_LICENSE.txt`)으로 바꿔 올릴 것(HF, 사람이)
 - **파이보 마이크 소리에는 큰 DC 가 섞여 있다**(실측 약 -0.37, 몇 초에 걸쳐 조금씩 변함. 켤 때 0.5 로 튀기도 함).
   그대로 두면 silero VAD 가 말을 한 번도 못 잡아 `listen` 이 빈 글자를 돌려줬다(260930v1). 인식 모델은 DC 가 있어도 받아 적었다.
   그래서 `listen` 은 받는 대로 `_dc_block`(1차 고역 통과, 약 13Hz)으로 DC 를 걷고, VAD 에는 최근 최대 크기로 키워(최대 30배) 넣는다.
@@ -942,7 +945,7 @@ sudo /home/pi/.pyenv/bin/python3 /home/pi/openpibo-os/system/bench_models.py --c
 | 얼굴 구분 | **OpenVINO retail-0095** | **했다(261104)** — '얼굴 (261104)'. dlib 빼기. `landmark_face(_vis)` 는 dlib 68점 번호 유지, `train_face`·`recognize`·`save_db`·`load_db` 이름·인자 유지, 얼굴 정보 파일 pickle → JSON/npz(예전 파일은 다시 등록 안내). 재등록은 괜찮다(사용자) |
 | 마스크 | edge-lab `mask.onnx` | **했다(261104)** — `Face.mask_face`, '얼굴 (261104)' |
 | TFLite | onnxruntime | **했다(261104)** — '분류기 → 기기 요구' |
-| STT | 보류 | SenseVoice 라이선스 상업 조건 **확인 필요** |
+| STT | **SenseVoice int8**(261118 — edge-lab 도 Whisper 에서 바꿈, 같은 파일 `models/stt-sv`) | 없음. 라이선스는 '음성 인식 · TTS · 메모리' 절 |
 | LLM | 모델은 기기별 | 말투·프롬프트만 맞춤 |
 
 순서: ① 실측(`system/bench_models.py`) ② TFLite → ONNX ③ 얼굴 정리 ④ 마스크 ⑤ 모델 받기 인증 ⑥ 같은 점수 점검 도구 ⑦ edge-lab 가르치기 전환.
