@@ -213,6 +213,29 @@ async def voice_warm(sid, d=None):
     logging.error(f'[voice_warm] Error: {ex}')
   await emit('voice_state', pibo.voice_state)
 
+# [카메라] 고르기(261120) — 목록은 고르는 칸을 열 때마다 새로 읽는다(실행 중에 꽂은 카메라도 잡히게)
+@app.sio.on('cam_list')
+async def cam_list(sid, d=None):
+  if pibo is None:
+    return
+  try:
+    lst = await asyncio.to_thread(pibo.cam_list)
+  except Exception as ex:
+    logging.error(f'[cam_list] {ex}')
+    lst = [{'cam': 0, 'name': ''}]
+  await app.sio.emit('cam_list', {'list': lst, 'cur': pibo.cam_no}, to=sid)
+
+@app.sio.on('cam_select')
+async def cam_select(sid, d=None):
+  if pibo is None:
+    return
+  try:
+    n = int((d or {}).get('cam', 0))
+  except (TypeError, ValueError, AttributeError):
+    n = 0
+  r = await asyncio.to_thread(pibo.cam_select, n)
+  await emit('cam_select', r)
+
 # vision
 @app.sio.on('disp_vision')
 async def disp_vision(sid, d=None):

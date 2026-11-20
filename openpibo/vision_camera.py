@@ -7,6 +7,7 @@ Class:
 import cv2,requests
 import os
 import time
+import threading
 import numpy as np
 from PIL import Image,ImageDraw,ImageFont
 from picamera2 import Picamera2
@@ -67,7 +68,7 @@ Functions:
     """
 
     self.usb = self._cam_no(cam)   # 0 = 보드 카메라, 1~ = USB 카메라(261120)
-    self.width, self.height = (640, 480) if self.usb else (640, 480)
+    self.width, self.height = 640, 480   # USB 카메라도 같은 크기(비율이 다르면 가운데를 잘라 맞춤)
     if width is not None or height is not None:
       w = self._size(width, 'width') if width is not None else None
       h = self._size(height, 'height') if height is not None else None
@@ -78,41 +79,51 @@ Functions:
       self.width, self.height = w, h
     cv2.setUseOptimized(True)
     cv2.setNumThreads(cv2.getNumberOfCPUs())
+    self._open_lock = threading.Lock()
     if self.usb:
       from .modules.usbcam import UsbCam
       self.cap = UsbCam(self.usb - 1, self.width, self.height)
       return
-    # 앞 프로그램·도구 서비스가 카메라를 막 놓는 중이면 'Failed to start camera' 가 날 수 있다.
-    # 1초씩 쉬며 세 번까지 해 본다(261119). 카메라가 아예 안 잡히면(IndexError) 바로 오류
-    cap = None
-    for attempt in range(3):
-      try:
-        cap = Picamera2(self._board_num())
-        config = cap.create_still_configuration(
-                  main={
-                    'size': (1280, 960),
-                    'format': 'RGB888'
-                  },
-                  #transform=Transform(hflip=False, vflip=False),
-                  buffer_count=2
-                )
+    # 보드 카메라는 여기서 열지 않는다 — 처음 read() 때 _open_board()(261120)
+    self.cap = None
 
-        cap.configure(config)
-        cap.set_controls({'AwbEnable': True, 'AwbMode': 0})
-        cap.start()
-        break
-      except (RuntimeError, IndexError) as ex:
-        if cap is not None:
-          try:
-            cap.close()
-          except Exception as close_err:   # 열다 만 카메라라 닫기도 실패할 수 있다 — 다시 여는 데는 지장 없다
-            logging.debug('camera close after failed start: %s', close_err)
-          cap = None
-        if attempt == 2 or isinstance(ex, IndexError):
-          raise
-        time.sleep(1.0)
-    self.cap = cap
 
+  def _open_board(self):
+    # 보드 카메라는 처음 read() 할 때 연다(261120). 그리기·보여주기 블록도 camera = Camera() 를 넣어서,
+    # USB 카메라만 쓰는 프로그램까지 보드 카메라를 열지 않게. 두 스레드가 처음 read 를 같이 불러도 한 번만 연다
+    with self._open_lock:
+      if self.cap is not None:
+        return
+      # 앞 프로그램·도구 서비스가 카메라를 막 놓는 중이면 'Failed to start camera' 가 날 수 있다.
+      # 1초씩 쉬며 세 번까지 해 본다(261119). 카메라가 아예 안 잡히면(IndexError) 바로 오류
+      cap = None
+      for attempt in range(3):
+        try:
+          cap = Picamera2(self._board_num())
+          config = cap.create_still_configuration(
+                    main={
+                      'size': (1280, 960),
+                      'format': 'RGB888'
+                    },
+                    #transform=Transform(hflip=False, vflip=False),
+                    buffer_count=2
+                  )
+
+          cap.configure(config)
+          cap.set_controls({'AwbEnable': True, 'AwbMode': 0})
+          cap.start()
+          break
+        except (RuntimeError, IndexError) as ex:
+          if cap is not None:
+            try:
+              cap.close()
+            except Exception as close_err:   # 열다 만 카메라라 닫기도 실패할 수 있다 — 다시 여는 데는 지장 없다
+              logging.debug('camera close after failed start: %s', close_err)
+            cap = None
+          if attempt == 2 or isinstance(ex, IndexError):
+            raise
+          time.sleep(1.0)
+      self.cap = cap
 
   @staticmethod
   def _board_num():
@@ -187,7 +198,12 @@ Functions:
     """
 
     if self.usb:
+      if self.cap is None:   # release() 뒤에 다시 읽으면 다시 연다
+        from .modules.usbcam import UsbCam
+        self.cap = UsbCam(self.usb - 1, self.width, self.height)
       return self.cap.read()
+    if self.cap is None:
+      self._open_board()
     return cv2.resize(cv2.flip(self.cap.capture_array(), -1), (self.width, self.height))
     # return cv2.rotate(cv2.resize(self.cap.capture_array(), (self.height, self.width)),cv2.ROTATE_90_COUNTERCLOCKWISE)
     # return cv2.rotate(self.cap.capture_array(),cv2.ROTATE_90_COUNTERCLOCKWISE)

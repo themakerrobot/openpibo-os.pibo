@@ -53,7 +53,8 @@ Try piBo's features one at a time, without code. Pick [Motion], [Camera] or [Spe
 ![Tools: Camera](images/tools_vision.jpg)
 
 - **Camera**: apply vision features (grayscale, edges, cartoon, QR code, face analysis, object detection, hand gestures, pose, markers…)
-  to piBo's camera view. The result also appears as text under [Result]
+  to piBo's camera view. The result also appears as text under [Result].
+  If a USB camera is plugged in, switch between the **board camera and USB cameras** in the picker above the camera view (any USB camera that supports V4L2)
 
 ![Tools: Speech](images/tools_speech.png)
 
@@ -69,7 +70,8 @@ Try piBo's features one at a time, without code. Pick [Motion], [Camera] or [Spe
 Collect examples with the camera and teach the AI, for example "this is a cat, this is food".
 
 1. **What should it learn from?** — Image (the whole picture) · Hand (hand shape) · Face (expression) · Pose (body posture)
-2. Name each **class** and keep pressing **[Hold to collect]** to collect examples. You can also upload files with [Photos]
+2. Name each **class** and keep pressing **[Hold to collect]** to collect examples. You can also upload files with [Photos].
+   The picker under the camera switches to a USB camera — use the same camera for training and for use for better results
 3. **[Teach the AI]** — the tablet or laptop browser learns in a few seconds and shows the accuracy, a confusion table and live scores
 4. **[Save]** (under Save to piBo) — saved on piBo in `/home/pi/mymodel/<model name>`
 5. In the IDE use `Load classification model (mymodel) (model name)` → `Classify image (image) with the classification model`.

@@ -49,6 +49,8 @@ class Pibo:
     # 전엔 얼굴(당시 dlib 모델 약 120MB·OpenVINO 3개 컴파일·MediaPipe)까지 다 올린 뒤에야 연결됨이 떠서,
     # 동작 탭만 쓸 사람도 한참 기다렸다. 카메라 쪽은 vision_state 로 단계를 알린다(도구 [카메라] 탭에 표시)
     self.cam = None
+    self.cam_no = 0          # 0 = 보드 카메라, 1~ = USB 카메라(261120, [카메라] 고르기)
+    self._cam_lock = Lock()  # 카메라를 바꾸는 동안 vision_loop 가 옛 카메라를 읽지 않게
     self.fac = None
     self.face_tool = None   # [얼굴 구분] 타일(261113) — 얼굴 인식이 올라오면 만든다
     self.det = None
@@ -78,6 +80,7 @@ class Pibo:
       self._vision_step(1, 'vs_camera')
       from openpibo.vision_camera import Camera
       self.cam = Camera()
+      self.cam.read()   # 보드 카메라는 처음 read 때 연다(261120) — 여기서 열어 실패를 이 단계 오류로 남긴다
       Thread(name='vision_loop', target=self.vision_loop, args=(), daemon=True).start()
       self._vision_step(2, 'vs_detect', camera=True)
       from openpibo.vision_detect import Detect
@@ -98,6 +101,39 @@ class Pibo:
       self.vision_state['error'] = str(ex)
       asyncio.run(self.emit('vision_state', dict(self.vision_state), callback=None))
 
+  # [카메라] 고르기(261120) — 보드 카메라(0) + 꽂혀 있는 USB 카메라. 이름은 카메라가 알려 준 값(보드는 화면이 번역)
+  def cam_list(self):
+    from openpibo.vision_camera import Camera
+    return [{'cam': 0, 'name': ''}] + [{'cam': c['cam'], 'name': c['name']} for c in Camera.usb_cameras()]
+
+  def cam_select(self, n):
+    """카메라를 바꾼다. 새 카메라를 먼저 열어 한 장 읽어 보고, 되면 바꾸고 옛 카메라를 놓는다(안 되면 그대로)"""
+    n = int(n)
+    if self.cam is None:
+      return {'ok': False, 'cam': self.cam_no, 'error': 'camera not ready'}
+    if n == self.cam_no:
+      return {'ok': True, 'cam': n}
+    from openpibo.vision_camera import Camera
+    new = None
+    try:
+      new = Camera(n)
+      new.read()
+    except Exception as ex:
+      logging.error(f'[cam_select] {n}: {ex}')
+      try:
+        if new is not None:
+          new.release()
+      except Exception:
+        pass
+      return {'ok': False, 'cam': self.cam_no, 'error': str(ex)}
+    with self._cam_lock:
+      old, self.cam, self.cam_no = self.cam, new, n
+    try:
+      old.release()
+    except Exception as ex:
+      logging.error(f'[cam_select] release: {ex}')
+    return {'ok': True, 'cam': n}
+
   # 기능마다 필요한 모델. 아직 안 올라왔으면 카메라 화면만 보낸다
   NEEDS_FACE = ('face', 'face_landmark', 'face_id')
   NEEDS_DET = ('qr', 'object', 'hand', 'pose', 'marker')
@@ -109,7 +145,8 @@ class Pibo:
         continue
 
       try:
-        self.frame = self.cam.read()  # read the camera frame
+        with self._cam_lock:
+          self.frame = self.cam.read()  # read the camera frame
         if (self.vision_type in self.NEEDS_FACE and self.fac is None) or (self.vision_type in self.NEEDS_DET and self.det is None):
           img, res = self.frame, ''
         elif self.vision_type == 'grayscale':
