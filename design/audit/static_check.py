@@ -386,6 +386,28 @@ def s10(repos):
   report('S10', 'CLAUDE.md 규칙(옛 서버·유닛·keepalive·서버 한글)', bad)
 
 
+# ── S12 docstring :param 이름 = 실제 인자 ────────────────────────────────
+def s12(repos):
+  import ast
+  bad = []
+  for name, repo in repos:
+    for f in files(repo, 'openpibo/*.py'):
+      if SKIP_DIRS.search(f) or '/modules/' in f:
+        continue   # modules/ 는 가져온 코드가 많다(teachlab·mtts·oled)
+      src = open(os.path.join(repo, f), encoding='utf-8').read()
+      for n in ast.walk(ast.parse(src)):
+        if not isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef)):
+          continue
+        doc = ast.get_docstring(n) or ''
+        args = {a.arg for a in n.args.args + n.args.kwonlyargs + n.args.posonlyargs}
+        if n.args.vararg: args.add(n.args.vararg.arg)
+        if n.args.kwarg: args.add(n.args.kwarg.arg)
+        for m in re.finditer(r':param\s+(?:[\w\[\], .|]+\s+)?(\w+)\s*:', doc):
+          if m.group(1) not in args:
+            bad.append(f'{name}/{f}:{n.lineno}: {n.name}() 설명의 :param {m.group(1)} — 인자에 없다({", ".join(sorted(args - {"self"})) or "인자 없음"})')
+  report('S12', 'API 설명(:param)의 이름 = 실제 인자', bad)
+
+
 # ── S11 남은 작업 표시 ────────────────────────────────────────────────────
 def s11(repos):
   info = []
@@ -400,7 +422,7 @@ def main():
   args = [a for a in sys.argv[1:] if not a.startswith('--')]
   fetch = '--no-fetch' not in sys.argv
   repos = [('pibo', PIBO)] + ([('pibrain', os.path.abspath(args[0]))] if args else [])
-  for f in (s1, s2, s3, s4, s5, s6, s7, s10, s9, s11):
+  for f in (s1, s2, s3, s4, s5, s6, s7, s10, s12, s9, s11):
     try:
       f(repos)
     except Exception as e:   # 검사 하나가 죽어도 나머지는 돈다
