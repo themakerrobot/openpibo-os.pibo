@@ -371,6 +371,12 @@ def s10(repos):
       for m in re.finditer(r'fetch\([^;]*?enable=off[^;]*?\)', src):
         if 'keepalive' not in m.group(0):
           bad.append(f'{name}/{f}:{src.count(chr(10), 0, m.start()) + 1}: enable=off fetch 에 keepalive 없음(탭을 닫으면 취소된다)')
+    # 도움말 대표 주소(html_baseurl)는 그 리포의 GitHub Pages — 예전 리포 이름이 남으면 없는 주소(404)가 된다(261120)
+    url = git(repo, 'remote', 'get-url', 'origin').strip()
+    rname = re.sub(r'\.git$', '', url.rstrip('/').split('/')[-1])
+    m = re.search(r"^html_baseurl\s*=\s*'([^']*)'", open(os.path.join(repo, 'docs/source/conf.py'), encoding='utf-8').read(), re.M)
+    if rname and m and m.group(1) != f'https://themakerrobot.github.io/{rname}/':
+      bad.append(f'{name}/docs/source/conf.py: html_baseurl {m.group(1)} — https://themakerrobot.github.io/{rname}/ 이어야')
     # 서버(run_ide.py)는 한글 문장이 아니라 키를 보낸다 — 독스트링 말고 문자열에 한글이 있으면 안 된다(주석은 괜찮다)
     import ast
     tree = ast.parse(open(os.path.join(repo, 'ide/run_ide.py'), encoding='utf-8').read())
