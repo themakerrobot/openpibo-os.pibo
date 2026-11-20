@@ -54,6 +54,7 @@ Try piBo's features one at a time, without code. Pick [Motion], [Camera] or [Spe
 
 - **Camera**: apply vision features (grayscale, edges, cartoon, QR code, face analysis, object detection, hand gestures, pose, markers…)
   to piBo's camera view. The result also appears as text under [Result].
+  **Face ID** recognizes faces you have named and [Registered] (programs can use them too, with the `Load the face dictionary from code facedb` block).
   If a USB camera is plugged in, switch between the **board camera and USB cameras** in the picker above the camera view (any USB camera that supports V4L2)
 
 ![Tools: Speech](images/tools_speech.png)
@@ -73,9 +74,9 @@ Collect examples with the camera and teach the AI, for example "this is a cat, t
 2. Name each **class** and keep pressing **[Hold to collect]** to collect examples. You can also upload files with [Photos].
    The picker under the camera switches to a USB camera — use the same camera for training and for use for better results
 3. **[Teach the AI]** — the tablet or laptop browser learns in a few seconds and shows the accuracy, a confusion table and live scores
-4. **[Save]** (under Save to piBo) — saved on piBo in `/home/pi/mymodel/<model name>`
+4. **[Save]** — saved on piBo in `/home/pi/mymodel/<model name>`
 5. In the IDE use `Load classification model (mymodel) (model name)` → `Classify image (image) with the classification model`.
-   `Draw what the classifier saw on image` draws the hand, face or body points and the class name on the picture
+   `Show the classification result on image (image)` draws the hand, face or body points and the class name on the picture
 
 The [Test] tab tries a saved model again. [Models] lets you test, keep training, rename, download (zip) or delete a model.
 
@@ -108,10 +109,10 @@ TheMaker listens and **chooses a tool by itself**. The tool it ran appears in sm
 - Say "Let's just talk" to stop using tools, and "You can move now" to use them again.
 - Turn on [Speak out loud] and piBo speaks the answer (you can choose the voice and volume).
 
-Programs can use it too, with the `Choose chat model`, `Start LLM server` and `Respond to …` blocks in [Speech].
+Programs can use it too, with the `Choose chat model`, `Start LLM server` and `Say … to AI` blocks in [Speech].
 Blocks chat in text only and do not run tools.
 
 ```{note}
-Tools, Chat and Classifier run **one at a time**. Opening one closes the others, and running a program in the IDE closes them too
+Tools, Chat, Classifier, Robot Play and H/W check run **one at a time**. Opening one closes the others, and running a program in the IDE closes them too
 (they share the camera, speaker and memory). A closed screen shows [Restart].
 ```

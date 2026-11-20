@@ -7,7 +7,7 @@
     (PH 는 CLM blob 때문에 상위 채널이 막혀 36~48 로 고정해야 한다)
   - 공유기를 함께 납품하는 전제가 아니다. 기관이 이미 쓰는 공유기를 pibo 로
     맞추는 경우를 기본으로 쓰고, 새로 살 때의 권장 기종을 덧붙인다
-  - 기기 안 문서(포트 8080)가 한국어라 Guide 버튼을 그대로 쓸 수 있다
+  - 기기 안 문서(포트 8080)는 한·영 두 벌이다(261001~) — Guide 버튼이 IDE 언어로 연다
 """
 import io, os, datetime, html
 
@@ -189,7 +189,7 @@ def build():
 
 <h3>새로 살 때</h3>
 <p>WiFi 6(AX) 제품이어도 상관없습니다. 위 표대로 11ac 로 내려 쓰면 됩니다. 필요한 성능은
-높지 않아서 보급형으로 충분합니다. 필리핀 납품분에는 TP-Link Archer AX53 을 <code>pibo</code>
+높지 않아서 보급형으로 충분합니다. 영문판 납품분에는 공유기를 <code>pibo</code>
 로 세팅해 함께 보내고 있습니다. 중요한 건 성능이 아니라 <b>5GHz 채널을 수동으로 고정할 수
 있는지</b>와 <b>밴드 스티어링을 끌 수 있는지</b>입니다. 이 두 가지가 안 되는 기종은 피하세요.</p>
 
@@ -323,10 +323,13 @@ iPadOS 는 인터넷이 안 되는 WiFi 를 나쁜 네트워크로 보고 알아
 <tr><td><code>http://&lt;ip&gt;:8080</code></td><td>참고 문서. 편집기의 Guide 버튼과 같은 곳.</td></tr>
 <tr><td><code>http://&lt;ip&gt;:50000</code></td><td>도구 — 동작 편집기와 녹음기.</td></tr>
 <tr><td><code>http://&lt;ip&gt;:50010</code></td><td>분류기 — 이미지 학습.</td></tr>
-<tr><td><code>http://&lt;ip&gt;:50020</code></td><td>언어모델 서버.</td></tr>
+<tr><td><code>http://&lt;ip&gt;:50020</code></td><td>언어모델 서버(대화가 씀).</td></tr>
+<tr><td><code>http://&lt;ip&gt;:50030</code></td><td>대화 — 언어모델과 글자로 대화.</td></tr>
+<tr><td><code>http://&lt;ip&gt;:50050</code></td><td>H/W 검수 — 하드웨어 점검 페이지.</td></tr>
+<tr><td><code>http://&lt;ip&gt;:50060</code></td><td>로봇 놀이 — 초등학생용 카드 활동.</td></tr>
 </tbody></table>
-<p>도구·분류기·언어모델은 주소를 직접 치지 말고 편집기의 버튼으로 여세요. 셋 중 하나만
-동시에 돌 수 있고, 전환은 편집기가 알아서 합니다.</p>
+<p>도구·분류기·대화·로봇 놀이·H/W 검수는 주소를 직접 치지 말고 편집기의 버튼으로 여세요. 한 번에 하나만
+돌 수 있고, 전환은 편집기가 알아서 합니다.</p>
 </section>''')
 
     # 6
@@ -481,6 +484,9 @@ WiFi 설정이 <code>pibo</code> 로 돌아가는데 그게 원래 쓰던 공유
 <tr><th>50000</th><td>도구</td></tr>
 <tr><th>50010</th><td>분류기</td></tr>
 <tr><th>50020</th><td>언어모델</td></tr>
+<tr><th>50030</th><td>대화</td></tr>
+<tr><th>50050</th><td>H/W 검수</td></tr>
+<tr><th>50060</th><td>로봇 놀이</td></tr>
 </tbody></table>
 
 <h3>수용 규모</h3>

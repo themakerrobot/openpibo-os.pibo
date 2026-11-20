@@ -661,8 +661,8 @@ IDE 의 [도구][대화][분류기] 는 누르는 **그 순간** 이름 붙인 �
 | `themaker-en`(더메이커 EN) | `themaker-en.gguf` → `themaker-en-0.8b-Q4_K_M.gguf`(PC 학습 중 — 오기 전엔 깨진 링크) | **있음** | 〃 |
 
 - `openpibo/speech.py` `Dialog`: `set_llm_model(model)`(이름이 셋 밖이면 `ValueError`, 파일이 없으면(깨진 링크 포함) `FileNotFoundError`, 이미 띄웠으면 다시 띄움).
-  `gemma3`(261029v1 블록 값)는 `general` 로 받는다. `start_llm()` 은 `systemctl stop llama-server 'llama-server@*'` → `systemctl start llama-server@<고른 것 또는 general>`. `stop_llm()` 은 둘 다 끈다. 고른 모델은 그 `Dialog` 안에서만 기억한다
-- **대화 화면(`chat/`)**: 상단 [대화 모델] select 하나(`#model_sel`, 처음엔 '고르세요') + 옆에 고른 것의 실제 파일·크기(`#model_file`, 예 `themaker-0.8b-Q4_K_M · 321MB`). 세 개를 늘어놓지 말 것(사용자).
+  `gemma3`(261029v1 블록 값)는 `general` 로 받는다. `start_llm()` 은 `systemctl stop 'llama-server@*'` → `systemctl start llama-server@<고른 것 또는 general>`. `stop_llm()` 도 `'llama-server@*'` 를 끈다(예전 `llama-server.service` 는 없다). 고른 모델은 그 `Dialog` 안에서만 기억한다
+- **대화 화면(`chat/`)**: 상단 [대화 모델] select 하나(`#model_sel`, 처음엔 '고르세요') + 옆에 고른 것의 판·크기(`#model_file`, 예 `themaker-0.8b-Q4_K_M · 321MB` — 261120 부터 `.model/VERSION` 의 `llm/<이름>.gguf = …` 줄에서 읽는다(`run_chat.model_version`). 그 줄이 없으면 파일 이름 `themaker-ko`. 기기 VERSION 줄 모양은 **확인 필요**). 세 개를 늘어놓지 말 것(사용자).
   파일이 없는 모델은 '(없음)' 으로 못 고른다(`/api/models` 의 `have`·`file`·`mb`). 고르면 `POST /api/model` → `switch_model()`(스레드)이
   대답 중이면 끝난 뒤 기록·말하기를 비우고, 다 끈 다음 `llama-server@<이름>` 을 `--no-block` 으로 켠다. 준비는 예전처럼 `warm_loop` 가 `/health` → 미리 읽기. 바꾸는 동안(`_switching`)은 옛 서버를 보지 않는다.
   고르기 전엔 상태 줄을 숨기고 빈 화면이 '위에서 대화 모델을 골라 주세요.'(`chat_pick_model`). 새로 고쳐도 서버의 `model` 로 선택이 남는다. [다시 켜기] 는 같은 모델로 `switch_model`.
@@ -1546,6 +1546,15 @@ v1 전용 CSS(`index.css` `fontello.css` `cobalt.css` `duotone-light.css`), [새
 IDE 화면 출력 안내·툴팁을 블록 이름(`모니터 화면에 보여주기`)에 맞춤, 마지막 수정 뒤 안 올린 `?ver`(IDE `ide.css`·`index.js`·`errhelp.js`·`ko2en.js`, `langFileVersion`) → 261120v1.
 **도움말 다시 빌드함(261120)**: 두 리포 한·영, 경고 0, API 13쪽 한·영 개수 같음. 블록 가이드에 쉬움 블록(파이보 19·PiBrain 16), 사용법 글·IDE 캡처는 A안·오류 상자·[쉬움 | 전체] 로, 파이보 [동작] 캡처는 점 숫자 입력으로.
 **태그 전에 남은 일**: ① 태그는 사람이(`YYMMDDvN`·`-gl` 같이) ② 실기기 확인(이 문서의 '실기기 확인 필요' 들 — 특히 카메라 재시도·실행 전 서비스 대기·오류 상자 줄 잡기·대화 도구 예시·분류기 태블릿)
+
+**2차 전수조사(261120, 두 리포)** — 문서·주석이 코드보다 늦은 곳을 찾아 고쳤다. 기계 점검: 문법(파이썬·JS·셸) 0 오류, `?ver` 늦은 곳 0, 화면·서버가 쓰는 번역 키 빠진 것 0,
+예제(국내·영문 두 판) 블록 열기·코드 만들기 오류 0, 전 화면 × 한/영 pageerror·가로 넘침 0, 도움말 빌드 경고 0·영문 API 번역 빈칸 0.
+고친 것: API 설명(`Camera` — USB·처음 `read()` 때 열기·함수 목록 · `Detect` — 없는 `classify_image` 빼고 함수 목록 · 대화 모델 파일 · `transcribe` 빈 글자 · 분류 '파이보' 낱말)과 영문 `.po`,
+블록 설명 3개(`ko.js`·`en.js` — 옛 블록 이름·'파이보가'), 도움말 사용법(블록 이름·PiBrain 도구 탭 위치·얼굴 구분·espeak·로봇 놀이·USB 카메라), README 폴더표(chat·kids·docs),
+`setup.py`(안 쓰는 `openpibo_face_models` 빼고 라이선스), IMAGE.md(`'llama-server@*'`·모델 크기·실제 파일·**뜨기 전 청소에 로봇 놀이 기록 지우기**), KIDS.md(10차시·저장 한 벌·IDE 버튼),
+`design/README.md`(두 리포 같은 파일로), 매뉴얼 생성 스크립트(공유기 제품명 → 일반 명사, 포트 50030·50050·50060, 영문 도움말 있음), 손동작 모델 라이선스 줄(**확인 필요**),
+대화 화면 `#model_file` 이 `.model/VERSION` 에서 판 이름을 읽게(261106 실제 파일 뒤로 `themaker-ko` 만 보였다), `gen_block_guide.py` 가 그림을 **다 그린 뒤에만** 옛 그림을 지우게(전엔 IDE 주소가 틀리면 그림이 다 지워진 채 멈췄다), `ide.css` 머리 주석(A안 배치·파랑).
+**남은 것**: 매뉴얼 PDF 4개는 260915 판이라 공유기 제품명·지운 블록이 그대로 있다(다시 만들지는 사용자 결정 — 컨테이너에 한글 글꼴이 없다)
 
 ## 오류 쉬운 말 (261119) — 실행 출력 위 빨간 상자
 
