@@ -256,9 +256,18 @@ zip update.zip _update          # USB(FAT32·exFAT) 맨 위에 update.zip 으로
 
 이미지에 개인 정보와 기기별 상태가 딸려간다. 전원 끄기 전에 지운다.
 
+**WiFi 설정(`/etc/NetworkManager/system-connections/`)은 지우지 않는다(261120 — PiBrain 과 맞춤).**
+출하 기본값은 `pibo` / `!pibo0314` 에 붙는 연결이다(CLAUDE.md '현장 네트워크' — 납품 때 현장 공유기도 이 값으로 맞춘다).
+지우면 저장된 SSID 가 없어 기기가 AP 모드로만 뜬다. 다른 WiFi 가 들어 있으면 지우고 기본값만 남긴다.
+`conwifi.sh` 가 새 WiFi 를 붙일 때 기존 것을 전부 지우고 새로 만들므로 현장에서 교실 공유기를 설정하면 자동으로 대체된다.
+`psk` 는 평문으로 저장되고 배포되는 모든 기기에 들어간다. 의도한 것이다.
+
 ```bash
+# WiFi — 기본 연결(pibo) 하나만 남아 있어야 한다
+sudo nmcli -f NAME,TYPE connection show
+sudo grep -h "^ssid=" /etc/NetworkManager/system-connections/*.nmconnection   # ssid=pibo 만
+
 # 기기별 상태
-sudo rm -f  /etc/NetworkManager/system-connections/*.nmconnection*   # WiFi 비번
 sudo rm -rf /home/pi/code/* /home/pi/myimage/* /home/pi/myaudio/* /home/pi/mymodel/* 2>/dev/null
 sudo rm -f  /home/pi/mymotion.json /home/pi/custom_motion.json       # 검수 중 녹화한 모션
 sudo find /home/pi/.kids -mindepth 1 -maxdepth 1 ! -name voice -exec rm -rf {} + 2>/dev/null   # 로봇 놀이 기록·재주·사진(미리 만든 목소리 voice/ 는 남긴다)
@@ -272,6 +281,11 @@ sudo journalctl --rotate && sudo journalctl --vacuum-time=1s
 ls -la /home/pi/.ssh/                 # 개인키가 있으면 지운다. known_hosts 도 사내 호스트가 남는다
 ls -d  /home/pi/.git 2>/dev/null      # 있으면 지운다
 grep -rIl "token\|password\|secret" /home/pi --exclude-dir=.openpibo-os.pibo 2>/dev/null | head
+
+# GitHub 토큰 — 기기에서 push 한 적이 있으면 remote URL 에 박혀 있다
+git -C /home/pi/openpibo-os remote -v       # https://github.com/themakerrobot/openpibo-os.pibo.git 이어야 한다
+sudo git -C /home/pi/openpibo-os config --local --unset user.email 2>/dev/null
+sudo git -C /home/pi/openpibo-os config --local --unset user.name  2>/dev/null
 
 sudo shutdown -h now
 ```
