@@ -51,6 +51,8 @@ class Pibo:
     self.cam = None
     self.cam_no = 0          # 0 = 보드 카메라, 1~ = USB 카메라(261120, [카메라] 고르기)
     self._cam_lock = Lock()  # 카메라를 바꾸는 동안 vision_loop 가 옛 카메라를 읽지 않게
+    self._cam_tried = False  # vision_start 가 보드 카메라를 열어 봤는지(성공·실패 상관없이)
+    self._loop_started = False
     self.fac = None
     self.face_tool = None   # [얼굴 구분] 타일(261113) — 얼굴 인식이 올라오면 만든다
     self.det = None
@@ -79,10 +81,23 @@ class Pibo:
     try:
       self._vision_step(1, 'vs_camera')
       from openpibo.vision_camera import Camera
-      self.cam = Camera()
-      self.cam.read()   # 보드 카메라는 처음 read 때 연다(261120) — 여기서 열어 실패를 이 단계 오류로 남긴다
-      Thread(name='vision_loop', target=self.vision_loop, args=(), daemon=True).start()
-      self._vision_step(2, 'vs_detect', camera=True)
+      cam = Camera()
+      try:
+        cam.read()   # 보드 카메라는 처음 read 때 연다(261120) — 여기서 열어 실패를 이 단계 오류로 남긴다
+      except Exception as ex:
+        # 보드 카메라를 못 열어도(빠짐·고장) 인식 모델은 올린다 — [카메라 고르기]로 USB 카메라를 고르면 그때 화면이 나온다(261120)
+        logging.error(f'[vision_start] board camera: {ex}')
+        self.vision_state['error'] = str(ex)
+        try:
+          cam.release()
+        except Exception:
+          pass
+        cam = None
+      if cam is not None:
+        self.cam = cam
+        self._start_vision_loop()
+      self._cam_tried = True
+      self._vision_step(2, 'vs_detect', camera=self.cam is not None)
       from openpibo.vision_detect import Detect
       det = Detect()
       det.load_hand_gesture_model()
@@ -106,12 +121,20 @@ class Pibo:
     from openpibo.vision_camera import Camera
     return [{'cam': 0, 'name': ''}] + [{'cam': c['cam'], 'name': c['name']} for c in Camera.usb_cameras()]
 
+  def _start_vision_loop(self):
+    with self._cam_lock:
+      if self._loop_started:
+        return
+      self._loop_started = True
+    Thread(name='vision_loop', target=self.vision_loop, args=(), daemon=True).start()
+
   def cam_select(self, n):
-    """카메라를 바꾼다. 새 카메라를 먼저 열어 한 장 읽어 보고, 되면 바꾸고 옛 카메라를 놓는다(안 되면 그대로)"""
+    """카메라를 바꾼다. 새 카메라를 먼저 열어 한 장 읽어 보고, 되면 바꾸고 옛 카메라를 놓는다(안 되면 그대로).
+    보드 카메라를 못 열었던 경우(self.cam 이 None)에도 USB 카메라를 고르면 그때부터 화면을 보낸다"""
     n = int(n)
-    if self.cam is None:
-      return {'ok': False, 'cam': self.cam_no, 'error': 'camera not ready'}
-    if n == self.cam_no:
+    if not self._cam_tried:   # 켜는 중(vision_start 가 아직 보드 카메라를 여는 중)
+      return {'ok': False, 'cam': self.cam_no, 'error': '카메라를 아직 준비하는 중이에요 / The camera is still starting'}
+    if n == self.cam_no and self.cam is not None:
       return {'ok': True, 'cam': n}
     from openpibo.vision_camera import Camera
     new = None
@@ -128,10 +151,16 @@ class Pibo:
       return {'ok': False, 'cam': self.cam_no, 'error': str(ex)}
     with self._cam_lock:
       old, self.cam, self.cam_no = self.cam, new, n
-    try:
-      old.release()
-    except Exception as ex:
-      logging.error(f'[cam_select] release: {ex}')
+    if old is not None:
+      try:
+        old.release()
+      except Exception as ex:
+        logging.error(f'[cam_select] release: {ex}')
+    if not self.vision_state.get('camera') or self.vision_state.get('error'):
+      # 보드 카메라를 못 열었던 경우 — 이제 카메라가 있으니 상태를 고치고 화면 보내기를 시작한다
+      self.vision_state.update(camera=True, error='')
+      asyncio.run(self.emit('vision_state', dict(self.vision_state), callback=None))
+    self._start_vision_loop()
     return {'ok': True, 'cam': n}
 
   # 기능마다 필요한 모델. 아직 안 올라왔으면 카메라 화면만 보낸다
