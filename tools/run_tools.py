@@ -50,7 +50,7 @@ async def lifespan(app: FastAPI):
 try:
   app = FastAPI(lifespan=lifespan)
   app.mount("/static", StaticFiles(directory="static"), name="static")
-  app.mount("/webfonts", StaticFiles(directory="webfonts"), name="webfonts")
+  # /webfonts 는 마운트하지 않는다 — SharedFonts 가 fa-* 요청을 IDE(80)로 넘긴다(261120, 쓰지 않던 사본 폴더를 지움)
   app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
   # IDE·분류기처럼 gzip 으로 보낸다. 도구 첫 화면 JS·CSS 500KB → 133KB (수업에서 여러 대가 한 공유기로 받는다)
   app.add_middleware(GZipMiddleware, minimum_size=1000)

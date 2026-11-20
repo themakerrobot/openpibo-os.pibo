@@ -7,5 +7,5 @@ IDE [도구] 버튼이 `tools.service` 를 켜고 이 화면을 연다(직접 �
 
 ```bash
 sudo systemctl stop tools.service classify.service 'llama-server@*'
-cd /home/pi/openpibo-os/tools && sudo /home/pi/.pyenv/bin/python3 run_tools.py --port 50000   # static·webfonts 를 이 폴더 기준으로 찾는다
+cd /home/pi/openpibo-os/tools && sudo /home/pi/.pyenv/bin/python3 run_tools.py --port 50000   # static 을 이 폴더 기준으로 찾는다(아이콘 글꼴은 IDE 가 준다)
 ```
