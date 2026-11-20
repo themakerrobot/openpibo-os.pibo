@@ -1,4 +1,5 @@
-# build.sh 가 만드는 중간 산출물. PDF 만 커밋한다.
+# build.sh 가 만드는 것. PDF 도 리포에 두지 않는다(261120, 사용자 — 납품 때마다 태그로 빌드)
+*.pdf
 *.html
 msg.json
 cats.json

@@ -1554,7 +1554,10 @@ IDE 화면 출력 안내·툴팁을 블록 이름(`모니터 화면에 보여주
 `setup.py`(안 쓰는 `openpibo_face_models` 빼고 라이선스), IMAGE.md(`'llama-server@*'`·모델 크기·실제 파일·**뜨기 전 청소에 로봇 놀이 기록 지우기**), KIDS.md(10차시·저장 한 벌·IDE 버튼),
 `design/README.md`(두 리포 같은 파일로), 매뉴얼 생성 스크립트(공유기 제품명 → 일반 명사, 포트 50030·50050·50060, 영문 도움말 있음), 손동작 모델 라이선스 줄(**확인 필요**),
 대화 화면 `#model_file` 이 `.model/VERSION` 에서 판 이름을 읽게(261106 실제 파일 뒤로 `themaker-ko` 만 보였다), `gen_block_guide.py` 가 그림을 **다 그린 뒤에만** 옛 그림을 지우게(전엔 IDE 주소가 틀리면 그림이 다 지워진 채 멈췄다), `ide.css` 머리 주석(A안 배치·파랑).
-**남은 것**: 매뉴얼 PDF 4개는 260915 판이라 공유기 제품명·지운 블록이 그대로 있다(다시 만들지는 사용자 결정 — 컨테이너에 한글 글꼴이 없다)
+**사용자 결정(261120)**: 매뉴얼 PDF 4개는 리포에서 뺐다(`manual/.gitignore` 에 `*.pdf` — 납품 때마다 태그로 빌드). 안 쓰던 백업 파일(`test/*.bak`, PiBrain `*.bak` 2개)을 지웠다 — PiBrain `test/test` 는 H/W 검수를 손으로 띄우는 스크립트라 남김.
+도구·분류기의 `webfonts/` 사본(파이보 도구는 v1 fontello 포함)과 그 마운트를 지웠다 — 260929 부터 `SharedFonts` 가 fa-* 를 IDE 로 넘겨 한 번도 안 쓰였다(컨테이너: 4개 서버 모두 301 → IDE, 첫 화면 200). 아이콘 글꼴은 이제 `ide/webfonts/` 한 벌뿐.
+`ide/examples/` 는 코드가 안 쓴다 — 공장 초기화·이미지가 복사하는 원본은 리포 맨 위 `examples/`(`run_ide.py` restore). 둘 중 무엇을 원본으로 둘지 사용자 확인 중.
+`rps_recognizer.task` 는 사용자가 MediaPipe Model Maker 예제 데이터(`rps_data_sample.zip`, Google 저장소)로 학습한 것 — 데이터셋 라이선스는 zip(라이선스·README 파일 없음, 사진 500장)·안내 페이지 어디에도 적혀 있지 않다(261120 확인). **확인 필요**(Google 문의, 또는 직접 찍은 사진으로 다시 학습)
 
 ## 오류 쉬운 말 (261119) — 실행 출력 위 빨간 상자
 
