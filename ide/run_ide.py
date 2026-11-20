@@ -632,6 +632,13 @@ async def handle_restore(sid):
         # custom_motion.json 은 import 할 때마다 덮어쓰는 임시 파일이다.
         # 없으면 tools/lib.py 가 빈 dict 로 시작하므로 지워도 안전하다.
         os.system("rm -f /home/pi/mymotion.json /home/pi/custom_motion.json")
+        # 폴더가 없으면 cp 가 조용히 실패한다(os.system) — 없으면 만들고 pi 소유로(이미지와 같게)
+        if not os.path.isdir('/home/pi/examples'):
+            os.makedirs('/home/pi/examples', exist_ok=True)
+            try:
+                shutil.chown('/home/pi/examples', user='pi', group='pi')
+            except Exception:
+                pass   # 소유자를 못 바꿔도 초기화는 이어간다
         os.system("cp -rf /home/pi/openpibo-os/examples/* /home/pi/examples/")
         os.system("sudo /home/pi/openpibo-os/system/conwifi.sh wpa-psk 'pibo' '!pibo0314'")
         os.system('echo "#11:!" > /dev/ttyS0')
