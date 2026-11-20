@@ -325,6 +325,46 @@ const getVisions = (socket) => {
     showVisionFunc(data);
   });
 
+  /* [카메라] 고르기(261120): 보드 카메라 + 꽂혀 있는 USB 카메라(이름은 카메라가 알려 준 값).
+     목록은 [카메라] 탭을 열 때·고르는 칸을 누를 때 서버에 새로 묻는다(실행 중에 꽂은 카메라도 잡히게).
+     고르면 서버가 새 카메라를 먼저 열어 보고 되면 바꾼다 — 안 되면 원래 카메라 그대로 + 안내 */
+  const camSel = document.getElementById("v_cam_sel");
+  let camList = [{ cam: 0, name: "" }], camCur = 0, camShown = "";
+  const camLabel = (c) => (c.cam === 0 ? t("cam_board") : t("cam_usb", c.cam, c.name));
+  const paintCams = (force) => {
+    const list = camList.slice();
+    if (!list.some((c) => c.cam === camCur)) list.push({ cam: camCur, missing: true });
+    const key = JSON.stringify([list, camCur, lang]);
+    if (!force && key === camShown) return;   // 바뀐 게 없으면 그대로 둔다(열려 있는 목록이 닫히지 않게)
+    camShown = key;
+    camSel.innerHTML = "";
+    list.forEach((c) => {
+      const o = document.createElement("option");
+      o.value = String(c.cam);
+      o.textContent = c.missing ? t("cam_missing", c.cam) : camLabel(c);
+      camSel.appendChild(o);
+    });
+    camSel.value = String(camCur);
+    camSel.title = t("cam_pick");
+    camSel.setAttribute("aria-label", t("cam_pick"));
+  };
+  window.paintCams = () => paintCams(true);
+  socket.on("cam_list", (d) => { camList = (d && d.list) || camList; camCur = d && typeof d.cur === "number" ? d.cur : camCur; paintCams(); });
+  socket.on("cam_select", async (r) => {
+    camSel.disabled = false;
+    if (r && typeof r.cam === "number") camCur = r.cam;
+    paintCams(true);
+    if (r && !r.ok) await alert_popup(t("cam_sel_fail", r.error || ""));
+  });
+  camSel.addEventListener("pointerdown", () => socket.emit("cam_list"));
+  camSel.addEventListener("focus", () => socket.emit("cam_list"));
+  camSel.addEventListener("change", () => {
+    camSel.disabled = true;
+    camSel.title = t("cam_switching");
+    socket.emit("cam_select", { cam: parseInt(camSel.value, 10) || 0 });
+  });
+  paintCams(true);
+
   // 카메라 한 장은 JPEG 바이트로 온다(260929, 예전 서버는 base64 문자열 — 둘 다 받는다). 이전 주소는 풀어 준다
   let streamUrl = "";
   socket.on("stream", function (data) {
@@ -1341,6 +1381,7 @@ const handleMenu = (name) => {
     $("#v_pan_range").val($("#m4_range").val());
     $("#v_location").text(`${$("#m4_range").val()}, ${$("#m5_range").val()}`);
     socket.emit("disp_vision");
+    socket.emit("cam_list");
   } else if (name === "motion") {
     socket.emit("disp_motion");
   } else if (name === "speech") {
@@ -1404,6 +1445,7 @@ const setLanguage = (lang) => {
     const v = translations[el.getAttribute('data-aria-key')];
     if (v && typeof v[lang] === 'string') el.setAttribute('aria-label', v[lang]);
   });
+  if (window.paintCams) window.paintCams();   // 카메라 고르기 목록(보드 카메라 이름이 언어를 따른다)
 }
 
 const language = document.getElementById("language");

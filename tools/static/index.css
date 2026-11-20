@@ -1231,3 +1231,10 @@ main > div.content.pb-pane {
 #v_faceid .v-faceid__item.v-faceid__danger, #v_faceid .v-faceid__item.v-faceid__danger > i { color: var(--v2-red) !important; }
 #v_faceid .v-faceid__item:disabled, #v_faceid .v-faceid__item.is-disabled { opacity: .45; pointer-events: none; }
 .v-faceid__list[hidden], .v-faceid__note[hidden] { display: none !important; }
+
+/* [카메라] 고르기(261120) — 제목 줄 오른쪽, [사진 저장] 앞 */
+.v-head__right { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.v-camsel { max-width: 220px; height: 32px; padding: 0 8px; border: 1px solid var(--v2-line-2, #c4cad6); border-radius: 8px;
+  background: var(--v2-raise, #fff); color: var(--v2-ink, #1a1e29); font: inherit; font-size: 13px; text-overflow: ellipsis; }
+.v-camsel:disabled { opacity: .6; }
+@media (max-width: 600px) { .v-camsel { max-width: 140px; } }

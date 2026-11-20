@@ -33,7 +33,7 @@ Everything runs **inside piBo**. Only the [Collect] category needs the internet,
 | Motion | 10 |
 | Display | 11 |
 | Speech | 7 |
-| Vision | 16 |
+| Vision | 17 |
 | Recognition | 33 |
 | Utilities | 12 |
 
@@ -246,6 +246,10 @@ Stop the LLM server.
 <img src="img/vision_read.png" alt="Take a picture" width="201" class="blk">
 
 Capture an image. *returns a value*
+
+<img src="img/vision_read_usb.png" alt="Take a picture with USB camera [cam1 ▾]" width="463" class="blk">
+
+Takes a picture with a USB camera. cam1, cam2 and cam3 follow the USB port order (same names as the camera picker in Tools and Classifier). For the board camera, use the [Take a picture] block. *returns a value*
 
 <img src="img/vision_imread_dynamic.png" alt="Load image file [Select folder ▾] [Select file ▾]" width="513" class="blk">
 

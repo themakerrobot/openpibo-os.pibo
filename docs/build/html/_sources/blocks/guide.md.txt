@@ -33,7 +33,7 @@
 | 동작 | 10 |
 | 화면 | 11 |
 | 음성 | 7 |
-| 시각 | 16 |
+| 시각 | 17 |
 | 인식 | 33 |
 | 기타 | 12 |
 
@@ -242,6 +242,10 @@
 <img src="img/vision_read.png" alt="사진 찍기" width="146" class="blk">
 
 카메라로 사진을 찍습니다. *값을 돌려주는 블록*
+
+<img src="img/vision_read_usb.png" alt="USB 카메라 [cam1 ▾] 로 사진 찍기" width="373" class="blk">
+
+USB 카메라로 사진을 찍습니다. cam1·cam2·cam3 은 꽂은 USB 포트 순서예요(도구·분류기의 카메라 고르기와 같은 이름). 보드 카메라는 [사진 찍기] 블록을 씁니다. *값을 돌려주는 블록*
 
 <img src="img/vision_imread_dynamic.png" alt="이미지 [폴더 선택 ▾] [파일 선택 ▾] 을(를) 불러오기" width="507" class="blk">
 
