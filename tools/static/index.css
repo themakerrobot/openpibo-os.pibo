@@ -1238,3 +1238,9 @@ main > div.content.pb-pane {
   background: var(--v2-raise, #fff); color: var(--v2-ink, #1a1e29); font: inherit; font-size: 13px; text-overflow: ellipsis; }
 .v-camsel:disabled { opacity: .6; }
 @media (max-width: 600px) { .v-camsel { max-width: 140px; } }
+
+/* 동작 표 머리: M0~M9 아래 부위 이름(261120). 칸이 좁아 작게, 줄바꿈 없이 넘치면 말줄임 */
+#motor_table thead td .mhead {
+  display: block; margin-top: 1px; font-size: 10.5px; font-weight: 500; line-height: 1.2;
+  color: var(--v2-ink-3, #6b7280); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}

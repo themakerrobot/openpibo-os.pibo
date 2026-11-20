@@ -11,7 +11,7 @@
     <!-- <link rel="manifest" href="../static/manifest.json" /> -->
     <link rel="stylesheet" href="../static/all.min.css?ver=240110v1" type="text/css" />
     <link rel="stylesheet" href="../static/jquery.jsonview.min.css" />
-    <link rel="stylesheet" href="../static/index.css?ver=261120v1" />
+    <link rel="stylesheet" href="../static/index.css?ver=261120v2" />
   <link rel="stylesheet" href="../static/pibo-ui.css?ver=261120v1" />
     <link rel="stylesheet" href="../static/simulator.css?ver=261027v3" />
     <link rel="shortcut icon" href="../static/icon.png?ver=261102v1" type="image/png" />
@@ -355,16 +355,16 @@
                     <thead>
                       <tr>
                         <td><span data-key="time"></span></td>
-                        <td>M0</td>
-                        <td>M1</td>
-                        <td>M2</td>
-                        <td>M3</td>
-                        <td>M4</td>
-                        <td>M5</td>
-                        <td>M6</td>
-                        <td>M7</td>
-                        <td>M8</td>
-                        <td>M9</td>
+                        <td>M0<small class="mhead" data-key="motor_s0"></small></td>
+                        <td>M1<small class="mhead" data-key="motor_s1"></small></td>
+                        <td>M2<small class="mhead" data-key="motor_s2"></small></td>
+                        <td>M3<small class="mhead" data-key="motor_s3"></small></td>
+                        <td>M4<small class="mhead" data-key="motor_s4"></small></td>
+                        <td>M5<small class="mhead" data-key="motor_s5"></small></td>
+                        <td>M6<small class="mhead" data-key="motor_s6"></small></td>
+                        <td>M7<small class="mhead" data-key="motor_s7"></small></td>
+                        <td>M8<small class="mhead" data-key="motor_s8"></small></td>
+                        <td>M9<small class="mhead" data-key="motor_s9"></small></td>
                       </tr>
                     </thead>
                     <tbody></tbody>
@@ -634,7 +634,7 @@
       </div>
     </main>
   </body>
-  <script src="../static/ko2en.js?ver=261120v3"></script>
+  <script src="../static/ko2en.js?ver=261120v4"></script>
   <script src="../static/pibo-ui.js?ver=261102v1"></script>
   <script src="../static/index.js?ver=261120v3"></script>
   <script>/* [동작] 표가 비면 안내를 보인다(pibo-ui.css 의 .motion-table-wrap[data-empty]). :has() 를 안 쓰려고 tbody 를 지켜본다 */
