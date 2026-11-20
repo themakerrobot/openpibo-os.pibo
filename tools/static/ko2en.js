@@ -194,7 +194,12 @@ const translations = {
   cam_missing:        { ko: (n) => `cam${n} · (빠짐)`, en: (n) => `cam${n} · (unplugged)` },
   cam_switching:      { ko: "카메라를 바꾸는 중…", en: "Switching the camera…" },
   cam_sel_fail:       { ko: (e) => { const m = String(e).match(/^(.*[가-힣].*?) \/ ([^가-힣]+)$/); return `카메라를 바꾸지 못했어요. (${m ? m[1] : e})`; },
-                        en: (e) => { const m = String(e).match(/^(.*[가-힣].*?) \/ ([^가-힣]+)$/); return `Could not switch the camera. (${m ? m[2] : e})`; } },
+                        en: (e) => { const m = String(e).match(/^(.*[가-힣].*?) \/ ([^가-힣]+)$/); return `Could not switch the camera. (${m ? m[2] : e})`; } },  // 동작 표 머리의 부위 이름(261120) — 숫자만 있던 M0~M9 아래 작게
+  motor_s0: { ko: "오른발", en: "R foot" },  motor_s1: { ko: "오른다리", en: "R leg" },
+  motor_s2: { ko: "오른팔", en: "R arm" },   motor_s3: { ko: "오른손", en: "R hand" },
+  motor_s4: { ko: "고개↔", en: "Head ↔" },  motor_s5: { ko: "고개↕", en: "Head ↕" },
+  motor_s6: { ko: "왼발", en: "L foot" },    motor_s7: { ko: "왼다리", en: "L leg" },
+  motor_s8: { ko: "왼팔", en: "L arm" },     motor_s9: { ko: "왼손", en: "L hand" },
 };
 
 // 키 → 현재 언어 문자열. 모르는 키(일반 문자열)는 그대로 반환.
