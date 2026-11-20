@@ -349,7 +349,8 @@ const getVisions = (socket) => {
     camSel.setAttribute("aria-label", t("cam_pick"));
   };
   window.paintCams = () => paintCams(true);
-  socket.on("cam_list", (d) => { camList = (d && d.list) || camList; camCur = d && typeof d.cur === "number" ? d.cur : camCur; paintCams(); });
+  socket.on("cam_list", (d) => { camList = ((d && d.list) || camList).filter((c) => c.cam <= 1);   // USB 카메라는 하나만(첫 번째)
+    camCur = d && typeof d.cur === "number" ? d.cur : camCur; paintCams(); });
   socket.on("cam_select", async (r) => {
     camSel.disabled = false;
     if (r && typeof r.cam === "number") camCur = r.cam;
