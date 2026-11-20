@@ -10,7 +10,10 @@
 | `classifier/` | AI 분류기 — 이미지·손·얼굴·포즈 가르치기 | 50010 |
 | `openpibo/` | 파이썬 라이브러리 (`from openpibo.motion import Motion` …) | — |
 | `system/` | 부팅·WiFi·핫스팟 스크립트 | 8080 |
+| `chat/` | 대화 웹 — 대화 모델(llama-server, 50020)과 글자로 대화 | 50030 |
+| `kids/` | 체험 앱 '로봇 놀이' (시험 중) | 50060 |
 | `test/` | H/W 검수 페이지 | 50050 |
+| `docs/` | 도움말(빌드 결과 `docs/build` 를 8080 이 보여 줌) | 8080 |
 | `examples/` | 예제 프로그램 | — |
 
 - 문서: [openpibo 가이드](https://themakerrobot.github.io/openpibo-os.pibo/build/html/index.html)

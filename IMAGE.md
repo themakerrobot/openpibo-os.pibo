@@ -159,7 +159,7 @@ find . -type f ! -name VERSION ! -name VERSION.new -print0 | sort -z | xargs -0 
 mv VERSION.new VERSION
 
 cd /home/pi/.model
-du -sh */ | sort -h            # tts 약 181M, stt 약 230M, llm 약 324M(Qwen3.5 0.8B Q4_K_M 339,212,576 바이트, 261026 판)
+du -sh */ | sort -h            # tts 약 181M, stt 약 230M, llm 약 1.1G(general 젬마3 1B 806MB + themaker-ko 0.8B 337MB, themaker-en 이 오면 더 늘어남)
 sed -n '/^## sha256/,$p' VERSION | tail -n +2 | sha256sum -c --quiet && echo "VERSION 과 같음"
 $PY -c "from openpibo.speech import SpeechToText, SpeechOnDevice; SpeechOnDevice(); SpeechToText(); print('tts·stt ok')"
 ```
@@ -173,7 +173,7 @@ CPU 전용 Release 빌드이고 서버만 만든다: `cmake -B build -DCMAKE_BUI
 빌드 뒤 `ldd build/bin/llama-server | grep "not found"` 가 비어 있어야 한다.
 
 `/etc/systemd/system/llama-server@.service` (리포 밖 — 이 내용 그대로, 261029). 대화 모델은 **이 템플릿 유닛 하나로만** 띄운다.
-`%i` 가 모델 이름(`general` · `themaker-ko` · `themaker-en`)이고 `/home/pi/.model/llm/<이름>.gguf` 별칭 링크를 연다(CLAUDE.md '대화 모델 고르기').
+`%i` 가 모델 이름(`general` · `themaker-ko` · `themaker-en`)이고 `/home/pi/.model/llm/<이름>.gguf` 파일을 연다(261106 부터 링크가 아닌 실제 파일 — CLAUDE.md '대화 모델 고르기').
 
 ```ini
 [Unit]
@@ -193,7 +193,7 @@ StandardError=journal
 모델 파일: `/home/pi/.model/llm/` 에 `general.gguf`·`themaker-ko.gguf`·`themaker-en.gguf` 를 **실제 파일로** 둔다(261106 — HF 에서 이 이름으로 받는다. 예전 별칭 링크는 링크를 그 파일로 바꿨다).
 새 판으로 바꿀 땐 같은 이름으로 덮어쓰고 `VERSION` 의 `llm/<이름>.gguf = <원래 파일 이름>` 줄과 sha256 목록을 다시 만든다. 영문 파일이 없으면 대화 화면에 '(없음)', `set_llm_model` 은 '파일이 아직 없어요'. 그 뒤 `sudo systemctl daemon-reload`.
 
-- `[Install]` 이 없어 enable 되지 않는다(`systemctl is-enabled llama-server@general` → `static`). 대화 화면·`Speech.start_llm()` 이 켜고, IDE 가 끈다
+- `[Install]` 이 없어 enable 되지 않는다(`systemctl is-enabled llama-server@general` → `static`). 대화 화면·`Dialog.start_llm()` 이 켜고, IDE 가 끈다
 - 템플릿끼리는 서로 끄지 않는다 — 켜는 쪽(코드)이 늘 `systemctl stop 'llama-server@*'` 를 먼저 한다(램 2GB 라 하나만)
 - `WorkingDirectory` 도 빌드 폴더여야 한다(옛 폴더면 30ms 만에 죽었다, 261026). `--log-disable` 이라 죽은 이유가 로그에 안 남는다 — 같은 명령을 직접 돌려 볼 것
 - 확인: `sudo systemctl start llama-server@general; sleep 15; curl -s localhost:50020/health` → `{"status":"ok"}`, 그 뒤 `sudo systemctl stop 'llama-server@*'`
@@ -261,6 +261,7 @@ zip update.zip _update          # USB(FAT32·exFAT) 맨 위에 update.zip 으로
 sudo rm -f  /etc/NetworkManager/system-connections/*.nmconnection*   # WiFi 비번
 sudo rm -rf /home/pi/code/* /home/pi/myimage/* /home/pi/myaudio/* /home/pi/mymodel/* 2>/dev/null
 sudo rm -f  /home/pi/mymotion.json /home/pi/custom_motion.json       # 검수 중 녹화한 모션
+sudo find /home/pi/.kids -mindepth 1 -maxdepth 1 ! -name voice -exec rm -rf {} + 2>/dev/null   # 로봇 놀이 기록·재주·사진(미리 만든 목소리 voice/ 는 남긴다)
 sudo rm -rf /home/pi/.npm /home/pi/openpibo-files/.git               # 용량 (수십~64MB)
 sudo rm -f  /home/pi/.bash_history /root/.bash_history
 
@@ -327,7 +328,7 @@ ls /home/pi/examples/                                          # PH 는 10개, c
 
 echo "===== 서비스 ====="
 systemctl is-active ide booting                                # active active
-systemctl is-active tools classify llama-server                # 전부 inactive 가 정상
+systemctl is-active tools classify 'llama-server@*'            # 전부 inactive 가 정상(대화 모델은 템플릿 유닛)
 curl -s -o /dev/null -w "ide:%{http_code}\n" http://localhost/
 curl -s http://localhost:8080/wifi_scan | head -c 200; echo
 

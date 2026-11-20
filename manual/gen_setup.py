@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""Setup & Administration Guide — 공유기(AX53)를 pibo 로 세팅해 함께 납품하는 전제."""
+"""Setup & Administration Guide — 공유기를 pibo 로 세팅해 함께 납품하는 전제."""
 import io, os, datetime, html
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -161,7 +161,7 @@ busy being an access point. This is expected behaviour, not a fault.</div></sect
 
     # 2. The router
     W('''<section class="page"><h2>2 &nbsp; The router supplied with the robots</h2>
-<p class="lead">A TP-Link Archer AX53 is supplied, already configured. Plug in power, and if the school
+<p class="lead">A router is supplied, already configured. Plug in power, and if the school
 has internet, plug the school’s cable into the router’s <b>WAN</b> (internet) port. Nothing else is
 needed.</p>
 
@@ -319,14 +319,16 @@ screen.</p>
 <tr><td><code>http://&lt;ip&gt;:8080</code></td><td>Reference documentation, also reached from the Guide button.</td></tr>
 <tr><td><code>http://&lt;ip&gt;:50000</code></td><td>Tools — motion editor and sound recorder.</td></tr>
 <tr><td><code>http://&lt;ip&gt;:50010</code></td><td>Classifier — image model training.</td></tr>
-<tr><td><code>http://&lt;ip&gt;:50020</code></td><td>Language model server.</td></tr>
+<tr><td><code>http://&lt;ip&gt;:50020</code></td><td>Language model server (used by Chat).</td></tr>
+<tr><td><code>http://&lt;ip&gt;:50030</code></td><td>Chat — talk with the language model.</td></tr>
+<tr><td><code>http://&lt;ip&gt;:50050</code></td><td>H/W check — hardware test page.</td></tr>
+<tr><td><code>http://&lt;ip&gt;:50060</code></td><td>Robot Play — card activities for young learners.</td></tr>
 </tbody></table>
-<p>Open Tools, Classifier and the language model from the buttons in the editor rather than typing
-the addresses — only one of the three may run at a time, and the editor handles the switching.</p>
+<p>Open Tools, Classifier, Chat, Robot Play and H/W check from the buttons in the editor rather than typing
+the addresses — only one of them may run at a time, and the editor handles the switching.</p>
 
-<div class="note"><b>The documentation on the robot is in Korean</b>
-The Guide button on port 8080 still serves the Korean reference text in this software version. Use the
-printed <i>Teacher’s Guide</i> instead. An English version is planned for a later release.</div>
+<div class="note"><b>The documentation on the robot</b>
+The Guide button on port 8080 opens the reference documentation in English (Korean is also there, from the language menu).</div>
 </section>''')
 
     # 5. Different network
@@ -479,6 +481,9 @@ backup / restore page. Restoring it is far quicker than re-entering everything.<
 <tr><th>50000</th><td>Tools</td></tr>
 <tr><th>50010</th><td>Classifier</td></tr>
 <tr><th>50020</th><td>Language model</td></tr>
+<tr><th>50030</th><td>Chat</td></tr>
+<tr><th>50050</th><td>H/W check</td></tr>
+<tr><th>50060</th><td>Robot Play</td></tr>
 </tbody></table>
 
 <h3>Capacity</h3>

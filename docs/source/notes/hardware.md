@@ -63,3 +63,4 @@
 
    - Raspberrypi Camera v1.3과 호환되는 카메라입니다.
    - 5 Megapixel로 촬영이 가능합니다.
+   - USB 카메라(V4L2 지원)를 꽂으면 cam1·cam2 로 같이 쓸 수 있습니다(`Camera(1)`·`Camera(2)`, 블록 `USB 카메라 cam1 로 사진 찍기`).

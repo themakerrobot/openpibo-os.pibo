@@ -426,6 +426,7 @@ type a name and press <strong>[Save]</strong> to use it later with the <code cla
 <ul class="simple">
 <li><p><strong>Camera</strong>: apply vision features (grayscale, edges, cartoon, QR code, face analysis, object detection, hand gestures, pose, markers…)
 to piBo’s camera view. The result also appears as text under [Result].
+<strong>Face ID</strong> recognizes faces you have named and [Registered] (programs can use them too, with the <code class="docutils literal notranslate"><span class="pre">Load</span> <span class="pre">the</span> <span class="pre">face</span> <span class="pre">dictionary</span> <span class="pre">from</span> <span class="pre">code</span> <span class="pre">facedb</span></code> block).
 If a USB camera is plugged in, switch between the <strong>board camera and USB cameras</strong> in the picker above the camera view (any USB camera that supports V4L2)</p></li>
 </ul>
 <p><img alt="Tools: Speech" src="../_images/tools_speech.png" /></p>
@@ -445,9 +446,9 @@ The first time takes a few seconds while speech recognition loads. [Record] reco
 <li><p>Name each <strong>class</strong> and keep pressing <strong>[Hold to collect]</strong> to collect examples. You can also upload files with [Photos].
 The picker under the camera switches to a USB camera — use the same camera for training and for use for better results</p></li>
 <li><p><strong>[Teach the AI]</strong> — the tablet or laptop browser learns in a few seconds and shows the accuracy, a confusion table and live scores</p></li>
-<li><p><strong>[Save]</strong> (under Save to piBo) — saved on piBo in <code class="docutils literal notranslate"><span class="pre">/home/pi/mymodel/&lt;model</span> <span class="pre">name&gt;</span></code></p></li>
+<li><p><strong>[Save]</strong> — saved on piBo in <code class="docutils literal notranslate"><span class="pre">/home/pi/mymodel/&lt;model</span> <span class="pre">name&gt;</span></code></p></li>
 <li><p>In the IDE use <code class="docutils literal notranslate"><span class="pre">Load</span> <span class="pre">classification</span> <span class="pre">model</span> <span class="pre">(mymodel)</span> <span class="pre">(model</span> <span class="pre">name)</span></code> → <code class="docutils literal notranslate"><span class="pre">Classify</span> <span class="pre">image</span> <span class="pre">(image)</span> <span class="pre">with</span> <span class="pre">the</span> <span class="pre">classification</span> <span class="pre">model</span></code>.
-<code class="docutils literal notranslate"><span class="pre">Draw</span> <span class="pre">what</span> <span class="pre">the</span> <span class="pre">classifier</span> <span class="pre">saw</span> <span class="pre">on</span> <span class="pre">image</span></code> draws the hand, face or body points and the class name on the picture</p></li>
+<code class="docutils literal notranslate"><span class="pre">Show</span> <span class="pre">the</span> <span class="pre">classification</span> <span class="pre">result</span> <span class="pre">on</span> <span class="pre">image</span> <span class="pre">(image)</span></code> draws the hand, face or body points and the class name on the picture</p></li>
 </ol>
 <p>The [Test] tab tries a saved model again. [Models] lets you test, keep training, rename, download (zip) or delete a model.</p>
 <div class="admonition tip">
@@ -511,11 +512,11 @@ will start right away during class.</p>
 <li><p>Say “Let’s just talk” to stop using tools, and “You can move now” to use them again.</p></li>
 <li><p>Turn on [Speak out loud] and piBo speaks the answer (you can choose the voice and volume).</p></li>
 </ul>
-<p>Programs can use it too, with the <code class="docutils literal notranslate"><span class="pre">Choose</span> <span class="pre">chat</span> <span class="pre">model</span></code>, <code class="docutils literal notranslate"><span class="pre">Start</span> <span class="pre">LLM</span> <span class="pre">server</span></code> and <code class="docutils literal notranslate"><span class="pre">Respond</span> <span class="pre">to</span> <span class="pre">…</span></code> blocks in [Speech].
+<p>Programs can use it too, with the <code class="docutils literal notranslate"><span class="pre">Choose</span> <span class="pre">chat</span> <span class="pre">model</span></code>, <code class="docutils literal notranslate"><span class="pre">Start</span> <span class="pre">LLM</span> <span class="pre">server</span></code> and <code class="docutils literal notranslate"><span class="pre">Say</span> <span class="pre">…</span> <span class="pre">to</span> <span class="pre">AI</span></code> blocks in [Speech].
 Blocks chat in text only and do not run tools.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>Tools, Chat and Classifier run <strong>one at a time</strong>. Opening one closes the others, and running a program in the IDE closes them too
+<p>Tools, Chat, Classifier, Robot Play and H/W check run <strong>one at a time</strong>. Opening one closes the others, and running a program in the IDE closes them too
 (they share the camera, speaker and memory). A closed screen shows [Restart].</p>
 </div>
 </section>
