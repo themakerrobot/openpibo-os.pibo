@@ -79,6 +79,7 @@ async function b1(br) {
 async function b2(br) {
   const bad = [];
   const ref = {};
+  const names = {};   // 제품/언어 → { ide: {앱: IDE 버튼 글자}, 앱: 상단바 앱 이름 }
   for (const w of [1366, 820]) for (const lang of ['ko', 'en']) {
     const strips = [];
     for (const pgi of pages()) {
@@ -108,6 +109,11 @@ async function b2(br) {
         // 표준 버튼보다 오른쪽에 있는 다른 버튼(앱 동작은 IDE 왼쪽에 둔다)
         const ideX = std.ide ? std.ide.getBoundingClientRect().left : 1e9;
         out.rightExtra = btns.filter(b => !Object.values(std).includes(b) && b.getBoundingClientRect().left > ideX).map(b => b.id || b.className.split(' ')[0]);
+        // IDE 의 앱 버튼 글자(좁으면 숨지만 글자는 있다) — 각 앱 상단바의 앱 이름과 같아야 한다
+        const lab = id => { const e = document.getElementById(id); if (!e) return null; const sp = [...e.querySelectorAll('span')].find(x => x.textContent.trim()); return sp ? sp.textContent.trim() : e.textContent.trim(); };
+        out.ideApps = { tools: lab('tools_bt'), chat: lab('llm_bt'), classifier: lab('classifier_bt'), kids: lab('kids_bt'), docs: lab('guide_bt') };
+        const appEl = brand && brand.querySelector('.pb-header__app, .pb-topbar__app');
+        out.appName = appEl ? appEl.textContent.trim() : '';
         return out;
       }).catch(e => ({ err: e.message }));
       const tag = `${pgi.p}/${pgi.app} ${w} ${lang}`;
@@ -115,6 +121,7 @@ async function b2(br) {
       if (hdr) { const f = path.join(OUT, `hdr_${pgi.p}_${pgi.app}_${w}_${lang}.png`); await hdr.screenshot({ path: f }).catch(() => {}); strips.push(f); }
       await ctx.close();
       if (!d || d.err) { bad.push(`${tag}: 상단바를 못 찾음 ${d && d.err || ''}`); continue; }
+      if (w === 1366) { const k = `${pgi.p}/${lang}`; (names[k] = names[k] || {})[pgi.app] = pgi.app === 'ide' ? d.ideApps : d.appName; }
       if (!ref.bg) ref.bg = d.bg;
       if (d.h !== 48) bad.push(`${tag}: 높이 ${d.h}px(48)`);
       if (d.bb !== '1px') bad.push(`${tag}: 아래 선 ${d.bb}(1px)`);
@@ -161,7 +168,14 @@ o.save(sys.argv[1])`;
       strips.forEach(f => fs.unlinkSync(f));
     } catch (e) { /* PIL 이 없으면 낱장으로 둔다 */ }
   }
-  report('B2', '상단바 규칙(높이·색·이름·순서·글자·크기)', bad);
+  for (const k in names) {
+    const ide = names[k].ide || {};
+    for (const app of ['tools', 'chat', 'classifier', 'kids', 'docs']) {
+      if (ide[app] && names[k][app] !== undefined && ide[app] !== names[k][app])
+        bad.push(`${k}: IDE 버튼 '${ide[app]}' ≠ ${app} 상단바 이름 '${names[k][app]}'(같은 이름이어야)`);
+    }
+  }
+  report('B2', '상단바 규칙(높이·색·이름·순서·글자·크기·IDE 버튼 = 앱 이름)', bad);
 }
 
 // ── B3 예제 ───────────────────────────────────────────────────────────

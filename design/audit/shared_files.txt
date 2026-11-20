@@ -72,6 +72,7 @@ kids/static/pibo-ui.css
 kids/static/pibo-ui.js
 openpibo/__init__.py
 openpibo/collect.py
+openpibo/device.py
 openpibo/modules/__init__.py
 openpibo/modules/card/__init__.py
 openpibo/modules/card/decode_card.py
