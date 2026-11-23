@@ -25,7 +25,7 @@ function pages() {
     // 대문(261123): / 는 첫 화면, IDE 는 /ide
     out.push({ p, prod, app: 'home', url: `${H}:${ide}/` }, { p, prod, app: 'ide', url: `${H}:${ide}/ide` }, { p, prod, app: 'tools', url: `${H}:${b}/` },
       { p, prod, app: 'classifier', url: `${H}:${b + 10}/` }, { p, prod, app: 'chat', url: `${H}:${b + 30}/?ide=${ide}` },
-      { p, prod, app: 'kids', url: `${H}:${b + 60}/play?ide=${ide}` }, { p, prod, app: 'cards', url: `${H}:${b + 60}/cards?ide=${ide}` },   // 체험 앱 서버 하나의 두 화면(261123)
+      { p, prod, app: 'kids', url: `${H}:${b + 70}/?ide=${ide}` }, { p, prod, app: 'cards', url: `${H}:${b + 60}/?ide=${ide}` },   // 체험 앱 둘(261123): 로봇 놀이 play/ 50070 · 카드 코딩 cards/ 50060
       { p, prod, app: 'docs', url: `${H}:${b + 88}/build/html/index.html`, en: `${H}:${b + 88}/build/en/index.html` },
       { p, prod, app: 'launch', url: `${H}:${ide}/static/launch.html?svc=tools` });
   }

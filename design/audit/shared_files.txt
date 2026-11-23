@@ -1,6 +1,14 @@
 # 두 리포(파이보·PiBrain)에서 글자까지 같아야 하는 파일 — design/audit/static_check.py S5 가 본다
 # 일부러 갈라야 하면 그 줄을 지우고 AUDIT.md '예외' 에 이유를 적을 것. 새로 같은 파일을 만들면 여기 넣을 것
 LICENSE
+cards/blocks.py
+cards/content.json
+cards/run_cards.py
+cards/static/cards.css
+cards/static/cards.js
+cards/static/pet.js
+cards/static/pibo-ui.css
+cards/static/pibo-ui.js
 chat/pibo_chat.py
 chat/pibrain_chat.py
 chat/run_chat.py
@@ -58,21 +66,10 @@ ide/static/v2/ide.js
 ide/static/v2/levels.js
 ide/static/v2/pibo-art.js
 ide/static/v2/usbcam_block.js
-kids/blocks.py
-kids/content.json
-kids/face.py
-kids/make_pet_png.py
 kids/make_sounds.py
 kids/make_voice.py
-kids/pet.py
 kids/robot.py
-kids/run_kids.py
 kids/screen.py
-kids/static/kids.css
-kids/static/kids.js
-kids/static/pet.js
-kids/static/pibo-ui.css
-kids/static/pibo-ui.js
 openpibo/__init__.py
 openpibo/collect.py
 openpibo/device.py
@@ -113,6 +110,17 @@ openpibo/usb_uart.py
 openpibo/utils.py
 openpibo/vision_classify.py
 openpibo/vision_detect.py
+play/content.json
+play/face.py
+play/game.py
+play/make_pet_png.py
+play/pet.py
+play/run_play.py
+play/static/pet.js
+play/static/pibo-ui.css
+play/static/pibo-ui.js
+play/static/play.css
+play/static/play.js
 setup.py
 system/bench_models.py
 system/fetch_models.sh
