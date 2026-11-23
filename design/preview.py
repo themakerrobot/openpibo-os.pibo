@@ -29,7 +29,7 @@ import http.server
 import importlib.util
 
 PIBO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-FONT = re.compile(r'^/((?:static/fonts/Pretendard-|webfonts/fa-)[^/]+)$')
+FONT = re.compile(r'^/((?:static/fonts/Pretendard-|static/fonts/gowun/|webfonts/fa-)[^/]+)$')
 LIST_PORT = 18999
 APPS = (('ide', 80, 'IDE'), ('tools', 0, '도구'), ('classifier', 10, '분류기'))   # (폴더, 포트 끝자리, 이름)
 ANSWER = {'pibo': '안녕! 나는 파이보야. 오늘은 무엇을 같이 만들어 볼까? 동작을 만들거나 카메라로 물건을 알아볼 수 있어.',
