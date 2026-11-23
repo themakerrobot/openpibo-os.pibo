@@ -1,7 +1,7 @@
 # 체험 앱 '카드 코딩' · '로봇 놀이' — 설계 (261123 개정)
 
 초등학생이 **코딩 없이** 카드로 로봇 친구(파이보·PiBrain)에게 **재주를 가르치며** 코딩 개념을 차례로 익히는 웹.
-IDE 와 따로 둔다(`kids/`, 50060 — 한 서버의 두 화면 `/cards` 카드 코딩 · `/play` 로봇 놀이, 0-0절). **1차를 만들었고 시험 중이다** — 대문 카드·IDE 상단바 **[로봇 놀이]**(`#kids_bt`)로 연다(12절).
+IDE 와 따로 둔다(카드 코딩 `cards/` 50060 · 로봇 놀이 `play/` 50070 · 공용 `kids/`, 0-0절). **1차를 만들었고 시험 중이다** — 대문 카드·IDE 상단바 **[로봇 놀이]**(`#kids_bt`)로 연다(12절).
 파이보·PiBrain **같은 코드**(`kids/` 통째로, 원본은 파이보 리포). 컨테이너(가짜 로봇)에서만 확인했다 — **실기기 확인 필요**.
 
 ## 0. 결정 (사용자, 261028)
@@ -12,20 +12,20 @@ IDE 와 따로 둔다(`kids/`, 50060 — 한 서버의 두 화면 `/cards` 카�
 | 쓰는 방식 | 로봇 한 대에 태블릿 하나(1:1). 로봇은 학교 것이라 반마다 아이가 바뀐다 |
 | 제품 | 파이보·PiBrain 같은 코드, `--device` 로 제품에 없는 카드만 숨김 |
 | 핵심 | **아이가 만든 재주가 다음 수업의 재료(카드)가 된다** + 차시 + 아이별 기록 |
-| 소스 | 같은 리포의 `kids/`. IDE [로봇 놀이] 버튼으로 연다(261028) |
+| 소스 | 같은 리포의 `cards/` · `play/` · `kids/`(공용). 대문 카드와 IDE [로봇 놀이] 버튼으로 연다(261028, 261123) |
 
-## 0-0. 261123 개정 (사용자) — 카드 코딩을 따로, 로봇 놀이 = 키우기 + 조종하기
+## 0-0. 261123 개정 (사용자) — 폴더·서버를 둘로: 카드 코딩 · 로봇 놀이
 
 | 바뀐 것 | 내용 |
 |---|---|
-| **앱 둘** | 체험 앱 서버(`kids/run_kids.py`, 50060) **하나**가 두 화면을 낸다: **`/cards` 카드 코딩**(도전 · 만들기 · 내 재주) · **`/play` 로봇 놀이**(키우기 · 조종하기). 예전 주소 `/` 는 `/cards`(`?go=pet` 이면 `/play`)로 넘긴다 |
-| **서버를 나누지 않은 이유** | 두 앱이 같은 모터·화면·스피커를 쓰는데 그 장치는 한 프로세스만 쥘 수 있고, IDE 도 체험 앱을 하나만 띄운다(`kids_proc`). 사용자에게는 이름·주소·처음 화면·대문 카드가 따로라 독립 앱으로 보인다 |
-| **대문** | 줄 2 = [카드 코딩](`launch.html?svc=kids&go=cards`) · [로봇 놀이](`go=play`). **PiBrain 은 몸이 없어 조종하기가 없으므로 [키우기]**(`go=pet`, `/play` 가 바로 키우기 — 뒤로 단추·[놀이 처음] 숨김). IDE [로봇 놀이](`#kids_bt`, `fa-gamepad`)는 `/play` |
-| **조종하기** (파이보) | 왼쪽 방향 단추(앞으로 `forward1` · 뒤로 `backward1` · 왼쪽/오른쪽으로 돌기 `left`/`right` · 가운데 [멈춤] = 끊고 처음 자세), 오른쪽 동작 단추 19개. **누르면 바로 한다**, 하던 것이 있으면 서버가 끊고 새것(`POST /api/drive {id}`, `GET /api/drive`). 동작은 **다리·발(M0·M1·M6·M7)을 쓰지 않는 것만** — openpibo-models 0.4.9 `motion_db.json` 82개 중 54개가 그렇고 거기서 골랐다(`content.json` 의 `drive`). 끝나면 처음 자세(`stop`), `hold` 인 자세(하이파이브·보기·손 들기)는 그대로. 카드 실행 중이면 409 |
-| **안전** | 조종하기 위에 '걸을 때는 넓고 평평한 바닥에서, 책상 끝은 위험' 띠. 이동은 카드 코딩과 같은 걷기 동작이다 |
-| **처음 화면** | 대문과 같은 활동지 카드(위에 파이보 캐릭터 장면 — `pibo-art.js` 의 challenge · cards · tricks / pet · drive, IDE(80)에서 받는다. 못 받으면 Font Awesome) |
-| **색** | 카드 코딩 = `--app-kids`(주황), 로봇 놀이 = `--app-play`(청록), 그 안 키우기 = `--app-pet`(분홍). 선생님 잠금은 카드 코딩에만(차시·도달 기록) |
-| **확인 필요(기기)** | 동작 이름이 기기 `motion_db` 에 다 있는지(0.4.9 기준), 걷기 중 끊을 때 넘어지지 않는지, 서보 전원 강하(동작을 빨리 바꿔 누를 때) |
+| **앱 둘** | **`cards/` 카드 코딩**(`run_cards.py`, 50060) — 도전 · 만들기 · 내 재주(버튼 3개). **`play/` 로봇 놀이**(`run_play.py`, 50070) — 키우기 + 파이보 **조종하기** / PiBrain **블록 쌓기**. 대문에는 [카드 코딩] · [로봇 놀이], 들어가서 나뉜다 |
+| **공용** | `kids/` 에 두 앱이 같이 쓰는 `robot.py`(로봇 손잡이) · `screen.py`(화면 그림) · `sounds/`(효과음 — IDE 쉬움 블록도 이 경로) · `make_voice.py` · `make_sounds.py`. 저장 폴더 `/home/pi/.kids` 도 같이 쓴다(카드 코딩 `p/1/{tricks,progress}.json`·`settings.json`, 로봇 놀이 `p/1/pet.json`·`p/1/blocks.json`) |
+| **한 번에 하나** | 두 앱이 같은 모터·화면·스피커를 쓰므로 IDE 가 하나를 켤 때 다른 하나를 끈다(`run_ide.py` 의 `kids_app`) |
+| **조종하기** (파이보) | 왼쪽 방향 단추(앞으로 `forward1` · 뒤로 `backward1` · 왼쪽/오른쪽으로 돌기 `left`/`right` · 가운데 [멈춤] = 끊고 처음 자세), 오른쪽 동작 단추 19개. **누르면 바로 한다**, 하던 것이 있으면 서버가 끊고 새것(`POST /api/drive {id}`, `GET /api/drive`). 동작은 **다리·발(M0·M1·M6·M7)을 쓰지 않는 것만** — openpibo-models 0.4.9 `motion_db.json` 82개 중 54개가 그렇고 거기서 골랐다(`play/content.json` 의 `drive`). 끝나면 처음 자세(`stop`), `hold` 인 자세(하이파이브·보기·손 들기)는 그대로. 위에 '넓고 평평한 바닥에서, 책상 끝은 위험' 띠 |
+| **블록 쌓기** (PiBrain) | 떨어지는 블록 퍼즐(`play/game.py`) — **게임은 LCD(240x320)**, 태블릿엔 지금 판(점수·지운 줄·단계·시간) · 내 기록(최고·판 수·평균·지운 줄 모두·최근 10판 막대·한 번에 지운 줄 1~4·나온 블록 수) · 단추 4개 · 시작/잠깐 멈춤. 버튼 `b1` 왼쪽 · `b2` 돌리기 · `b3` 오른쪽 · `b4` 떨어뜨리기(**실제 위치는 확인 필요**). 블록 8가지(2~4칸 — 아이가 다루기 쉬운 작은 것을 섞음), 판 10x14, 줄 점수 10·30·60·100 × 단계, 5줄마다 단계(최대 9), 떨어질 자리 테두리. **장르 게임으로 직접 만들었다 — 특정 게임(상표)의 이름·그림·음악을 쓰지 않는다** |
+| **처음 화면** | 대문과 같은 활동지 카드 + 캐릭터 장면(`pibo-art.js` — challenge · cards · tricks / pet · drive · blocks, IDE(80)에서 받는다) |
+| **색** | 카드 코딩 `--app-kids`(주황, `fa-shapes`), 로봇 놀이 `--app-play`(청록, `fa-gamepad`), 그 안 키우기 `--app-pet`(분홍). 선생님 잠금은 카드 코딩에만 |
+| **확인 필요(기기)** | 동작 이름이 기기 `motion_db` 에 다 있는지, 걷기 중 끊을 때 넘어지지 않는지, 빨리 바꿔 누를 때 서보 전원 강하, LCD 한 장 그리는 시간·버튼 반응 |
 
 ## 0-1. 261116 개정 (사용자)
 
@@ -115,7 +115,7 @@ IDE 와 따로 둔다(`kids/`, 50060 — 한 서버의 두 화면 `/cards` 카�
 
 - 카드 줄을 **[재주로 저장]** → 이름(8자, 비우면 '재주 N')과 그림(16가지)을 붙인다. 재주는 그 아이의 **카드 한 장**이 된다(청록색, 모서리에 겹친 표시)
 - [내 재주]: 모음 — 누르면 안의 카드 줄이 보이고 [실행] [고치기] [지우기]. 고치기는 그 줄을 [만들기] 로 불러와 같은 재주로 다시 저장한다
-- 한도(`run_kids.py`): 한 아이 24개 · 재주 안의 재주 **3겹까지** · 다 펼쳤을 때 300번까지 · 한 줄 20장(재주 카드는 1장으로 셈)
+- 한도(`cards/run_cards.py`): 한 아이 24개 · 재주 안의 재주 **3겹까지** · 다 펼쳤을 때 300번까지 · 한 줄 20장(재주 카드는 1장으로 셈)
 - **자기 자신을 부르는 재주는 막는다**(직접이든 다른 재주를 거쳐서든 — `cycle`). 고친 결과로 그 재주를 쓰는 큰 재주가 3겹을 넘거나 너무 길어져도 막는다
 - 다른 재주가 쓰고 있는 재주는 지우지 못한다(어느 재주가 쓰는지 알려 준다). 이름이 겹치면 뒤에 숫자를 붙인다(IDE 함수 이름이 겹치지 않게)
 - 실행 중엔 줄의 재주 카드가 빛나 있고, 그 안은 로봇이 차례대로 한다. 실행을 시작할 때의 재주로 돈다(도중에 고쳐도 이번 실행은 그대로)
@@ -166,24 +166,31 @@ IDE 와 따로 둔다(`kids/`, 50060 — 한 서버의 두 화면 `/cards` 카�
 ## 11. 구조
 
 ```
-kids/
-  run_kids.py     FastAPI 서버(50060) — 프로필, 카드 줄 검사·실행·채점, 재주 저장(순환·깊이·길이 검사), 말, 키우기, 선생님
-  content.json    카드 · 개념 · 차시 · 도전 · 말(ko/en) · 키우기 설정 · 재주/프로필 그림
-  pet.py          키우기 규칙(수치·성격·얼굴) — 로봇을 모른다
-  robot.py        PiboRobot · PiBrainRobot · FakeRobot(기기 없이)
-  blocks.py       카드 줄 → IDE 블록 JSON(재주 = 함수 블록)
-  pet.js          키우기 친구 그림(파이보 실물 얼굴 SVG · PiBrain 은 보드 머리, 포즈·꾸미기 — 261123)
-  make_pet_png.py pet.js → static/pet/lcd/*.png (PiBrain LCD 용, PC 에서)
-  face.py         그 PNG 를 친구 색으로 바꿔 PiBrain LCD 에 (평소 화면은 IP 정보 — 앱 켤 때·키우기 나갈 때·끌 때 network_disp.py 로 되돌림)
-  make_sounds.py  효과음 만들기 → sounds/ (숫자로 생성, 녹음·외부 파일 없음)
-  make_voice.py   로봇 말 미리 만들기 → /home/pi/.kids/voice/
-  templates/index.html · static/kids.js · kids.css (+ 키트 pibo-ui.css/js — design/sync.sh 가 복사)
+cards/                카드 코딩(50060)
+  run_cards.py        FastAPI 서버 — 프로필, 카드 줄 검사·실행·채점, 재주 저장(순환·깊이·길이 검사), 말, 선생님
+  content.json        카드 · 개념 · 차시 · 도전 · 말(ko/en) · 재주/프로필 그림
+  blocks.py           카드 줄 → IDE 블록 JSON(재주 = 함수 블록)
+  templates/index.html · static/cards.js · cards.css · pet.js(play/ 사본 — 도전 결과 그림) (+ 키트 — design/sync.sh 가 복사)
+play/                 로봇 놀이(50070)
+  run_play.py         FastAPI 서버 — 키우기, 조종하기(파이보), 블록 쌓기(PiBrain)
+  content.json        키우기 설정 · 키우기 말(ko/en) · 조종하기 단추
+  pet.py              키우기 규칙(수치·성격·얼굴) — 로봇을 모른다
+  game.py             블록 쌓기 규칙 + LCD 그림(PIL 은 그릴 때만)
+  pet.js              키우기 친구 그림(파이보 실물 얼굴 SVG · PiBrain 은 보드 머리, 포즈·꾸미기 — 261123)
+  make_pet_png.py     pet.js → static/pet/lcd/*.png (PiBrain LCD 용, PC 에서)
+  face.py             그 PNG 를 친구 색으로 바꿔 PiBrain LCD 에 (평소 화면은 IP 정보 — 앱 켤 때·키우기 나갈 때·끌 때 network_disp.py 로 되돌림)
+  templates/index.html · static/play.js · play.css (+ 키트)
+kids/                 두 앱 공용
+  robot.py            PiboRobot · PiBrainRobot · FakeRobot(기기 없이) — 동작·말·화면·사진·센서·LCD(lcd)
+  screen.py           [화면] 카드 그림(PIL 도형, 파일 없음)
+  sounds/ · make_sounds.py   효과음(숫자로 생성, 녹음·외부 파일 없음) — IDE 쉬움 블록도 이 경로를 쓴다
+  make_voice.py       로봇 말 미리 만들기(카드 코딩 + 로봇 놀이 말) → /home/pi/.kids/voice/
 ```
 
-- 화면 ↔ 서버는 **HTTP 만**(소켓 없음). 실행 중엔 화면이 0.25초마다 `/api/run`, 키우기는 1초마다 `/api/pet`
-- API: `/api/content` `/api/state` `/api/profile` · `/api/run`(GET 상태·POST 실행) `/api/stop` · `/api/photo/{name}` · `/api/mymotions` · `/api/voice/prep`(내가 쓴 말 목소리 미리) · `/api/screen/home`(로봇 화면 IP 로) ·
-  `/api/tricks/save` `/api/tricks/delete` · `/api/say`(guide·challenge 키만 — 아무 글이나 말하게 하지 않는다) · `/api/export` ·
-  `/api/pet` `/api/pet/{mode,act,profile}` · `/api/teacher/{unlock,settings,report,reset,lock}`
+- 화면 ↔ 서버는 **HTTP 만**(소켓 없음). 실행 중엔 화면이 0.25초마다 `/api/run`, 키우기는 1초마다 `/api/pet`, 블록 쌓기는 0.5초마다 `/api/game`
+- 카드 코딩 API: `/api/content` `/api/state` `/api/profile` · `/api/run`(GET 상태·POST 실행) `/api/stop` · `/api/photo/{name}` · `/api/mymotions` · `/api/voice/prep`(내가 쓴 말 목소리 미리) · `/api/screen/home`(로봇 화면 IP 로) ·
+  `/api/tricks/save` `/api/tricks/delete` · `/api/say`(guide·challenge 키만 — 아무 글이나 말하게 하지 않는다) · `/api/export` · `/api/teacher/{unlock,settings,report,reset,lock}`
+- 로봇 놀이 API: `/api/content` `/api/state` `/api/stop` · `/api/pet` `/api/pet/{mode,act,profile}` · `/api/drive`(GET·POST, 파이보) · `/api/game` `/api/game/{mode,key}` `/api/game/lcd.png`(PiBrain)
 - 문구는 IDE `ko2en.js` 끝의 `kids_*` 키(두 리포 같은 블록) — 영문판 델타가 늘지 않는다. 시험할 땐 `?ide=<포트>`
 - 목소리: 기기 TTS(SpeechOnDevice)로 만든 wav 를 `/home/pi/.kids/voice/<목소리>_<sha1>.wav` 에 남긴다. 처음 한 번 6~15초라 **`make_voice.py` 로 미리**(문장 39개 × 한/영)
 - 하드웨어는 `robot.lock` 하나로 한 번에 하나. 반응(말·소리·얼굴)은 일꾼 스레드 하나, 새 반응이 오면 기다리던 것은 버린다
@@ -194,13 +201,13 @@ kids/
 sudo systemctl stop tools.service classify.service 'llama-server@*'
 cd /home/pi/openpibo-os
 sudo /home/pi/.pyenv/bin/python3 kids/make_voice.py --device pibo      # 처음 한 번. PiBrain 은 --device pibrain
-sudo /home/pi/.pyenv/bin/python3 kids/run_kids.py --device pibo         # PiBrain 은 --device pibrain
-# 태블릿에서 http://<로봇IP>:50060
+sudo /home/pi/.pyenv/bin/python3 cards/run_cards.py --device pibo       # 카드 코딩 → http://<로봇IP>:50060
+sudo /home/pi/.pyenv/bin/python3 play/run_play.py --device pibo         # 로봇 놀이 → http://<로봇IP>:50070 (둘을 같이 띄우지 말 것)
 ```
 
-기기 없이: `python3 kids/run_kids.py --fake [--device pibrain] [--fake-speed 0.2] --data-dir /tmp/kids --code-dir /tmp/code` + 브라우저 `?ide=<IDE 포트>`.
+기기 없이: `python3 cards/run_cards.py --fake [--device pibrain] [--fake-speed 0.2] --data-dir /tmp/kids --code-dir /tmp/code` · `python3 play/run_play.py --fake [--device pibrain] --data-dir /tmp/kids` + 브라우저 `?ide=<IDE 포트>`(또는 `design/preview.py`).
 
-**IDE 연결(261028, 됨)**: IDE [로봇 놀이](`#kids_bt`) → 대기 페이지 `launch.html?svc=kids` → `/kids?enable=on`(`run_ide.py` 의 `kids_proc`). 켤 때 도구·분류기·대화·검수를 끄고, 그것들을 켤 때·코드 실행 때 꺼진다. 탭을 닫으면 `beforeunload` 가 `/kids?enable=off`(`keepalive`). 위 손으로 띄우기는 시험용.
+**IDE 연결(261028, 261123 개정)**: 대문 [카드 코딩] → `launch.html?svc=cards` → `/cards?enable=on`, 대문 [로봇 놀이]·IDE [로봇 놀이](`#kids_bt`) → `svc=play` → `/play?enable=on`(`run_ide.py` 의 `kids_app`). 켤 때 다른 체험 앱·도구·분류기·대화·검수를 끄고, 그것들을 켤 때·코드 실행 때 꺼진다. 탭을 닫으면 `beforeunload` 가 `/cards|/play?enable=off`(`keepalive`). 위 손으로 띄우기는 시험용.
 
 ## 13. 다음 단계
 

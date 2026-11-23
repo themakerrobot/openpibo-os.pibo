@@ -223,11 +223,12 @@ def s5(repos):
       bad.append(f'{f}: 한쪽에 없다')
     elif open(pa, 'rb').read() != open(pb, 'rb').read():
       bad.append(f'{f}: 다르다')
-  # 로봇 놀이 템플릿은 탭 아이콘 ?ver 만 다르다
+  # 체험 앱(카드 코딩·로봇 놀이) 템플릿은 탭 아이콘 ?ver 만 다르다
   def kids(p):
     return re.sub(r'icon\.png\?ver=[\w.]+', '', open(p, encoding='utf-8').read())
-  if kids(os.path.join(a, 'kids/templates/index.html')) != kids(os.path.join(b, 'kids/templates/index.html')):
-    bad.append('kids/templates/index.html: 아이콘 ?ver 말고도 다르다')
+  for t in ('cards/templates/index.html', 'play/templates/index.html'):
+    if kids(os.path.join(a, t)) != kids(os.path.join(b, t)):
+      bad.append(f'{t}: 아이콘 ?ver 말고도 다르다')
   # AUDIT.md 도 같은 파일
   if open(os.path.join(a, 'AUDIT.md'), 'rb').read() != open(os.path.join(b, 'AUDIT.md'), 'rb').read():
     bad.append('AUDIT.md: 다르다')

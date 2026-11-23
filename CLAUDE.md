@@ -584,7 +584,7 @@ curl -s http://localhost/static/ko2en.js | head -n1
 
 `tools.service`(50000), `classify.service`(50010), `llama-server@<모델>`(50020, 261029 전엔 `llama-server.service`) 는
 **셋 중 하나만** 돈다. 포트는 PiBrain 과 같다(260930 에 PiBrain 도구 50040 → 50000, 파이보 H/W 검수 8000 → 50050 으로 맞춤).
-체험 앱(`kids/`, 50060, 261028 시험 중)은 IDE [로봇 놀이](`#kids_bt`, 261028)가 직접 띄운다(`/kids` — 대화 웹·H/W 검수와 같은 방식, `stop_kids()`). 켤 때 나머지를 다 끄고, 도구·분류기·대화·검수 켜기와 코드 실행 때 꺼진다. H/W 검수(`test/test.py`, 50050)는 유닛이 아니라 IDE 의 `/hwtest` 가 직접 띄우고, 켤 때 셋을 다 끈다. 대화 웹(`chat/run_chat.py`, 50030, 261026)도 IDE 가 `/llm` 때 llama-server 와 같이 띄운다('대화 웹' 절). IDE가 하나를 켤 때 나머지를 stop 한다 (`ide/run_ide.py` 의
+체험 앱 둘(카드 코딩 `cards/` 50060 · 로봇 놀이 `play/` 50070, 261123 에 나눔)은 IDE 가 직접 띄운다(`/cards` · `/play` — 대화 웹·H/W 검수와 같은 방식, `stop_kids()`). 켤 때 나머지를 다 끄고, 도구·분류기·대화·검수 켜기와 코드 실행 때 꺼진다. H/W 검수(`test/test.py`, 50050)는 유닛이 아니라 IDE 의 `/hwtest` 가 직접 띄우고, 켤 때 셋을 다 끈다. 대화 웹(`chat/run_chat.py`, 50030, 261026)도 IDE 가 `/llm` 때 llama-server 와 같이 띄운다('대화 웹' 절). IDE가 하나를 켤 때 나머지를 stop 한다 (`ide/run_ide.py` 의
 `/tools` `/classifier` `/llm` 핸들러). 부팅 시엔 안 뜬다.
 
 **종료는 탭이 닫힐 때 브라우저가 알린다.** 각 페이지의 `beforeunload` 가
@@ -787,30 +787,41 @@ IDE [대화] 는 llama-server 기본 웹 화면이 아니라 **우리 대화 웹
 
 ---
 
-## 체험 앱 — 카드 코딩 · 로봇 놀이 (261028, 시험 중) — `kids/`, 50060
+## 체험 앱 — 카드 코딩(`cards/`, 50060) · 로봇 놀이(`play/`, 50070) (261028, 시험 중)
 
-**261123 개정(사용자): 앱 둘로 나눴다 — 서버(`kids/run_kids.py`, 50060)는 하나, 화면이 둘.** `/cards` **카드 코딩**(도전 · 만들기 · 내 재주) · `/play` **로봇 놀이**(키우기 · 조종하기).
-예전 주소 `/` 는 `/cards`(`?go=pet` 이면 `/play`)로 넘긴다. 서버를 안 나눈 이유: 두 앱이 같은 모터·화면·스피커를 쓰는데 장치는 한 프로세스만 쥘 수 있고, IDE 도 체험 앱을 하나만 띄운다(`kids_proc`).
-- **조종하기**(파이보만): 방향 단추(앞으로 `forward1` · 뒤로 `backward1` · 왼쪽/오른쪽으로 돌기 · 가운데 [멈춤] = 끊고 처음 자세) + **다리·발(M0·M1·M6·M7)을 쓰지 않는 동작** 19개(openpibo-models 0.4.9 `motion_db` 82개 중 54개가 그렇다, `content.json` 의 `drive`). 누르면 바로 한다(`POST /api/drive {id}`) — 하던 것이 있으면 끊고 새것. 끝나면 처음 자세, `hold`(하이파이브·보기·손 들기)는 자세 유지. 카드 실행 중이면 409. 위에 '넓고 평평한 바닥에서' 띠. **실기기 확인 필요** — 동작 이름, 걷기 중 끊기, 빨리 바꿔 누를 때 서보 전원 강하
-- **PiBrain 은 몸이 없어 조종하기가 없다** — `/play` 가 바로 키우기(뒤로 단추·[놀이 처음] 숨김), 대문 줄 2 는 [카드 코딩][키우기]
-- 처음 화면은 대문과 같은 활동지 카드 + 파이보 캐릭터 장면(IDE 의 `pibo-art.js` 를 받아 씀 — challenge · cards · tricks / pet · drive). 색: 카드 코딩 `--app-kids` 주황 `fa-shapes`, 로봇 놀이 `--app-play` 청록 `fa-gamepad`. 선생님 잠금은 카드 코딩에만
-- 대기 페이지 `launch.html?svc=kids&go=cards|play|pet|drive`(`make` 는 예전 이름). IDE [로봇 놀이](`#kids_bt`)는 `/play`
-- 확인(컨테이너, 가짜 로봇): 57/57 — 두 앱 처음 화면·제목·잠금, 조종하기 단추 수·눌림 표시·끊고 바꾸기 순서(`greeting → stop → forward1 → look_l → stop`), 예전 주소 넘김, PiBrain 키우기 바로·drive 400, 대문·대기 페이지, 1366·1024·820·390 넘침 0, pageerror 0
+**261123 개정(사용자): 폴더·서버를 둘로 나눴다.** 대문에는 [카드 코딩] · [로봇 놀이] 두 카드, 들어가서 나뉜다.
+
+| 앱 | 폴더 · 서버 · 포트 | 들어가면 |
+|---|---|---|
+| 카드 코딩 | `cards/run_cards.py` · 50060 | 도전 · 만들기 · 내 재주(버튼 3개) — 선생님 잠금은 여기에만 |
+| 로봇 놀이 | `play/run_play.py` · 50070 | 키우기 + **파이보 조종하기 / PiBrain 블록 쌓기** |
+| (공용) | `kids/` | `robot.py`(로봇 손잡이 — 제품마다 · 가짜) · `screen.py`(화면 그림) · `sounds/`(효과음 — IDE 쉬움 블록도 이 경로를 쓴다) · `make_voice.py` · `make_sounds.py`. 두 서버가 `sys.path` 에 넣어 쓴다 |
+
+- 두 앱은 같은 모터·화면·스피커를 쓰므로 **한 번에 하나만** — IDE `run_ide.py` 의 `kids_app()` 이 하나를 켤 때 다른 하나를 끈다(`KIDS_APPS`, `stop_kids(only)`). 도구·분류기·대화·검수 켜기와 코드 실행 때는 둘 다 꺼진다. 예전 주소 `/kids` 는 로봇 놀이로
+- 저장 폴더 `/home/pi/.kids` 는 같이 쓴다 — 카드 코딩 `p/1/{tricks,progress}.json` · `settings.json`(목소리·소리 크기·숫자, 카드 코딩 선생님 잠금에서 바꿈), 로봇 놀이 `p/1/pet.json` · `p/1/blocks.json`(블록 쌓기 기록). 카드 코딩 [처음부터 하기] 가 `p/1` 을 통째로 지운다(키우기·블록 쌓기 기록까지)
+- 내용 파일도 나눴다: `cards/content.json`(카드·차시·도전·말) · `play/content.json`(키우기·키우기 말·조종하기). 도전 결과 그림은 키우기 친구 그림(`pet.js`)이라 `cards/static/pet.js` 는 `play/static/pet.js` 의 사본이다 — 같이 고칠 것. `cards.css` · `play.css` 도 앞부분(버튼·처음·대화상자)이 같다
+- **조종하기**(파이보만): 방향 단추(앞으로 `forward1` · 뒤로 `backward1` · 왼쪽/오른쪽으로 돌기 · 가운데 [멈춤] = 끊고 처음 자세) + **다리·발(M0·M1·M6·M7)을 쓰지 않는 동작** 19개(openpibo-models 0.4.9 `motion_db` 82개 중 54개가 그렇다, `play/content.json` 의 `drive`). 누르면 바로 한다(`POST /api/drive {id}`) — 하던 것이 있으면 끊고 새것. 끝나면 처음 자세, `hold`(하이파이브·보기·손 들기)는 자세 유지. 위에 '넓고 평평한 바닥에서' 띠. **실기기 확인 필요** — 동작 이름, 걷기 중 끊기, 빨리 바꿔 누를 때 서보 전원 강하
+- **블록 쌓기**(PiBrain 만, `play/game.py`): 떨어지는 블록 퍼즐. **게임은 LCD(240x320)에**, 태블릿엔 지금 판(점수·지운 줄·단계·시간) · 내 기록(최고·판 수·평균·지운 줄 모두 · 최근 10판 막대 · 한 번에 지운 줄 1~4 · 나온 블록 수) · 단추 4개(PiBrain 버튼과 같은 일) · 시작/잠깐 멈춤. PiBrain 버튼 `b1` 왼쪽 · `b2` 돌리기 · `b3` 오른쪽 · `b4` 떨어뜨리기(`GAME_KEYS` — **실제 버튼 위치는 확인 필요**), 시작 전·끝난 뒤엔 아무 버튼이나 새 판. 노트북은 화살표·스페이스
+  - **장르 게임으로 직접 만들었다** — 특정 게임(상표)의 이름·그림·음악을 쓰지 않는다. 블록 8가지(2~4칸: duo·trio·corner·square·stick·tee·hook·step, 파이보 색), 판 10x14, 줄 점수 10·30·60·100 × 단계, 5줄마다 단계(최대 9, 떨어지는 간격 0.85초 → 0.2초), 떨어질 자리 테두리, 다음 블록. 다른 게임 이름으로 바꾸지 말 것
+  - LCD 는 바뀔 때만 0.05초에 한 번까지 그린다(`game_draw`, 키우기 말이 `robot.lock` 을 쥐면 다음에). 화면을 나가면 하던 판은 멈추고 LCD 는 IP 화면. `GET /api/game/lcd.png` 는 시험용(지금 LCD 그림). **실기기 확인 필요** — LCD 한 장 그리는 시간(SPI), 버튼 반응, 방향
+- 처음 화면은 대문과 같은 활동지 카드 + 캐릭터 장면(IDE 의 `pibo-art.js` 를 받아 씀 — challenge · cards · tricks / pet · drive · blocks). 색: 카드 코딩 `--app-kids` 주황 `fa-shapes`, 로봇 놀이 `--app-play` 청록 `fa-gamepad`
+- 대기 페이지 `launch.html?svc=cards|play[&go=make|pet|drive|game]`(`svc=kids` 는 예전 이름 → play). `LAUNCH_VER` 261123v8. IDE [로봇 놀이](`#kids_bt`)는 `svc=play`
+- 확인(컨테이너, 가짜 로봇, 두 제품): 95/95 — 카드 코딩 3카드·잠금·카드 실행, 로봇 놀이 2카드·키우기 돌보기·조종하기(`greeting → stop`)·블록 쌓기(가짜 버튼으로 시작·옮기기, 끝까지 → 기록 1판, 새로 시작·잠깐 멈춤, 나가면 IP 화면), 제품 밖 기능 400, 대문 설명·대기 페이지, 1366·1024·820·390 넘침 0, 한/영, pageerror 0
 
 **초등학생**이 코딩 없이 카드로 로봇 친구에게 **재주를 가르치며** 순서·고치기·반복·재사용(함수)을 차시대로 익힌다(유치원은 뺐다 — 사용자 결정).
 핵심은 **아이가 저장한 재주가 다음 수업의 카드가 되는 것** + 차시 + 아이별 기록. [키우기](다마고치)는 아이별 친구로 남고 2차에서 이벤트·조건의 재료가 된다.
-**파이보·PiBrain 같은 코드**(`kids/` 통째로, 원본은 파이보 리포 — 고치면 PiBrain 에도 복사). 제품은 `--device pibo|pibrain`.
+**파이보·PiBrain 같은 코드**(`cards/` · `play/` · `kids/` 통째로 — 템플릿은 탭 아이콘 `?ver` 만 다름, 원본은 파이보 리포 — 고치면 PiBrain 에도 복사). 제품은 `--device pibo|pibrain`.
 설계·차시·도전 규칙·확인 필요는 **파이보 리포 `KIDS.md`**.
 
-- **IDE [로봇 놀이] 버튼으로 연다(261028, 사용자 — 시험 편하게. 안 쓰기로 하면 `ide/templates/index.html` 의 `#kids_bt` 만 지우면 된다).** 대기 페이지 `launch.html?svc=kids` → `/kids?enable=on`(IDE 가 `kids_proc` 로 띄움) → 50060. 체험 앱 상단바 [IDE], 탭을 닫으면 `beforeunload` 가 `/kids?enable=off`(keepalive). `LAUNCH_VER` 261028v1. 손으로 띄울 때는 `sudo /home/pi/.pyenv/bin/python3 kids/run_kids.py --device <제품>`
+- **IDE [로봇 놀이] 버튼으로도 연다(261028, 사용자 — 안 쓰기로 하면 `ide/templates/index.html` 의 `#kids_bt` 만 지우면 된다).** 대기 페이지 `launch.html?svc=play` → `/play?enable=on`(IDE 가 띄움) → 50070. 탭을 닫으면 `beforeunload` 가 `/cards|/play?enable=off`(keepalive, 키트 `PiboUI`). 손으로 띄울 때는 `sudo /home/pi/.pyenv/bin/python3 cards/run_cards.py --device <제품>`(또는 `play/run_play.py`)
 - **저장 한 벌(261116, 사용자)**: 번호·그림 고르기를 뺐다 — 앱을 켜면 바로 처음 화면, 저장은 `/home/pi/.kids/p/1/` 하나. 반이 바뀌면 선생님 잠금 [처음부터 하기]
 - **카드 더(261116, 사용자)**: 동작·이동·내 동작(도구에서 저장한 `mymotion.json`, 파이보) · 내가 쓴 말(20자) · 화면(그림·글자, `kids/screen.py`) · 사진 찍기 · 센서 '~할 때까지'(파이보 터치·PIR, PiBrain 버튼) · '만약 ~하면'(3초 동안 살핌 — 주사위 카드는 261120 에 뺐다, 사용자) · 차시 9(이벤트)·10(조건) · **저장한 재주 카드는 1차시부터 [재주] 탭에**(전엔 7차시부터). 음 카드(도~솔)는 다른 카드처럼 아이콘 + 이름(261120 — 큰 글자와 이름이 두 번 나왔다). 자세한 건 파이보 리포 `KIDS.md` '0-1'. **실기기 확인 필요** — 터치·PIR 읽기, 동작 이름, 카메라
-- **차시·도전은 `kids/content.json` 만 고친다**(`concepts` `lessons` `challenges`, 정답형 `want`·열린형 조건 열쇠). 코드는 안 바뀐다
+- **차시·도전은 `cards/content.json` 만 고친다**(`concepts` `lessons` `challenges`, 정답형 `want`·열린형 조건 열쇠). 코드는 안 바뀐다
 - 재주 한도: 24개 · 3겹 · 펼쳐 300번 · 줄 20장. 자기 자신을 부르는 재주(`cycle`)·쓰이는 재주 지우기는 막는다. [블록으로 보기] 에서 재주는 IDE **함수 블록**
-- 로봇 말은 처음 한 번 6~15초라 **`kids/make_voice.py --device <제품>` 으로 미리** 만든다. 문구는 IDE `ko2en.js` 끝의 `kids_*` 키(두 리포 같은 블록)
+- 로봇 말은 처음 한 번 6~15초라 **`kids/make_voice.py --device <제품>` 으로 미리** 만든다(카드 코딩·로봇 놀이 말을 같이). 문구는 IDE `ko2en.js` 끝의 `kids_*` 키(두 리포 같은 블록)
 - 선생님 잠금: 상단바 자물쇠 3초 → 숫자 4개(기본 1234) → 오늘 차시(목표·발문 — **처음엔 '자유'(모든 차시·모든 카드)**, 261120 사용자)·번호 수·도달 기록. **한/영은 다른 앱처럼 상단바 언어 select**(261120, 사용자 — 전엔 잠금 안에만 있었다), 자물쇠는 앱 동작이라 IDE 왼쪽
-- **키트 변경**: body `pb-plain` 이면 `pibo-ui.js` 가 `pb-v2` 층을 얹지 않는다(그 층의 앱 버튼 규칙이 카드 색을 덮었다). `design/sync.sh` 가 `kids/static` 에도 복사
-- **키우기 친구는 파이보 실물 얼굴(261123, 사용자 — 261028~261122 는 써큘러스 캐릭터였다), PiBrain 에서는 머리가 PiBrain 보드**(검은 화면 속 하늘색 얼굴 · 카메라 · 버튼 넷): `kids/static/pet.js`(`PetArt.svg(포즈, {color, hat, glasses, device})` — `kids.js` 가 `C.device` 를 넘긴다). 대문 그림(`pibo-art.js`)과 같은 생김새. 상태 6(normal·happy·hungry·sleepy·sleep·sad) + 돌보기 반응(밥 eat · 놀기 ball · 씻기 wash, 2.5초) + 도전 결과(cheer·oops). 꾸미기: 색(안테나·모자·팻말·밥그릇) · 머리 소품(안테나/모자) · 안경. 돌보기는 **PiBrain 버튼 4개에 맞춰 4가지**(밥·놀기·재우기·씻기 — 늘리지 말 것, 사용자). PiBrain LCD 는 `kids/make_pet_png.py` 가 미리 만든 PNG(`static/pet/lcd/`, 36장 — 상태 6 + 반응 3 × 소품·안경 4벌, **보드 머리로**)를 `face.py` 가 친구 색으로 바꿔 띄운다. LCD 에는 **점수 세 줄**(배고픔·기분·졸림, 바뀌면 다시 그림)과 **말풍선**(버튼·화면으로 돌보면 반응 포즈 + 로봇이 하는 말, 2.5초 이상)도 그린다. 글꼴은 리포의 Pretendard(woff2 — 기기 PIL 이 못 읽으면 KDL.ttf, **확인 필요**) — **pet.js 를 고치면 PNG 를 다시 만들 것**
+- **키트 변경**: body `pb-plain` 이면 `pibo-ui.js` 가 `pb-v2` 층을 얹지 않는다(그 층의 앱 버튼 규칙이 카드 색을 덮었다). `design/sync.sh` 가 `cards/static` · `play/static` 에도 복사
+- **키우기 친구는 파이보 실물 얼굴(261123, 사용자 — 261028~261122 는 써큘러스 캐릭터였다), PiBrain 에서는 머리가 PiBrain 보드**(검은 화면 속 하늘색 얼굴 · 카메라 · 버튼 넷): `play/static/pet.js`(사본 `cards/static/pet.js`)(`PetArt.svg(포즈, {color, hat, glasses, device})` — `play.js` 가 `C.device` 를 넘긴다). 대문 그림(`pibo-art.js`)과 같은 생김새. 상태 6(normal·happy·hungry·sleepy·sleep·sad) + 돌보기 반응(밥 eat · 놀기 ball · 씻기 wash, 2.5초) + 도전 결과(cheer·oops). 꾸미기: 색(안테나·모자·팻말·밥그릇) · 머리 소품(안테나/모자) · 안경. 돌보기는 **PiBrain 버튼 4개에 맞춰 4가지**(밥·놀기·재우기·씻기 — 늘리지 말 것, 사용자). PiBrain LCD 는 `play/make_pet_png.py` 가 미리 만든 PNG(`static/pet/lcd/`, 36장 — 상태 6 + 반응 3 × 소품·안경 4벌, **보드 머리로**)를 `face.py` 가 친구 색으로 바꿔 띄운다. LCD 에는 **점수 세 줄**(배고픔·기분·졸림, 바뀌면 다시 그림)과 **말풍선**(버튼·화면으로 돌보면 반응 포즈 + 로봇이 하는 말, 2.5초 이상)도 그린다. 글꼴은 리포의 Pretendard(woff2 — 기기 PIL 이 못 읽으면 KDL.ttf, **확인 필요**) — **pet.js 를 고치면 PNG 를 다시 만들 것**
 - 세로 스크롤: 키트 `.pb-shell` 이 body 스크롤을 막으므로 `.kids-main` 이 스크롤 칸이다(261028 — 전엔 작은 화면에서 아래가 잘렸다)
 - **화면(파이보 OLED·PiBrain LCD)은 IP 정보가 기본이다(261028, 사용자).** 체험 앱은 켤 때·키우기를 나갈 때·끝날 때(Ctrl+C·SIGTERM) `system/network_disp.py` 로 IP 화면을 다시 그린다(`robot.show_network`). PiBrain LCD 는 키우기에서 얼굴을 처음 그릴 때 연다(`OledByPiBrain()` 이 LCD 를 검게 초기화해서, 켜자마자 열면 IP 화면이 꺼진 것처럼 지워졌다)
 - 확인은 컨테이너(가짜 로봇)뿐: 서버 51/51, 재주 → IDE Blockly 함수·파이썬 생성까지. **실기기 확인 필요** — 동작 이름(`greeting` 등)·머리 터치 값·PiBrain 버튼 순서·LCD 방향
@@ -1526,7 +1537,7 @@ v1 전용 CSS(`index.css` `fontello.css` `cobalt.css` `duotone-light.css`), [새
 
 **대문 `/`** — 접속하면 앱을 큰 젤리 아이콘으로 고르고 **같은 탭으로** 들어간다(edge-lab 런처처럼). **앱 서버는 그대로 따로 돈다**(합치지 않는다 — 사용자). IDE 는 **`/ide`**.
 - 파일: `ide/templates/home.html`(두 리포 차이는 `data-product`·마크 클래스뿐) · `ide/static/v2/home.js` · `home.css`(**두 리포 같은 파일**). 서버는 `run_ide.py` 의 `/`·`/ide`·`GET /home_info`(상태·최근 파일 4·내가 가르친 AI 3·켜진 앱 — WiFi 비밀번호는 안 보낸다)
-- 앱 8개(짝수, 사용자), 줄 셋: **1 만들기**(코딩 → `/ide` · 도구 · AI 가르치기 · 대화) · **2 놀이 · 배우기**(카드 코딩 → `launch.html?svc=kids&go=cards`(`/cards`) · 로봇 놀이 → `go=play`(`/play`, 키우기 · 조종하기). PiBrain 은 로봇 놀이 대신 키우기 `go=pet`, 261123) · **3 선생님 · 관리**(설정 · 도움말 :8080)
+- 앱 8개(짝수, 사용자), 줄 셋: **1 만들기**(코딩 → `/ide` · 도구 · AI 가르치기 · 대화) · **2 놀이 · 배우기**(카드 코딩 → `launch.html?svc=cards`(`cards/`, 50060) · 로봇 놀이 → `svc=play`(`play/`, 50070 — 키우기 + 파이보 조종하기 / PiBrain 블록 쌓기, 261123)) · **3 선생님 · 관리**(설정 · 도움말 :8080)
   - 설정은 대문 안의 창: 화면 밝기 · WiFi 설정(`/ide?panel=wifi` 가 WiFi 창을 연다) · 로봇 화면 처음으로 · **H/W 검수**(자주 안 써서 설정 안으로 — 사용자, `confirm_hwtest` 한 번 묻고 `svc=hwtest`) · 공장 초기화 · 전원 끄기(두 번 누르기, IDE 와 같은 socket `restore`·`poweroff`)
   - **활동지 한 장(261123 개정, 사용자 — '아이콘이 AI 티가 나고 밋밋하다, 디자이너가 한 것처럼')**: 모눈 점 바탕 위에 흰 종이 — 왼쪽 철 구멍 셋 · 빨간 여백선 두 줄, 머리에 캐릭터 · '오늘의 활동지' 이름표 · 형광펜 밑줄 제목 · **켜진 시간 도장**(uptime — 기기는 오프라인이라 날짜·시계를 못 믿어서 날짜 대신, 261123 사용자. `/home_info` 의 `uptime`, 글은 IDE 상태 줄과 같은 `v2_uptime`. 예전 '이름 ___ 날짜 ___' 빈칸은 누를 수 없는데 써야 할 것처럼 보여 뺐다). [이어서 하기]의 때는 '몇 분/시간/일 전' 을 **기기 시계끼리**(`now - mtime`) 센다 — 태블릿 시계와 달라도 맞게.
     활동 1 만들기는 큰 카드 넷, 활동 2·3 은 가로 카드 둘씩(덜 쓰는 것을 작게 — 중요도 차등). 활동마다 펜 색 하나(남색 · 초록 · 갈색) + 번호 동그라미 + 점선 지시선
@@ -1544,7 +1555,7 @@ v1 전용 CSS(`index.css` `fontello.css` `cobalt.css` `duotone-light.css`), [새
   - 오른쪽: 로봇 상태(괘선 표 — 배터리·메모리는 막대) · 이어서 하기(노란 메모지 + 마스킹 테이프)
   - [이어서 하기] 파일 → `/ide?open=<경로>`(`ide.js` 11 — init 을 놓치면 2.5초 보조 타이머)
 - **앱의 [IDE](#ide_bt)**: IDE 가 새 탭으로 연 탭(`window.opener`)이면 그대로 [IDE](탭을 닫음), 아니면 키트가 **[처음 화면]**(집 아이콘)으로 바꾼다 → 대문. IDE 상단바에도 [처음 화면](저장 안 했으면 묻기). 체험 앱 안의 [처음]은 헷갈리지 않게 카드 코딩 [카드 처음](도형 아이콘) · 로봇 놀이 [놀이 처음](게임패드 아이콘)
-- 대기 페이지 `launch.html`: `svc=hwtest`(50050) · `svc=kids&go=cards|play|pet|drive`(체험 앱의 그 화면, 이름·아이콘·색도 그 화면 것 — `make` 는 예전 이름). `LAUNCH_VER` 261123v7. 체험 앱은 `?go=` 를 읽고 주소에서 지운다
+- 대기 페이지 `launch.html`: `svc=hwtest`(50050) · `svc=cards|play[&go=make|pet|drive|game]`(체험 앱의 그 화면, 이름·아이콘·색도 그 화면 것 — `svc=kids` 는 예전 이름 → play). `LAUNCH_VER` 261123v8. 체험 앱은 `?go=` 를 읽고 주소에서 지운다
 - 미리보기 `design/preview.py` 와 검사 `design/audit/browser_check.js` 가 대문(`/`)·IDE(`/ide`)를 안다. `AUDIT.md` B2 예외에 대문·[처음 화면] 을 넣었다
 
 **학습지 층** — ai-lab(같은 회사, 초등 저학년용)과 한 식구로 보이게(사용자, 261123). 젤리·파스텔 '귀염 층'은 같은 날 시험했다가 이것으로 바꿨다
