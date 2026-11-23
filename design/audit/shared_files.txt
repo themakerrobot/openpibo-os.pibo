@@ -112,7 +112,7 @@ openpibo/vision_classify.py
 openpibo/vision_detect.py
 play/content.json
 play/face.py
-play/game.py
+play/pixel.py
 play/make_pet_png.py
 play/pet.py
 play/run_play.py
