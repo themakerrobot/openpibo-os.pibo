@@ -6,11 +6,13 @@ chat/pibrain_chat.py
 chat/run_chat.py
 chat/static/chat.css
 chat/static/chat.js
+chat/static/pibo-icons.js
 chat/static/pibo-ui.css
 chat/static/pibo-ui.js
 chat/tools.py
 classifier/static/check.html
 classifier/static/index.css
+classifier/static/pibo-icons.js
 classifier/static/pibo-ui.css
 classifier/static/pibo-ui.js
 classifier/static/tl/classifier.js
@@ -21,6 +23,7 @@ classifier/static/tl/theme.js
 classifier/static/tl/trainer.js
 design/README.md
 design/index.html
+design/pibo-icons.js
 design/pibo-ui.css
 design/pibo-ui.js
 design/sync.sh
@@ -46,14 +49,18 @@ ide/static/en.js
 ide/static/field-bitmap.js
 ide/static/handdelete.cur
 ide/static/ko.js
+ide/static/pibo-icons.js
 ide/static/pibo-ui.css
 ide/static/pibo-ui.js
 ide/static/python.js
 ide/static/python_compressed.js
 ide/static/v2/errhelp.js
+ide/static/v2/home.css
+ide/static/v2/home.js
 ide/static/v2/ide.css
 ide/static/v2/ide.js
 ide/static/v2/levels.js
+ide/static/v2/pibo-art.js
 ide/static/v2/usbcam_block.js
 kids/blocks.py
 kids/content.json
@@ -68,6 +75,7 @@ kids/screen.py
 kids/static/kids.css
 kids/static/kids.js
 kids/static/pet.js
+kids/static/pibo-icons.js
 kids/static/pibo-ui.css
 kids/static/pibo-ui.js
 openpibo/__init__.py
@@ -122,5 +130,6 @@ system/venv_rebuild.sh
 system/wifi.py
 test/requirements.sphnix.txt
 test/requirements.tf.txt
+tools/static/pibo-icons.js
 tools/static/pibo-ui.css
 tools/static/pibo-ui.js

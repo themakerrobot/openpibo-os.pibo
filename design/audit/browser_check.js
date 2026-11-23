@@ -117,6 +117,9 @@ async function b2(br) {
         out.ideApps = { tools: lab('tools_bt'), chat: lab('llm_bt'), classifier: lab('classifier_bt'), kids: lab('kids_bt'), docs: lab('guide_bt') };
         const appEl = brand && brand.querySelector('.pb-header__app, .pb-topbar__app');
         out.appName = appEl ? appEl.textContent.trim() : '';
+        // 7. 앱으로 가는 버튼은 캐릭터 앱 아이콘(.pb-appic, 261123)
+        out.noAppic = ['ide_bt', 'tools_bt', 'llm_bt', 'classifier_bt', 'kids_bt', 'guide_bt', 'home_bt']
+          .filter(id => { const e = document.getElementById(id); return e && !e.querySelector('.pb-appic'); });
         return out;
       }).catch(e => ({ err: e.message }));
       const tag = `${pgi.p}/${pgi.app} ${w} ${lang}`;
@@ -139,6 +142,7 @@ async function b2(br) {
         else if (!new RegExp(`^${pgi.prod}·?(${appRe.replace(/ /g, '')})$`).test(bn))   // 가운데 점은 CSS ::before 라 글자에 없을 수 있다
           bad.push(`${tag}: 왼쪽 이름 '${d.brand}'(${pgi.prod} · 앱)`);
       }
+      if (d.noAppic && d.noAppic.length && pgi.app !== 'docs') bad.push(`${tag}: 캐릭터 앱 아이콘 아님 ${d.noAppic.join(',')}`);   // B2-7. 도움말(8080)은 키트를 안 싣는다
       if (pgi.app === 'ide' || pgi.app === 'launch') continue;   // IDE·대기 페이지는 예외(AUDIT.md B2)
       const s = d.std;
       for (const k of ['ide', 'fs', 'theme']) if (!s[k] && !(k === 'ide' && pgi.app === 'home')) bad.push(`${tag}: ${k} 버튼 없음`);   // 대문은 [IDE] 가 없다(자기가 처음 화면)
