@@ -17,7 +17,7 @@ const PIBO = path.resolve(__dirname, '..', '..');
 fs.mkdirSync(OUT, { recursive: true });
 const H = `http://${IP}`;
 const PRODUCTS = [['pibo', 18000, 'piBo', PIBO]].concat(PIBRAIN ? [['pibrain', 18100, 'PiBrain', path.resolve(PIBRAIN)]] : []);
-const APPS = { home: '처음 화면|Home', ide: 'IDE', tools: '도구|Tools', classifier: '분류기|Classifier', chat: '대화|Chat', kids: '로봇 놀이|Robot Play', docs: '도움말|Help', launch: '' };
+const APPS = { home: '처음 화면|Home', ide: 'IDE', tools: '도구|Tools', classifier: '분류기|Classifier', chat: '대화|Chat', kids: '로봇 놀이|Robot Play', cards: '카드 코딩|Card coding', docs: '도움말|Help', launch: '' };
 function pages() {
   const out = [];
   for (const [p, b, prod] of PRODUCTS) {
@@ -25,7 +25,7 @@ function pages() {
     // 대문(261123): / 는 첫 화면, IDE 는 /ide
     out.push({ p, prod, app: 'home', url: `${H}:${ide}/` }, { p, prod, app: 'ide', url: `${H}:${ide}/ide` }, { p, prod, app: 'tools', url: `${H}:${b}/` },
       { p, prod, app: 'classifier', url: `${H}:${b + 10}/` }, { p, prod, app: 'chat', url: `${H}:${b + 30}/?ide=${ide}` },
-      { p, prod, app: 'kids', url: `${H}:${b + 60}/?ide=${ide}` },
+      { p, prod, app: 'kids', url: `${H}:${b + 60}/play?ide=${ide}` }, { p, prod, app: 'cards', url: `${H}:${b + 60}/cards?ide=${ide}` },   // 체험 앱 서버 하나의 두 화면(261123)
       { p, prod, app: 'docs', url: `${H}:${b + 88}/build/html/index.html`, en: `${H}:${b + 88}/build/en/index.html` },
       { p, prod, app: 'launch', url: `${H}:${ide}/static/launch.html?svc=tools` });
   }
