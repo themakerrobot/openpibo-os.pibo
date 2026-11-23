@@ -291,7 +291,9 @@ def home_info_sync():
     info['battery'] = get_device('%2315%3A%21')
   except Exception:
     info['battery'] = None
-  if chat_proc is not None and chat_proc.poll() is None:
+  if hwtest_proc is not None and hwtest_proc.poll() is None:
+    info['running'] = 'hwtest'
+  elif chat_proc is not None and chat_proc.poll() is None:
     info['running'] = 'llm'
   elif kids_proc is not None and kids_proc.poll() is None:
     info['running'] = 'kids'

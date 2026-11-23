@@ -1075,7 +1075,7 @@ easydetect-lab 지시서(`docs/pibo-integration.md`, 473dbe3) 그대로다. **�
 그쪽 CLAUDE.md '화면 v2' · '분류기' 표에 있다(배터리 칸 없음, 언어 키 `classifier_language` 등).
 시안 A·B·C(Scratch식·MakeCode식·Arduino식) 중 **B(MakeCode식)** 로 정했다(260924).
 
-- IDE: `run_ide.py` 의 `/` 는 늘 `templates/index.html`(`body.v2-app`). CSS·JS 는 `ide/static/v2/ide.css` · `ide.js`
+- IDE: `run_ide.py` 의 `/ide` 는 늘 `templates/index.html`(`body.v2-app`, 261123 부터 `/` 는 대문 `home.html`). CSS·JS 는 `ide/static/v2/ide.css` · `ide.js`
 - `index.js` 는 v1 시절부터 쓰던 한 벌이다. `index.js` 에서 id 를 바꾸거나 새 요소를 찾게 되면 `templates/index.html` 에도 넣을 것.
   v1 용 코드가 조금 남아 있다(편집기 cobalt/duotone-light 스위치 등 — `ide.js` 가 떼어 낸다)
 - 도구·분류기: 마크업은 거의 그대로, `<body class="… pb-refresh pb-v2">` 두 층(`pibo-ui.css`)이 색·모양을 바꾼다.
@@ -1513,6 +1513,25 @@ v1 전용 CSS(`index.css` `fontello.css` `cobalt.css` `duotone-light.css`), [새
 
 바뀐 버튼 이름(261028): [등록하기]→[저장], [원래자세]→[처음 자세], 도구 [음성] [실행하기]→[말하기], [삭제하기]→[지우기], 대화 [멈추기]→[정지], [인터넷 설정]→[WiFi 설정], 더보기 [초기화]→[공장 초기화]·[전원]→[전원 끄기].
 도움말 사용법 페이지(`notes/piboMaker.md` 한·영)와 화면 캡처·블록 가이드 그림도 새 화면으로 다시 만들었다(261027v3, 컨테이너에서 가짜 소켓으로 상태를 넣어 찍음 — 카메라 그림·인식 상자는 예전 캡처에서 오려 낸 것)
+
+## 첫 화면(대문) · 귀염 층 (261123, 사용자 — 저연령층이 많아 '귀염귀염'하게, 모든 화면)
+
+**대문 `/`** — 접속하면 앱을 큰 젤리 아이콘으로 고르고 **같은 탭으로** 들어간다(edge-lab 런처처럼). **앱 서버는 그대로 따로 돈다**(합치지 않는다 — 사용자). IDE 는 **`/ide`**.
+- 파일: `ide/templates/home.html`(두 리포 차이는 `data-product`·마크 클래스뿐) · `ide/static/v2/home.js` · `home.css`(**두 리포 같은 파일**). 서버는 `run_ide.py` 의 `/`·`/ide`·`GET /home_info`(상태·최근 파일 4·내가 가르친 AI 3·켜진 앱 — WiFi 비밀번호는 안 보낸다)
+- 앱 9개, 묶음 셋: **만들기**(코딩 → `/ide` · 도구 · AI 가르치기 · 대화) · **놀이 · 배우기**(카드 코딩 → 로봇 놀이 첫 화면 · 키우기 → 로봇 놀이 키우기, `launch.html?svc=kids&go=pet`) · **선생님 · 관리**(설정 · H/W 검수 `svc=hwtest` · 도움말 :8080)
+  - 설정은 대문 안의 창: 화면 밝기 · WiFi 설정(`/ide?panel=wifi` 가 WiFi 창을 연다) · 로봇 화면 처음으로 · 공장 초기화 · 전원 끄기(두 번 누르기, IDE 와 같은 socket `restore`·`poweroff`)
+  - H/W 검수는 다른 앱을 다 끄므로 한 번 묻는다(`confirm_hwtest`). 켜진 앱은 '켜져 있음' + 하늘색 링·별 하나(없으면 마지막에 쓴 앱, `localStorage pibo_home_last`)
+  - 캐릭터: 실제 로봇처럼 **흰 얼굴**(사용자) + 남색 얼굴판 · 하늘색 눈 깜빡임 · 안테나 흔들기 — 제품 마크를 바탕으로 SVG 로 직접 그림. **PiBrain 보드 색은 확인 필요**(흰색으로 그림)
+  - [이어서 하기] 파일 → `/ide?open=<경로>`(`ide.js` 11 — init 을 놓치면 2.5초 보조 타이머)
+- **앱의 [IDE](#ide_bt)**: IDE 가 새 탭으로 연 탭(`window.opener`)이면 그대로 [IDE](탭을 닫음), 아니면 키트가 **[처음 화면]**(집 아이콘)으로 바꾼다 → 대문. IDE 상단바에도 [처음 화면](저장 안 했으면 묻기). 로봇 놀이 안의 [처음]은 헷갈리지 않게 [놀이 처음](도형 아이콘)
+- 대기 페이지 `launch.html`: `svc=hwtest`(50050) · `go=make|pet`(로봇 놀이 화면 바로 가기, 이름·아이콘도 그 화면 것). `LAUNCH_VER` 261123v1. 로봇 놀이는 `?go=` 를 읽고 주소에서 지운다
+- 미리보기 `design/preview.py` 와 검사 `design/audit/browser_check.js` 가 대문(`/`)·IDE(`/ide`)를 안다. `AUDIT.md` B2 예외에 대문·[처음 화면] 을 넣었다
+
+**귀염 층** — 색 값(파랑·노랑·빨강)·상단바(48px 노랑)·배치는 그대로 두고 모양만:
+- 키트 `design/pibo-ui.css` 끝 '귀염 층'(도구·분류기·대화·로봇 놀이·대기 페이지·PiBrain 도구 `body.tl`): 파스텔 바탕(앱 바닥 `--v2-canvas` 를 비움), 모서리 `--r-ctl/card/dlg` 12/20/26, 판·카드는 반투명 흰 판 + 부드러운 그림자(선 없음), 버튼은 **젤리**(위→아래 그라데이션 + 아래 두툼한 그림자, 누르면 꾹), 도구 왼쪽 메뉴는 동그란 아이콘 칸, 상단바 제품 마크는 흰 동그라미 안, 빈 화면 아이콘은 파스텔 칸
+- IDE `ide/static/v2/ide.css` 끝 '귀염 층': 서랍·실행 화면·상태 줄 파스텔, 그 안의 칸은 흰 판 둥글게, [실행]·[정지] 젤리, 툴박스 분류 둥근 칸. **블록 작업판은 흰 바탕 그대로**(블록 대비)
+- 움직임은 transform·opacity 만, 움직임 줄이기면 멈춘다. 구형 브라우저 기준 그대로(:has·color-mix·backdrop-filter 안 씀)
+- 확인(컨테이너 미리보기): 대문 48경우(두 제품 × 한/영 × 밝기 3 × 1366/1024/820/390) 넘침·잘림·오류 0, 동작 22/22, 전 앱 캡처(밝기 3 × 1366/1024/820). **실기기·실제 태블릿·학교 노트북 확인 필요**
 
 ## 빈 화면 안내 · 읽기 다듬기 (261120, 사용자 — UX 점검 A~F 전부)
 
