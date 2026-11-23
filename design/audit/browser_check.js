@@ -61,7 +61,9 @@ async function b1(br) {
     let ko = [];
     if (c.lang === 'en') {
       ko = await pg.evaluate(() => {
-        const t = (document.body ? document.body.innerText : '').replace(/한국어/g, '');
+        let t = (document.body ? document.body.innerText : '').replace(/한국어/g, '');
+        // 사용자 자료(대문 [이어서 하기] 의 파일·모델 이름 — data-user)는 사람이 지은 이름이라 뺀다
+        document.querySelectorAll('[data-user]').forEach(e => { t = t.split(e.innerText).join(''); });
         return (t.match(/[가-힣][가-힣 ]*/g) || []).slice(0, 4);
       }).catch(() => []);
     }
