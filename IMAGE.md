@@ -129,7 +129,7 @@ $PY -m pip check
 | `tts/assets/onnx` | Supertonic 3 **int8** 변환본(`leeyunjai/edge-lab` `tts-int8`, vocoder 만 fp32, 약 178MB) + `tts.json` `unicode_indexer.json` |
 | `tts/assets` | `voice_styles/`(F1~F5·M1~M5) · `LICENSE` · `LICENSE-OpenRAIL-M.txt` · `MODIFICATIONS.md`(변환 고지 — 변형 모델이라 필요) |
 | `stt` | `model.int8.onnx` `tokens.txt`(sherpa-onnx `sense-voice-zh-en-ja-ko-yue-int8-2024-07-17`) · `silero_vad.onnx` · `LICENSE-SenseVoice` |
-| `llm` | **`general.gguf` · `themaker-ko.gguf` · `themaker-en.gguf` 실제 파일 세 개**(261106 — 링크가 아니라 모델 이름으로 된 파일. HF 에도 이 이름으로 올린다). 어느 판인지는 `VERSION` 의 `## sha256` 위 `llm/<이름>.gguf = <원래 파일 이름>` 줄에 적는다(지금 general = `gemma-3-1b-it-Q4_K_M`, themaker-ko = `themaker-0.8b-Q4_K_M`). 261029~261105 에는 판 이름 파일 + 별칭 링크였다. 예전 `pibo-qwen3.5-…gguf`·링크 `llm-model.gguf` 는 없다. 서버는 `/home/pi/.llama.cpp` 빌드 |
+| `llm` | **`general.gguf` · `themaker-ko.gguf` · `themaker-en.gguf` 실제 파일 세 개**(261106 — 링크가 아니라 모델 이름으로 된 파일. HF 에도 이 이름으로 올린다). 어느 판인지는 `VERSION` 의 `## sha256` 위 `llm/<이름>.gguf = <원래 파일 이름>` 줄에 적는다(지금 general = `gemma-3-1b-it-Q4_K_M`, themaker-ko = `themaker-ko-v2-0.8b-Q4_K_M`, themaker-en = `themaker-en-v2-0.8b-Q4_K_M` — 261123). 261029~261105 에는 판 이름 파일 + 별칭 링크였다. 예전 `pibo-qwen3.5-…gguf`·링크 `llm-model.gguf` 는 없다. 서버는 `/home/pi/.llama.cpp` 빌드 |
 | `object` | **`ed-s-320.onnx`** 하나(easydetect ed-s COCO, 이름·conf 는 파일 안 메타데이터, HF `.model/object/ed-s-320.onnx`). 예전 사물 인식 가중치와 그 고지 파일은 **지운다**(261026) |
 | `hand` | 그대로 |
 | `mask` | **`mask.onnx`**(261104 — 마스크 판별 `Face.mask_face`, edge-lab 과 같은 파일, HF `leeyunjai/edge-lab` 의 `mask/mask.onnx`, 4,453,442 B, sha256 `bd3624be…37010`). 없으면 `mask_face` 만 오류(처음 부를 때 올린다) |
