@@ -39,7 +39,7 @@ ANSWER = {'pibo': '안녕! 나는 파이보야. 오늘은 무엇을 같이 만�
 def fake_home_info(dev):
   """대문(/)의 GET /home_info 를 흉내 낸다(261123) — 미리보기에선 기기 정보가 없다"""
   now = int(time.time())
-  return {'running': None, 'version': ('piBo' if dev == 'pibo' else 'piBrain') + '_261123v1',
+  return {'running': None, 'now': now, 'uptime': 8100, 'version': ('piBo' if dev == 'pibo' else 'piBrain') + '_261123v1',
           'temp': '48.2°C', 'mem': 22, 'wifi_ip': '192.168.0.21', 'wired_ip': '', 'ssid': 'pibo',
           'battery': '85%' if dev == 'pibo' else None,
           'recent': [{'path': '/home/pi/code/손동작.json', 'mtime': now - 600},
