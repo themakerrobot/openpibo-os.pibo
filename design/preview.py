@@ -36,8 +36,21 @@ ANSWER = {'pibo': '안녕! 나는 파이보야. 오늘은 무엇을 같이 만�
           'pibrain': '안녕! 나는 파이브레인이야. 버튼으로 LED 색을 바꾸거나 카메라로 물건을 알아보는 프로그램을 같이 만들어 볼까?'}
 
 
-def static_server(root, page, port, ide_port):
-  """root 폴더를 그대로 보낸다. / 는 page. 글꼴·아이콘 글꼴은 기기처럼 IDE 포트로 넘긴다"""
+def fake_home_info(dev):
+  """대문(/)의 GET /home_info 를 흉내 낸다(261123) — 미리보기에선 기기 정보가 없다"""
+  now = int(time.time())
+  return {'running': None, 'version': ('piBo' if dev == 'pibo' else 'piBrain') + '_261123v1',
+          'temp': '48.2°C', 'mem': 22, 'wifi_ip': '192.168.0.21', 'wired_ip': '', 'ssid': 'pibo',
+          'battery': '85%' if dev == 'pibo' else None,
+          'recent': [{'path': '/home/pi/code/손동작.json', 'mtime': now - 600},
+                     {'path': '/home/pi/code/얼굴인식.py', 'mtime': now - 90000},
+                     {'path': '/home/pi/code/숙제/1주차.json', 'mtime': now - 400000}],
+          'models': [{'name': '가위바위보', 'source': 'hand', 'classes': 3, 'mtime': now - 7200}]}
+
+
+def static_server(root, page, port, ide_port, routes=None, info=None):
+  """root 폴더를 그대로 보낸다. / 는 page(routes 가 있으면 그 표대로). 글꼴·아이콘 글꼴은 기기처럼 IDE 포트로 넘긴다.
+  info 가 있으면 GET /home_info 에 그 JSON 을 돌려준다(대문)"""
   class H(http.server.SimpleHTTPRequestHandler):
     def end_headers(self):
       self.send_header('Access-Control-Allow-Origin', '*')
@@ -53,10 +66,20 @@ def static_server(root, page, port, ide_port):
         self.send_header('Location', f'http://{host}:{ide_port}/{m.group(1)}')
         self.end_headers()
         return
+      if info is not None and p == '/home_info':
+        body = json.dumps(info()).encode()
+        self.send_response(200)
+        self.send_header('Content-Type', 'application/json')
+        self.send_header('Content-Length', str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+        return
       return super().do_GET()
 
     def translate_path(self, path):
       path = path.split('?')[0].split('#')[0]
+      if routes and path in routes:
+        return os.path.join(root, routes[path])
       if path in ('/', '/index.html') and page:
         return os.path.join(root, page)
       return os.path.join(root, path.lstrip('/'))
@@ -137,6 +160,14 @@ def main():
     for app, off, name in APPS:
       folder = os.path.join(root, app)
       if os.path.isdir(folder):
+        if app == 'ide' and os.path.isfile(os.path.join(folder, 'templates', 'home.html')):
+          # 대문(261123): / 는 첫 화면, IDE 는 /ide (기기의 run_ide.py 와 같다)
+          static_server(folder, None, base + off, ide,
+                        routes={'/': 'templates/home.html', '/ide': 'templates/index.html', '/index.html': 'templates/index.html'},
+                        info=lambda d=dev: fake_home_info(d))
+          links.append(('처음 화면', f'http://{host}:{base + off}/'))
+          links.append((name, f'http://{host}:{base + off}/ide'))
+          continue
         static_server(folder, 'templates/index.html', base + off, ide)
         links.append((name, f'http://{host}:{base + off}/'))
     if os.path.isdir(os.path.join(root, 'docs', 'build')):

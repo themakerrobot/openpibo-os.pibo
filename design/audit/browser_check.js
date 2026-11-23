@@ -17,12 +17,13 @@ const PIBO = path.resolve(__dirname, '..', '..');
 fs.mkdirSync(OUT, { recursive: true });
 const H = `http://${IP}`;
 const PRODUCTS = [['pibo', 18000, 'piBo', PIBO]].concat(PIBRAIN ? [['pibrain', 18100, 'PiBrain', path.resolve(PIBRAIN)]] : []);
-const APPS = { ide: 'IDE', tools: '도구|Tools', classifier: '분류기|Classifier', chat: '대화|Chat', kids: '로봇 놀이|Robot Play', docs: '도움말|Help', launch: '' };
+const APPS = { home: '처음 화면|Home', ide: 'IDE', tools: '도구|Tools', classifier: '분류기|Classifier', chat: '대화|Chat', kids: '로봇 놀이|Robot Play', docs: '도움말|Help', launch: '' };
 function pages() {
   const out = [];
   for (const [p, b, prod] of PRODUCTS) {
     const ide = b + 80;
-    out.push({ p, prod, app: 'ide', url: `${H}:${ide}/` }, { p, prod, app: 'tools', url: `${H}:${b}/` },
+    // 대문(261123): / 는 첫 화면, IDE 는 /ide
+    out.push({ p, prod, app: 'home', url: `${H}:${ide}/` }, { p, prod, app: 'ide', url: `${H}:${ide}/ide` }, { p, prod, app: 'tools', url: `${H}:${b}/` },
       { p, prod, app: 'classifier', url: `${H}:${b + 10}/` }, { p, prod, app: 'chat', url: `${H}:${b + 30}/?ide=${ide}` },
       { p, prod, app: 'kids', url: `${H}:${b + 60}/?ide=${ide}` },
       { p, prod, app: 'docs', url: `${H}:${b + 88}/build/html/index.html`, en: `${H}:${b + 88}/build/en/index.html` },
@@ -132,12 +133,13 @@ async function b2(br) {
       } else if (pgi.app !== 'launch') {
         if (!new RegExp(`^(${appRe}) · ${pgi.prod}$`).test(d.title)) bad.push(`${tag}: 탭 제목 '${d.title}'(앱 · ${pgi.prod})`);
         const bn = d.brand.replace(/\s+/g, '');
-        if (!new RegExp(`^${pgi.prod}·?(${appRe.replace(/ /g, '')})$`).test(bn))   // 가운데 점은 CSS ::before 라 글자에 없을 수 있다
+        if (pgi.app === 'home') { if (bn !== pgi.prod) bad.push(`${tag}: 왼쪽 이름 '${d.brand}'(대문은 제품 이름만)`); }
+        else if (!new RegExp(`^${pgi.prod}·?(${appRe.replace(/ /g, '')})$`).test(bn))   // 가운데 점은 CSS ::before 라 글자에 없을 수 있다
           bad.push(`${tag}: 왼쪽 이름 '${d.brand}'(${pgi.prod} · 앱)`);
       }
       if (pgi.app === 'ide' || pgi.app === 'launch') continue;   // IDE·대기 페이지는 예외(AUDIT.md B2)
       const s = d.std;
-      for (const k of ['ide', 'fs', 'theme']) if (!s[k]) bad.push(`${tag}: ${k} 버튼 없음`);
+      for (const k of ['ide', 'fs', 'theme']) if (!s[k] && !(k === 'ide' && pgi.app === 'home')) bad.push(`${tag}: ${k} 버튼 없음`);   // 대문은 [IDE] 가 없다(자기가 처음 화면)
       if (!s.lang) bad.push(`${tag}: 언어 select 없음`);
       const order = ['ide', 'fs', 'theme', 'lang'].filter(k => s[k]);
       for (let i = 1; i < order.length; i++) if (s[order[i]].x <= s[order[i - 1]].x) bad.push(`${tag}: 순서 ${order[i - 1]} → ${order[i]} 가 아님`);
@@ -196,7 +198,7 @@ async function b3(br) {
     await ctx.addInitScript(`try{localStorage.setItem('language','${lang}')}catch(e){}`);
     await ctx.route('**/socket.io.min.js*', r => r.fulfill({ status: 200, contentType: 'application/javascript', body: 'window.io=function(){return {on(){},emit(){},connected:false}}' }));
     const pg = await ctx.newPage(); const errs = []; pg.on('pageerror', e => errs.push(e.message));
-    await pg.goto(`${H}:${b + 80}/`);
+    await pg.goto(`${H}:${b + 80}/ide`);
     await pg.waitForFunction("typeof Blockly!=='undefined' && typeof toolbox_dict!=='undefined' && Blockly.Msg && Object.keys(Blockly.Msg).length>500", null, { timeout: 30000 });
     await pg.waitForTimeout(800);
     for (const [f, txt] of list) {
