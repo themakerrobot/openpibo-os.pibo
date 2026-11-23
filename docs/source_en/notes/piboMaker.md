@@ -4,7 +4,7 @@ piBo Maker is the piBo development environment you open in a web browser. When y
 as piBo, type **piBo's IP address** (shown on piBo's screen) into the address bar. There is nothing to install.
 
 The address opens the **home screen** (a worksheet page). Tap a big picture button to enter an app, and use [Home] (house button) in an app's top bar to come back.
-Row 1 **Make** (Coding · Tools · Teach AI · Chat), row 2 **Play & learn** (Card coding · Pet), row 3 **Teacher tools** (Settings · Help).
+Row 1 **Make** (Coding · Tools · Teach AI · Chat), row 2 **Play & learn** (Card coding · Robot Play), row 3 **Teacher tools** (Settings · Help).
 The app that is running now gets a red 'Running' stamp and the one you used last gets a yellow tag; on the right are the robot status and [Continue] (recent files, AI you taught).
 [Settings] has screen brightness, WiFi settings, reset robot screen, H/W check, factory reset and power off.
 
@@ -14,7 +14,8 @@ The app that is running now gets a red 'Running' stamp and the one you used last
 | **Tools** | Try the motors, camera and voice right away, without code | Home screen, or [Tools] at the top of the IDE |
 | **Chat** | Chat in text with the language model (LLM) running inside piBo | Home screen, or [Chat] at the top of the IDE |
 | **Classifier** | Collect examples with the camera and teach your own AI | Home screen, or [Classifier] at the top of the IDE |
-| **Robot Play** | Elementary students teach the robot friend tricks with cards (no coding) | Home screen, or [Robot Play] at the top of the IDE |
+| **Card coding** | Elementary students teach the robot friend tricks with cards (no coding) — Challenges · Make · My tricks | Home screen [Card coding] |
+| **Robot Play** | **Pet** (look after your robot friend) and **Remote control** (buttons move the robot right away — arrows and motions that don't use the legs) | Home screen, or [Robot Play] at the top of the IDE |
 | **Help** | This document | Home screen, or [Help] at the top of the IDE |
 
 ```{note}
@@ -124,6 +125,6 @@ Programs can use it too, with the `Choose chat model`, `Start LLM server` and `S
 Blocks chat in text only and do not run tools.
 
 ```{note}
-Tools, Chat, Classifier, Robot Play and H/W check run **one at a time**. Opening one closes the others, and running a program in the IDE closes them too
+Tools, Chat, Classifier, Card coding/Robot Play and H/W check run **one at a time**. Opening one closes the others, and running a program in the IDE closes them too
 (they share the camera, speaker and memory). A closed screen shows [Restart].
 ```

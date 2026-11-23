@@ -129,6 +129,8 @@ def s3(repos):
         if f in dirty and t not in dirty:
           bad.append(f'{name}/{t}: {rel} 를 고쳤는데(커밋 전) ?ver={ver} 그대로')
           continue
+        if t in dirty and f'{rel}{needle}' not in git(repo, 'show', f'HEAD:{t}'):
+          continue   # 이번에(커밋 전) 새로 올린 번호 — 히스토리와 견줄 것이 없다(261123: 같은 번호의 다른 파일 줄을 잡아 거짓 FAIL)
         fc = ctime(repo, '--', f)
         vc = ctime(repo, '-S', f'{rel}{needle}', '--', t) or ctime(repo, '-S', needle, '--', t)
         if fc and vc and fc > vc:
