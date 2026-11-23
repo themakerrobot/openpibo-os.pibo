@@ -1106,6 +1106,7 @@ easydetect-lab 지시서(`docs/pibo-integration.md`, 473dbe3) 그대로다. **�
 `index.js` 의 `fmIcon()`(`update_file_manager` 위) — 종류마다 Font Awesome 아이콘과 색: 폴더(호박색) · `usb` 폴더(fa-brands fa-usb) · `.py` 코드 · `.json` 블록(퍼즐) ·
 그림 · 소리 · 영상 · 모델(onnx·tflite·task·bin·gguf, 큐브) · 글(txt·md·csv) · 압축 · 그 밖은 회색 파일. 색은 `v2/ide.css` 의 `--fm-*`(어둡게는 밝은 판).
 **클릭 처리는 첫 칸 html 에 `folder`/`file` 이 있는지로 가르므로 아이콘에 `data-kind='folder|file'` 을 꼭 넣을 것.** 줄마다 걸던 jQuery 흐려짐(`animate opacity`)은 뺐다 — 줄 배경(hover)·아이콘 확대로 대신한다(삭제는 빨강)
+- **줄 오른쪽 칸 순서: 내려받기 · 이름 바꾸기 · 복사·옮기기(261123) · 지우기.** 복사·옮기기는 `copy_popup()`(`index.js`, 템플릿 `#copyPopup`) → socket `copy`/`move` `{src, dst}` → `run_ide.py` `copy_move`. 받을 폴더는 code · myimage · myaudio · mymodel · usb 고정(서버 `COPY_DESTS` 와 화면 `COPY_DESTS` 를 같이 고칠 것). 장치를 넘어도 되고(USB exFAT ↔ SD), 같은 이름이면 `이름_1`. 결과는 `copy_done`/`move_done`·`err_copy_*` 알림. 자세한 건 IMAGE.md '서랍 [복사·옮기기]'. **실기기 확인 필요**
 
 ### 블록 수준 — 쉬움 / 전체 (261116, 사용자)
 
