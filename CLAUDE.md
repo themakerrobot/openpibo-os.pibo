@@ -1528,9 +1528,8 @@ v1 전용 CSS(`index.css` `fontello.css` `cobalt.css` `duotone-light.css`), [새
     큰 카드는 위에 그림 칸(132px), 가로 카드는 왼쪽 84px. 머리 캐릭터도 같은 그림(파이보 얼굴 · PiBrain 은 보드 — 화면 속 얼굴 · 카메라 · 버튼 넷). **PiBrain 대문 카드도 같은 파이보 캐릭터**(따로 말씀 없어 기본값).
     **PiBrain 은 PiBrain 캐릭터**(261123, 사용자) — 몸은 같고 머리가 PiBrain 보드(검은 화면 속 하늘색 얼굴 · 카메라 · 버튼 넷 · 아래 연결부). `PiboArt.svg(앱, 제품)`(제품이 없으면 `<html data-product>`).
     `pibo-art.js` 를 못 읽으면 예전 FA 기호(`APPS[].icon`)로 그린다. 그림을 고치면 어둡게에서도 볼 것
-  - **앱 아이콘도 캐릭터(261123, 사용자 '앱 안 아이콘도 캐릭터로')** — `design/pibo-icons.js`(`PiboIcons.app(앱, 제품)`, 키트처럼 `sync.sh` 가 각 앱 static/ 으로 복사 · 템플릿이 `pibo-ui.js` 앞에 싣는다): 파이보(PiBrain 은 보드) 얼굴 + 오른쪽 아래 **앱 색 배지**(코딩 파랑 `</>` · 도구 주황 렌치 · AI 가르치기 보라 학사모 · 대화 초록 말풍선 · 카드 코딩 주황 카드 · 키우기 분홍 하트 · 도움말 노랑 ? · 설정 회색 톱니 · 처음 화면 남색 집 · H/W 검수 초록 청진기).
-    키트 `initAppIcons()` 가 앱으로 가는 버튼(IDE 상단바 `#tools_bt` `#llm_bt` `#classifier_bt` `#kids_bt` `#guide_bt` `#home_bt`, 각 앱 `#ide_bt` — [처음 화면] 이면 집)의 첫 `<i>` 를 바꾼다. 버튼의 `data-appic` 이 먼저(로봇 놀이 [놀이 처음] 은 `cards`). 대기 페이지는 `launch.html` 이 직접. 로봇 놀이는 제품이 서버에서 오므로 정한 뒤 `PiboUI.appIcons()` 를 다시 부른다.
-    **상단바 왼쪽 제품 마크(`design/marks`)·도구 왼쪽 메뉴·버튼 안 동작 아이콘은 그대로 Font Awesome**(앱을 가리키는 아이콘만 캐릭터). `pibo-icons.js` 를 못 읽으면 예전 기호
+  - **상단바·대기 페이지 아이콘은 작은 Font Awesome 기호 그대로**(261123, 사용자) — 얼굴 + 색 배지 캐릭터 아이콘(`pibo-icons.js`)을 넣었다가 '상단바에 얼굴이 다 나오니 이상하다, 작은 아이콘만이 낫다' 는 의견으로 같은 날 뺐다. 다시 넣지 말 것. 캐릭터는 대문 카드 그림·머리 캐릭터·키우기 친구에만
+  - **작은 아이콘과 대문 그림을 잇는다(261123, 사용자)** — 대문 카드 이름 앞에 상단바·대기 페이지와 같은 작은 아이콘(`.home-app__nic`, `APPS[].icon`): 코딩 `fa-code`(앱의 [IDE] 버튼과 같게) · 도구 `fa-screwdriver-wrench` · AI 가르치기 `fa-graduation-cap` · 대화 `fa-comments` · 카드 코딩 `fa-shapes`(로봇 놀이와 같게 — 대기 페이지 `GO.make` 도) · 키우기 `fa-heart` · 설정 `fa-gear` · 도움말 `fa-circle-question`. 장면의 소품도 그 기호와 같은 물건(렌치·학사모·말풍선·톱니·물음표)
   - 켜진 앱은 빨간 고무 도장 '켜져 있음', 켜진 게 없으면 마지막에 쓴 앱(`localStorage pibo_home_last`)에 노란 꼬리표 '지난번'(`data-ring="run|last"`, 처음엔 아무것도 없음)
   - 오른쪽: 로봇 상태(괘선 표 — 배터리·메모리는 막대) · 이어서 하기(노란 메모지 + 마스킹 테이프)
   - [이어서 하기] 파일 → `/ide?open=<경로>`(`ide.js` 11 — init 을 놓치면 2.5초 보조 타이머)
