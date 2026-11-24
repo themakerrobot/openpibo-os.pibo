@@ -106,7 +106,7 @@ async function b2(br) {
         const brand = h.querySelector('.pb-header__brand, .v2-brand, .pb-topbar__brand');
         const btns = [...h.querySelectorAll('a.pb-iconbtn, button.pb-iconbtn, .tl-hbtn, .pb-topbar__btn, #fullscreen_bt, #home_bt')].filter(vis);
         const out = { h: Math.round(h.getBoundingClientRect().height), bg: cs.backgroundColor, bb: cs.borderBottomWidth,
-          brand: brand ? brand.innerText.replace(/\s+/g, ' ').trim() : '', title: document.title, std: {}, lock: !!pick('#lock_bt'),
+          brand: brand ? brand.innerText.replace(/\s+/g, ' ').trim() : '', title: document.title, std: {},
           heights: [...new Set(btns.map(b => Math.round(b.getBoundingClientRect().height)))] };
         for (const k in std) out.std[k] = std[k] ? Object.assign(box(std[k]), { label: k === 'lang' ? null : label(std[k]) }) : null;
         // 표준 버튼보다 오른쪽에 있는 다른 버튼(앱 동작은 [처음 화면] 왼쪽에 둔다)
