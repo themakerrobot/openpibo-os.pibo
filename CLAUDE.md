@@ -20,6 +20,7 @@ Pibo 로봇 OS. Raspberry Pi(`pi` 유저, `/home/pi/openpibo-os`)에서 서비�
 - **대화에서 거론한 업체·제품 이름(공유기 제조사·통신사·납품처 등)을 문서·커밋·코드에 남기지 말 것(261101, 사용자).** '한국 공유기', '메시 공유기' 처럼 일반 명사로 쓴다.
   라이선스 고지(`THIRD_PARTY_NOTICES.md`·`LICENSE`)에 필요한 저작권자 이름과 자사(Circulus)는 예외
 - 출하 기본 WiFi(`pibo` / `!pibo0314`)가 문서에 있는 것은 괜찮다(261101, 사용자). 다시 문제 삼지 말 것
+- **다시 거론하지 말 것(261124, 사용자)**: `rps_recognizer.task` 학습 데이터셋(`rps_data_sample.zip`)의 라이선스 확인·다시 학습, HF `.model/stt/LICENSE-SenseVoice` 를 원문으로 바꿔 올리기. 보고·'남은 일'·'확인 필요' 목록에 넣지 말 것
 
 ## 전수 조사 — `AUDIT.md` 체크리스트 (261120, 사용자)
 
@@ -918,7 +919,7 @@ TensorFlow·torch 걷어내기 순서와 지울 목록은 IMAGE.md. 파이보에
 - sherpa-onnx 한국어 스트리밍 zipformer 는 쓰지 않는다(빈 결과 버그, k2-fsa/sherpa-onnx#2886). Moonshine 한국어 Tiny/Base 는
   비상업 라이선스라 뺐다. **SenseVoice 모델은 FunASR Model License 1.1(Alibaba, 261118 원문 확인)** — 쓰기·복사·고치기·나눠 주기 허락, 비상업 조항 없음.
   의무는 출처·저작자 표시와 모델 이름 유지(int8 변환본도 파생물). 개정판이 자동 적용되는 조항(6)·준거법 빈칸(7)이 있어 계약에 넣을지는 법무 판단.
-  기기의 `.model/stt/LICENSE-SenseVoice` 는 링크 한 줄뿐이라 원문(edge-lab `tools/licenses/FunASR-MODEL_LICENSE.txt`)으로 바꿔 올릴 것(HF, 사람이)
+  기기의 `.model/stt/LICENSE-SenseVoice` 는 링크 한 줄뿐이라 원문(edge-lab `tools/licenses/FunASR-MODEL_LICENSE.txt`)으로 바꿔 올릴 것(HF, 사람이) — 다시 거론하지 말 것(261124, 사용자)
 - **파이보 마이크 소리에는 큰 DC 가 섞여 있다**(실측 약 -0.37, 몇 초에 걸쳐 조금씩 변함. 켤 때 0.5 로 튀기도 함).
   그대로 두면 silero VAD 가 말을 한 번도 못 잡아 `listen` 이 빈 글자를 돌려줬다(260930v1). 인식 모델은 DC 가 있어도 받아 적었다.
   그래서 `listen` 은 받는 대로 `_dc_block`(1차 고역 통과, 약 13Hz)으로 DC 를 걷고, VAD 에는 최근 최대 크기로 키워(최대 30배) 넣는다.
@@ -1666,7 +1667,7 @@ IDE 화면 출력 안내·툴팁을 블록 이름(`모니터 화면에 보여주
 **사용자 결정(261120)**: 매뉴얼 PDF 4개는 리포에서 뺐다(`manual/.gitignore` 에 `*.pdf` — 납품 때마다 태그로 빌드). 안 쓰던 백업 파일(`test/*.bak`, PiBrain `*.bak` 2개)을 지웠다 — PiBrain `test/test` 는 H/W 검수를 손으로 띄우는 스크립트라 남김.
 도구·분류기의 `webfonts/` 사본(파이보 도구는 v1 fontello 포함)과 그 마운트를 지웠다 — 260929 부터 `SharedFonts` 가 fa-* 를 IDE 로 넘겨 한 번도 안 쓰였다(컨테이너: 4개 서버 모두 301 → IDE, 첫 화면 200). 아이콘 글꼴은 이제 `ide/webfonts/` 한 벌뿐.
 `ide/examples/`(코드가 안 쓰던 옛 사본, 2개는 지운 블록이라 안 열림)를 지웠다 — **예제 원본은 리포 맨 위 `examples/`**(사용자 확인, 공장 초기화가 `/home/pi/examples/` 로 복사).
-`rps_recognizer.task` 는 사용자가 MediaPipe Model Maker 예제 데이터(`rps_data_sample.zip`, Google 저장소)로 학습한 것 — 데이터셋 라이선스는 zip(라이선스·README 파일 없음, 사진 500장)·안내 페이지 어디에도 적혀 있지 않다(261120 확인). **확인 필요**(Google 문의, 또는 직접 찍은 사진으로 다시 학습)
+`rps_recognizer.task` 는 사용자가 MediaPipe Model Maker 예제 데이터(`rps_data_sample.zip`, Google 저장소)로 학습한 것 — 데이터셋 라이선스는 zip(라이선스·README 파일 없음, 사진 500장)·안내 페이지 어디에도 적혀 있지 않다(261120 확인). — 다시 거론하지 말 것(261124, 사용자)
 
 ## 오류 쉬운 말 (261119) — 실행 출력 위 빨간 상자
 
