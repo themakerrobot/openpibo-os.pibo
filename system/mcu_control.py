@@ -19,7 +19,7 @@ class DeviceControl:
         # 단일 워커 스레드 시작
         self.worker_thread = Thread(target=self._worker, daemon=True)
         self.worker_thread.start()
-        logging.info(f"DeviceControl create successfully.")
+        logging.info("DeviceControl create successfully.")
 
     def _connect_serial(self):
         """Serial 포트를 연결합니다."""

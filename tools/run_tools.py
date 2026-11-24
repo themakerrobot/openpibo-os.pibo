@@ -151,7 +151,7 @@ async def import_motion(data:UploadFile = File(...)):
   try:
     await emit('disp_motion', {'record':pibo.motion_j})
     return JSONResponse(content={"filename":"custom_motion.json"}, status_code=200)
-  except Exception as ex:
+  except Exception:
     return JSONResponse(content={'result':'motion_file_invalid'}, status_code=500)
 
 @app.get('/export_motion/{name}', response_class=FileResponse)

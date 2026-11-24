@@ -100,7 +100,7 @@ def start():
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         loop.run_until_complete(read_serial())
-      except Exception as e:
+      except Exception:
         traceback.print_exc()
         time.sleep(5)  # 재시도 전 대기
       finally:
