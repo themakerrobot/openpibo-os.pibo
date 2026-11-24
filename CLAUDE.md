@@ -810,7 +810,7 @@ llama.cpp 웹 UI에는 `keepalive: true` 를 넣어 빌드했기 때문에 llm�
   - LCD 는 일꾼 스레드 하나(`art_worker`)가 가장 최근 요청만 그린다 — 새 요청이 오면 재생·다시 보기를 끊는다. 화면 잠금은 `oled.py` 의 flock 이 지키므로 `robot.lock` 은 안 잡는다(칭찬 말 중에도 그림이 나온다). 화면을 나가면 IP 화면. 가짜 로봇은 `GET /api/fake/lcd.png`(시험용)
   - **실기기 확인 필요** — LCD 방향, 한 장 그리는 시간(SPI — 빠르게 8장/초가 되는지), 칠할 때 반응
 - 처음 화면은 대문과 같은 활동지 카드 + 캐릭터 장면(IDE 의 `pibo-art.js` 를 받아 씀 — challenge · cards · tricks / pet · drive · art). 색: 카드 코딩 `--app-kids` 주황 `fa-shapes`, 로봇 놀이 `--app-play` 청록 `fa-gamepad`
-- 대기 페이지 `launch.html?svc=cards|play[&go=make|pet|drive|art]`(`svc=kids` 는 예전 이름 → play). `LAUNCH_VER` 261123v10. IDE [로봇 놀이](`#kids_bt`)는 `svc=play`
+- 대기 페이지 `launch.html?svc=cards|play[&go=make|pet|drive|art]`(`svc=kids` 는 예전 이름 → play). `LAUNCH_VER` 261124v1. IDE [로봇 놀이](`#kids_bt`)는 `svc=play`
 - 확인(컨테이너, 가짜 로봇, 두 제품): 95/95 — 카드 코딩 3카드·잠금·카드 실행, 로봇 놀이 2카드·키우기 돌보기·조종하기(`greeting → stop`)· 픽셀 그림 따로 39/39(칠하기·끌기·채우기·되돌리기·지우개가 LCD 에 그대로, 장 더하기·재생(두 장을 오감)·멈춤, 다시 보기, 저장·덮어쓰기·순서 기록·24x32·열기·지우기, 잘못된 값 400, 31번째 409, 파이보엔 없음·API 400), 제품 밖 기능 400, 대문 설명·대기 페이지, 1366·1024·820·390 넘침 0, 한/영, pageerror 0
 
 **초등학생**이 코딩 없이 카드로 로봇 친구에게 **재주를 가르치며** 순서·고치기·반복·재사용(함수)을 차시대로 익힌다(유치원은 뺐다 — 사용자 결정).
@@ -1561,7 +1561,7 @@ v1 전용 CSS(`index.css` `fontello.css` `cobalt.css` `duotone-light.css`), [새
   - 오른쪽: 로봇 상태(괘선 표 — 배터리·메모리는 막대) · 이어서 하기(노란 메모지 + 마스킹 테이프)
   - [이어서 하기] 파일 → `/ide?open=<경로>`(`ide.js` 11 — init 을 놓치면 2.5초 보조 타이머)
 - **모든 앱의 [처음 화면](`#home_bt[data-pb-home]`, 집 아이콘)** → 대문(261123 — 예전 [IDE] `#ide_bt` 는 지웠다). 코딩(IDE)의 [처음 화면]은 저장 안 했으면 묻는다(`ide.js` 12, `data-pb-home` 없음). 체험 앱 안의 [처음]은 헷갈리지 않게 카드 코딩 [카드 처음](도형 아이콘) · 로봇 놀이 [놀이 처음](게임패드 아이콘) — id 는 `#start_bt`(261123 전엔 `#home_bt`)
-- 대기 페이지 `launch.html`: `svc=hwtest`(50050) · `svc=cards|play[&go=make|pet|drive|art]`(체험 앱의 그 화면, 이름·아이콘·색도 그 화면 것 — `svc=kids` 는 예전 이름 → play). `LAUNCH_VER` 261123v10. 체험 앱은 `?go=` 를 읽고 주소에서 지운다
+- 대기 페이지 `launch.html`: `svc=hwtest`(50050) · `svc=cards|play[&go=make|pet|drive|art]`(체험 앱의 그 화면, 이름·아이콘·색도 그 화면 것 — `svc=kids` 는 예전 이름 → play). `LAUNCH_VER` 261124v1. 체험 앱은 `?go=` 를 읽고 주소에서 지운다
 - 미리보기 `design/preview.py` 와 검사 `design/audit/browser_check.js` 가 대문(`/`)·IDE(`/ide`)를 안다. `AUDIT.md` B2 예외에 대문을 넣었다
 - **대문 중심 정리(261123, 사용자 — 'IDE 가 메인이었던 흔적 전수 조사')**: 앱은 대문에서만 고르고, 모든 앱의 상단바는 같은 줄이다.
   - 코딩(IDE): 상단바 앱 버튼·[더보기]의 밝기·언어·공장 초기화·전원 끄기·소스 코드·로고, WiFi 창, 아래 상태 줄을 뺐다 → 대문 [설정]·[로봇 상태]. 이름 `piBo · 코딩`(대문 카드와 같게)
