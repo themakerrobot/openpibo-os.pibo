@@ -17,7 +17,7 @@ const PIBO = path.resolve(__dirname, '..', '..');
 fs.mkdirSync(OUT, { recursive: true });
 const H = `http://${IP}`;
 const PRODUCTS = [['pibo', 18000, 'piBo', PIBO]].concat(PIBRAIN ? [['pibrain', 18100, 'PiBrain', path.resolve(PIBRAIN)]] : []);
-const APPS = { home: '처음 화면|Home', ide: 'IDE', tools: '도구|Tools', classifier: '분류기|Classifier', chat: '대화|Chat', kids: '로봇 놀이|Robot Play', cards: '카드 코딩|Card coding', docs: '도움말|Help', launch: '' };
+const APPS = { home: '처음 화면|Home', ide: '코딩|Coding', tools: '도구|Tools', classifier: 'AI 가르치기|Teach AI', chat: '대화|Chat', kids: '로봇 놀이|Robot Play', cards: '카드 코딩|Card coding', docs: '도움말|Help', launch: '' };
 function pages() {
   const out = [];
   for (const [p, b, prod] of PRODUCTS) {
@@ -82,7 +82,7 @@ async function b1(br) {
 async function b2(br) {
   const bad = [];
   const ref = {};
-  const names = {};   // 제품/언어 → { ide: {앱: IDE 버튼 글자}, 앱: 상단바 앱 이름 }
+  const names = {};   // 제품/언어 → { home: {앱: 대문 카드 이름}, 앱: 상단바 앱 이름 }
   for (const w of [1366, 820]) for (const lang of ['ko', 'en']) {
     const strips = [];
     for (const pgi of pages()) {
@@ -100,21 +100,22 @@ async function b2(br) {
           const cs = getComputedStyle(s); return { text: s.textContent.trim(), fs: cs.fontSize, fw: cs.fontWeight };
         };
         const pick = sel => { const e = [...h.querySelectorAll(sel)].find(vis); return e || null; };
-        const std = { ide: pick('#ide_bt, .pb-topbar__ide'), fs: pick('#fullscreen_bt, .pb-topbar__fs'),
+        const std = { home: pick('#home_bt, .pb-topbar__home'), fs: pick('#fullscreen_bt, .pb-topbar__fs'),
           theme: pick('#pb_theme_bt, #theme_bt, .pb-topbar__theme'), lang: pick('select') };
         const cs = getComputedStyle(h);
         const brand = h.querySelector('.pb-header__brand, .v2-brand, .pb-topbar__brand');
-        const btns = [...h.querySelectorAll('a.pb-iconbtn, button.pb-iconbtn, .tl-hbtn, .pb-topbar__btn, #fullscreen_bt, #ide_bt')].filter(vis);
+        const btns = [...h.querySelectorAll('a.pb-iconbtn, button.pb-iconbtn, .tl-hbtn, .pb-topbar__btn, #fullscreen_bt, #home_bt')].filter(vis);
         const out = { h: Math.round(h.getBoundingClientRect().height), bg: cs.backgroundColor, bb: cs.borderBottomWidth,
           brand: brand ? brand.innerText.replace(/\s+/g, ' ').trim() : '', title: document.title, std: {}, lock: !!pick('#lock_bt'),
           heights: [...new Set(btns.map(b => Math.round(b.getBoundingClientRect().height)))] };
         for (const k in std) out.std[k] = std[k] ? Object.assign(box(std[k]), { label: k === 'lang' ? null : label(std[k]) }) : null;
-        // 표준 버튼보다 오른쪽에 있는 다른 버튼(앱 동작은 IDE 왼쪽에 둔다)
-        const ideX = std.ide ? std.ide.getBoundingClientRect().left : 1e9;
-        out.rightExtra = btns.filter(b => !Object.values(std).includes(b) && b.getBoundingClientRect().left > ideX).map(b => b.id || b.className.split(' ')[0]);
-        // IDE 의 앱 버튼 글자(좁으면 숨지만 글자는 있다) — 각 앱 상단바의 앱 이름과 같아야 한다
-        const lab = id => { const e = document.getElementById(id); if (!e) return null; const sp = [...e.querySelectorAll('span')].find(x => x.textContent.trim()); return sp ? sp.textContent.trim() : e.textContent.trim(); };
-        out.ideApps = { tools: lab('tools_bt'), chat: lab('llm_bt'), classifier: lab('classifier_bt'), kids: lab('kids_bt'), docs: lab('guide_bt') };
+        // 표준 버튼보다 오른쪽에 있는 다른 버튼(앱 동작은 [처음 화면] 왼쪽에 둔다)
+        const homeX = std.home ? std.home.getBoundingClientRect().left : 1e9;
+        out.rightExtra = btns.filter(b => !Object.values(std).includes(b) && b.getBoundingClientRect().left > homeX).map(b => b.id || b.className.split(' ')[0]);
+        // 대문 카드 이름 — 각 앱 상단바의 앱 이름과 같아야 한다(261123 — 전엔 IDE 상단바의 앱 버튼 글자와 견줬다)
+        const CARD = { code: 'ide', tools: 'tools', classifier: 'classifier', llm: 'chat', cards: 'cards', play: 'kids', guide: 'docs' };
+        out.cards = {};
+        document.querySelectorAll('.home-app[data-app]').forEach(a => { const k = CARD[a.getAttribute('data-app')], b = a.querySelector('b'); if (k && b) out.cards[k] = b.textContent.trim(); });
         const appEl = brand && brand.querySelector('.pb-header__app, .pb-topbar__app');
         out.appName = appEl ? appEl.textContent.trim() : '';
         return out;
@@ -124,31 +125,29 @@ async function b2(br) {
       if (hdr) { const f = path.join(OUT, `hdr_${pgi.p}_${pgi.app}_${w}_${lang}.png`); await hdr.screenshot({ path: f }).catch(() => {}); strips.push(f); }
       await ctx.close();
       if (!d || d.err) { bad.push(`${tag}: 상단바를 못 찾음 ${d && d.err || ''}`); continue; }
-      if (w === 1366) { const k = `${pgi.p}/${lang}`; (names[k] = names[k] || {})[pgi.app] = pgi.app === 'ide' ? d.ideApps : d.appName; }
+      if (w === 1366) { const k = `${pgi.p}/${lang}`; (names[k] = names[k] || {})[pgi.app] = pgi.app === 'home' ? d.cards : d.appName; }
       if (!ref.bg) ref.bg = d.bg;
       if (d.h !== 48) bad.push(`${tag}: 높이 ${d.h}px(48)`);
       if (d.bb !== '1px') bad.push(`${tag}: 아래 선 ${d.bb}(1px)`);
       if (d.bg !== ref.bg) bad.push(`${tag}: 바탕 ${d.bg}(다른 앱 ${ref.bg})`);
       const appRe = APPS[pgi.app];
-      if (pgi.app === 'ide') {
-        if (!new RegExp(`^${pgi.prod} (메이커|Maker)$`).test(d.title)) bad.push(`${tag}: 탭 제목 '${d.title}'(제품 메이커)`);
-      } else if (pgi.app !== 'launch') {
+      if (pgi.app !== 'launch') {
         if (!new RegExp(`^(${appRe}) · ${pgi.prod}$`).test(d.title)) bad.push(`${tag}: 탭 제목 '${d.title}'(앱 · ${pgi.prod})`);
         const bn = d.brand.replace(/\s+/g, '');
         if (pgi.app === 'home') { if (bn !== pgi.prod) bad.push(`${tag}: 왼쪽 이름 '${d.brand}'(대문은 제품 이름만)`); }
         else if (!new RegExp(`^${pgi.prod}·?(${appRe.replace(/ /g, '')})$`).test(bn))   // 가운데 점은 CSS ::before 라 글자에 없을 수 있다
           bad.push(`${tag}: 왼쪽 이름 '${d.brand}'(${pgi.prod} · 앱)`);
       }
-      if (pgi.app === 'ide' || pgi.app === 'launch') continue;   // IDE·대기 페이지는 예외(AUDIT.md B2)
+      if (pgi.app === 'launch') continue;   // 대기 페이지는 예외(AUDIT.md B2). IDE 도 261123 부터 같은 규칙
       const s = d.std;
-      for (const k of ['ide', 'fs', 'theme']) if (!s[k] && !(k === 'ide' && pgi.app === 'home')) bad.push(`${tag}: ${k} 버튼 없음`);   // 대문은 [IDE] 가 없다(자기가 처음 화면)
+      for (const k of ['home', 'fs', 'theme']) if (!s[k] && !(k === 'home' && pgi.app === 'home')) bad.push(`${tag}: ${k} 버튼 없음`);   // 대문은 [처음 화면] 이 없다(자기가 처음 화면)
       if (!s.lang) bad.push(`${tag}: 언어 select 없음`);
-      const order = ['ide', 'fs', 'theme', 'lang'].filter(k => s[k]);
+      const order = ['home', 'fs', 'theme', 'lang'].filter(k => s[k]);
       for (let i = 1; i < order.length; i++) if (s[order[i]].x <= s[order[i - 1]].x) bad.push(`${tag}: 순서 ${order[i - 1]} → ${order[i]} 가 아님`);
       const extra = d.rightExtra;
-      if (extra.length) bad.push(`${tag}: IDE 오른쪽에 앱 버튼 ${extra.join(',')}(앱 동작은 IDE 왼쪽)`);
+      if (extra.length) bad.push(`${tag}: [처음 화면] 오른쪽에 다른 버튼 ${extra.join(',')}(앱 동작은 [처음 화면] 왼쪽)`);
       if (d.heights.some(x => x !== 32)) bad.push(`${tag}: 버튼 높이 ${d.heights.join('/')}(32)`);
-      for (const k of ['ide', 'fs', 'theme']) {
+      for (const k of ['home', 'fs', 'theme']) {
         if (!s[k]) continue;
         const L = s[k].label;
         if (w >= 1000) {
@@ -173,13 +172,13 @@ o.save(sys.argv[1])`;
     } catch (e) { /* PIL 이 없으면 낱장으로 둔다 */ }
   }
   for (const k in names) {
-    const ide = names[k].ide || {};
-    for (const app of ['tools', 'chat', 'classifier', 'kids', 'docs']) {
-      if (ide[app] && names[k][app] !== undefined && ide[app] !== names[k][app])
-        bad.push(`${k}: IDE 버튼 '${ide[app]}' ≠ ${app} 상단바 이름 '${names[k][app]}'(같은 이름이어야)`);
+    const cards = names[k].home || {};
+    for (const app of ['ide', 'tools', 'chat', 'classifier', 'kids', 'cards', 'docs']) {
+      if (cards[app] && names[k][app] !== undefined && cards[app] !== names[k][app])
+        bad.push(`${k}: 대문 카드 '${cards[app]}' ≠ ${app} 상단바 이름 '${names[k][app]}'(같은 이름이어야)`);
     }
   }
-  report('B2', '상단바 규칙(높이·색·이름·순서·글자·크기·IDE 버튼 = 앱 이름)', bad);
+  report('B2', '상단바 규칙(높이·색·이름·순서·글자·크기·대문 카드 = 앱 이름)', bad);
 }
 
 // ── B3 예제 ───────────────────────────────────────────────────────────

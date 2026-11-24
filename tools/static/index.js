@@ -1472,7 +1472,6 @@ language.addEventListener("change", () => {
    이 서비스를 끈다.
    (오른쪽 끝 THE MAKER 로고도 IDE 로 가지만, 돌아가기 버튼인지 알아볼 수 없었다)
    ========================================================================== */
-document.getElementById("ide_bt").addEventListener("click", () => PiboUI.backToIDE());
 
 /* ==========================================================================
    연결 끊김 — 이 탭은 서비스가 꺼지면 소켓이 끊긴다. IDE 에서 다른 도구를 켜거나
@@ -1484,7 +1483,7 @@ PiboUI.watchSocket(socket, {
     kind: "warn",
     actions: [
       { label: PiboUI.text("restart"), primary: true, onClick: () => PiboUI.restartSelf("tools") },
-      { label: PiboUI.text("close"), onClick: () => PiboUI.backToIDE() }
+      { label: PiboUI.text("close"), onClick: () => PiboUI.goHome() }
     ]
   })
 });

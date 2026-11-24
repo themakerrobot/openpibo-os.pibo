@@ -12,7 +12,7 @@ IDE 와 따로 둔다(카드 코딩 `cards/` 50060 · 로봇 놀이 `play/` 5007
 | 쓰는 방식 | 로봇 한 대에 태블릿 하나(1:1). 로봇은 학교 것이라 반마다 아이가 바뀐다 |
 | 제품 | 파이보·PiBrain 같은 코드, `--device` 로 제품에 없는 카드만 숨김 |
 | 핵심 | **아이가 만든 재주가 다음 수업의 재료(카드)가 된다** + 차시 + 아이별 기록 |
-| 소스 | 같은 리포의 `cards/` · `play/` · `kids/`(공용). 대문 카드와 IDE [로봇 놀이] 버튼으로 연다(261028, 261123) |
+| 소스 | 같은 리포의 `cards/` · `play/` · `kids/`(공용). 대문 카드로 연다(261123 — 예전 IDE [로봇 놀이] 버튼은 없앴다) |
 
 ## 0-0. 261123 개정 (사용자) — 폴더·서버를 둘로: 카드 코딩 · 로봇 놀이
 
@@ -207,7 +207,7 @@ sudo /home/pi/.pyenv/bin/python3 play/run_play.py --device pibo         # 로봇
 
 기기 없이: `python3 cards/run_cards.py --fake [--device pibrain] [--fake-speed 0.2] --data-dir /tmp/kids --code-dir /tmp/code` · `python3 play/run_play.py --fake [--device pibrain] --data-dir /tmp/kids` + 브라우저 `?ide=<IDE 포트>`(또는 `design/preview.py`).
 
-**IDE 연결(261028, 261123 개정)**: 대문 [카드 코딩] → `launch.html?svc=cards` → `/cards?enable=on`, 대문 [로봇 놀이]·IDE [로봇 놀이](`#kids_bt`) → `svc=play` → `/play?enable=on`(`run_ide.py` 의 `kids_app`). 켤 때 다른 체험 앱·도구·분류기·대화·검수를 끄고, 그것들을 켤 때·코드 실행 때 꺼진다. 탭을 닫으면 `beforeunload` 가 `/cards|/play?enable=off`(`keepalive`). 위 손으로 띄우기는 시험용.
+**여는 길(261028, 261123 개정)**: 대문 [카드 코딩] → `launch.html?svc=cards` → `/cards?enable=on`, 대문 [로봇 놀이] → `svc=play` → `/play?enable=on`(`run_ide.py` 의 `kids_app`). 켤 때 다른 체험 앱·도구·분류기·대화·검수를 끄고, 그것들을 켤 때·코드 실행 때 꺼진다. 탭을 닫으면 `beforeunload` 가 `/cards|/play?enable=off`(`keepalive`). 위 손으로 띄우기는 시험용.
 
 ## 13. 다음 단계
 

@@ -6,29 +6,29 @@ as piBo, type **piBo's IP address** (shown on piBo's screen) into the address ba
 The address opens the **home screen** (a worksheet page). Tap a big picture button to enter an app, and use [Home] (house button) in an app's top bar to come back.
 Row 1 **Make** (Coding · Tools · Teach AI · Chat), row 2 **Play & learn** (Card coding · Robot Play), row 3 **Teacher tools** (Settings · Help).
 The app that is running now gets a red 'Running' stamp and the one you used last gets a yellow tag; on the right are the robot status and [Continue] (recent files, AI you taught).
-[Settings] has screen brightness, WiFi settings, reset robot screen, H/W check, factory reset and power off.
+[Settings] has screen brightness, WiFi settings (pick and join a WiFi right there), reset robot screen, H/W check, factory reset, power off and the source code and license.
+The robot status (battery, temperature, memory, WiFi, serial, uptime) is on the home screen too. Every app has the same top bar — the app name on the left, and (app actions) · [Home] · [Full screen] · [Brightness] · language on the right.
 
 | Screen | What it does | Where to open it |
 |---|---|---|
-| **IDE** | Build and run programs with blocks or Python | `http://<piBo IP>` → home screen [Coding] |
-| **Tools** | Try the motors, camera and voice right away, without code | Home screen, or [Tools] at the top of the IDE |
-| **Chat** | Chat in text with the language model (LLM) running inside piBo | Home screen, or [Chat] at the top of the IDE |
-| **Classifier** | Collect examples with the camera and teach your own AI | Home screen, or [Classifier] at the top of the IDE |
+| **Coding** | Build and run programs with blocks or Python | `http://<piBo IP>` → home screen [Coding] |
+| **Tools** | Try the motors, camera and voice right away, without code | Home screen [Tools] |
+| **Chat** | Chat in text with the language model (LLM) running inside piBo | Home screen [Chat] |
+| **Teach AI** | Collect examples with the camera and teach your own AI | Home screen [Teach AI] |
 | **Card coding** | Elementary students teach the robot friend tricks with cards (no coding) — Challenges · Make · My tricks | Home screen [Card coding] |
-| **Robot Play** | **Pet** (look after your robot friend) and **Remote control** (buttons move the robot right away — arrows and motions that don't use the legs) | Home screen, or [Robot Play] at the top of the IDE |
-| **Help** | This document | Home screen, or [Help] at the top of the IDE |
+| **Robot Play** | **Pet** (look after your robot friend) and **Remote control** (buttons move the robot right away — arrows and motions that don't use the legs) | Home screen [Robot Play] |
+| **Help** | This document | Home screen [Help] |
 
 ```{note}
 Everything runs **inside piBo** (voices, speech recognition, chat and the classifier included). Only the blocks in the
 [Collect] category (Wikipedia, weather, news) need the internet, and that category is only in the Korean edition.
 ```
 
-## IDE
+## Coding (IDE)
 
-![IDE with blocks](images/ide_block.png)
+![Coding with blocks](images/ide_block.png)
 
-- **Top bar**: the folder button on the far left opens the **file drawer**. [Blocks | Python] in the middle switches the editor. On the right are Tools, Chat, Classifier, Robot Play, Help, Full screen and [⋯] More
-  (brightness · font size · Python editor theme · language · factory reset · power off · source code and license)
+- **Top bar**: the folder button on the far left opens the **file drawer**. [Blocks | Python] in the middle switches the editor. On the right are [⋯] (font size · Python editor theme) · [Home] · [Full screen] · [Brightness] · language, the same as every other app
 - **File drawer**: the file list, [Add] (new file / new folder / upload) and a preview for pictures and sounds. It is open at first and closes when you open a file or tap the editor.
   Tapping the file name in the editor bar opens it again. The icons on each file download, rename, **copy or move** and delete it.
   To copy or move, choose a folder (code · myimage · myaudio · mymodel · usb) and tap [Copy] or [Move]. It works between a USB drive and the robot too.
@@ -37,14 +37,13 @@ Everything runs **inside piBo** (voices, speech recognition, chat and the classi
   Once a file is open, the editor bar shows the folder and name, like `code › hand.json` (hover to see the full path)
 - **Run panel on the right**: **[Run] [Stop]** with the run status, screen output (pictures sent with the `Show image … on the monitor` block), program output and sending input to the program.
   The button at the right end of the editor bar hides or shows it, and it opens again when you run a program. Hide both the drawer and the run panel to give the blocks the whole width
-- **Status bar at the bottom**: connection · version · serial | WiFi (tap for WiFi settings) · temperature · memory · uptime · battery
 - **Blocks**: drag blocks out of the categories on the left. Type a word such as "sound" or "face" into **Search blocks** at the top to find blocks.
   Choose [Easy] in **[Easy | All]** on the editor bar to see only beginner blocks (repeat forever, motions, lights, sounds, sensors, AI eyes, score and more).
   [Python code] shows the Python code your blocks make. See **Blocks** on the left for every block.
 - **When there is an error**: a red box above the output says where (the block outlined in red in block mode, or the line number in Python) and what went wrong in plain words.
   [Show block] / [Show line] takes you there, and the red outline goes away when you change the block
 
-![IDE with Python](images/ide_python.png)
+![Coding with Python](images/ide_python.png)
 
 - **Python**: the `openpibo` package gives you every piBo feature. `print` goes to [Output] on the right and `input` reads from the input box below it.
   See **Python** on the left for the API
@@ -74,9 +73,9 @@ Try piBo's features one at a time, without code. Pick [Motion], [Camera] or [Spe
   what it heard as text (up to 10 seconds, processed on piBo). [Use as text to speak] puts that text into the box on the left so piBo can say it back.
   The first time takes a few seconds while speech recognition loads. [Record] records piBo's microphone and [Play again] plays it back
 
-## Classifier
+## Teach AI (classifier)
 
-![Classifier: Train](images/classifier_learn.jpg)
+![Teach AI: Train](images/classifier_learn.jpg)
 
 Collect examples with the camera and teach the AI, for example "this is a cat, this is food".
 
@@ -87,13 +86,13 @@ Collect examples with the camera and teach the AI, for example "this is a cat, t
    The picker under the camera switches to a USB camera — use the same camera for training and for use for better results
 3. **[Teach the AI]** — the tablet or laptop browser learns in a few seconds and shows the accuracy, a confusion table and live scores
 4. **[Save]** — saved on piBo in `/home/pi/mymodel/<model name>`
-5. In the IDE use `Load classification model (mymodel) (model name)` → `Classify image (image) with the classification model`.
+5. In Coding use `Load classification model (mymodel) (model name)` → `Classify image (image) with the classification model`.
    `Show the classification result on image (image)` draws the hand, face or body points and the class name on the picture
 
 The [Test] tab tries a saved model again. [Models] lets you test, keep training, rename, download (zip) or delete a model.
 
 ```{tip}
-The classifier downloads its AI files (about 10 MB) the first time it opens. Open it once on every tablet before class and it
+Teach AI downloads its AI files (about 10 MB) the first time it opens. Open it once on every tablet before class and it
 will start right away during class.
 ```
 
@@ -125,6 +124,6 @@ Programs can use it too, with the `Choose chat model`, `Start LLM server` and `S
 Blocks chat in text only and do not run tools.
 
 ```{note}
-Tools, Chat, Classifier, Card coding/Robot Play and H/W check run **one at a time**. Opening one closes the others, and running a program in the IDE closes them too
+Tools, Chat, Teach AI, Card coding/Robot Play and H/W check run **one at a time**. Opening one closes the others, and running a program in Coding closes them too
 (they share the camera, speaker and memory). A closed screen shows [Restart].
 ```
