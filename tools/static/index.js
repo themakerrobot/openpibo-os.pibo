@@ -675,10 +675,11 @@ const getMotions = (socket) => {
       MDOT.forEach(([m]) => {
         if (document.activeElement !== ins[m]) ins[m].value = $(`#m${m}_value`).val() === "" ? "" : cur(m);
         gauge(m);
-        dots[m].setAttribute("aria-pressed", m === sel ? "true" : "false");
+        dots[m].setAttribute("aria-current", m === sel ? "true" : "false");   // 점은 단추가 아니라 고른 표시(aria-pressed 는 버튼에만, 261124)
       });
       const [lo, hi] = lim(sel);
       slide.title = `${t(`motor_m${sel}`)} · ${lo} ~ ${hi}`;
+      mpRange.setAttribute("aria-label", slide.title);   // 접근성 이름(261124)
       mpRange.min = lo; mpRange.max = hi;
       if (!dragging) mpRange.value = cur(sel);
       placeSlide();
