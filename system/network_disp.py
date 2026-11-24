@@ -17,18 +17,6 @@ def run():
     o.draw_text((0,25), f'I P: {wip.strip()}')
     o.draw_text((0,45), f'AP: {ssid}')
     o.show()
-
-    #pibrain
-    #o.set_font(size = 20)
-    #o.draw_text((15,  50), f'*Wifi ----------------------')
-    #o.draw_text((15,  85), f'i p : {wip.strip()}')
-    #o.draw_text((15, 120), f'ap : {ssid}')
-
-    #o.draw_text((15, 180), f'*System -----------------')
-    #o.draw_text((15, 215), f'sn : {sn}')
-    #o.draw_text((15, 250), f'os : {v[1]}')
-   
-    o.show()
     ret = True, ""
   except Exception as ex:
     ret = False, str(ex)

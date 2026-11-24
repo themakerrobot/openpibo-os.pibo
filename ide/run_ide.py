@@ -1,6 +1,5 @@
 import os
 import codecs
-import sys
 import asyncio
 import shutil
 import tempfile
@@ -12,16 +11,14 @@ import subprocess
 import time
 import threading
 import requests
-from pathlib import Path
-from typing import List, Union
+from typing import List
 
-from fastapi import FastAPI, Request, UploadFile, File, Form, Body, Depends
-from fastapi.responses import HTMLResponse, FileResponse, JSONResponse, RedirectResponse
+from fastapi import FastAPI, Request, UploadFile, File
+from fastapi.responses import HTMLResponse, FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi_socketio import SocketManager
-from starlette.websockets import WebSocketDisconnect
 from starlette.background import BackgroundTask
 from contextlib import asynccontextmanager
 
@@ -166,10 +163,6 @@ def read_directory(d):
     print(err)
     return False
   return sorted(dlst, key=lambda x:x['name'])  + sorted(flst, key=lambda x:x['name'])
-
-
-def file_extension_check(filename):
-  return filename.split('.')[-1].lower()
 
 
 @app.get('/dir')
@@ -415,10 +408,8 @@ async def handle_init(sid):
   await app.sio.emit('init', {'codepath': codePath, 'codetext': codeText, 'path': PATH}, to=sid)
 
 @app.get('/tools')
-async def classifier(enable: str):
+async def tools(enable: str):
   # print("Eanable tools:", enable)
-  if False:
-    return HTMLResponse(content="", status_code=200)
   if enable == "on":
     subprocess.Popen(['systemctl', 'stop', 'classify.service'])
     subprocess.Popen(['systemctl', 'stop', 'llama-server@*'])   # 대화 모델(템플릿 유닛)
@@ -437,8 +428,6 @@ async def classifier(enable: str):
 @app.get('/classifier')
 async def classifier(enable: str):
   # print("Eanable classifier:", enable)
-  if False:
-    return HTMLResponse(content="", status_code=200)
   if enable == "on":
     subprocess.Popen(['systemctl', 'stop', 'tools.service'])
     subprocess.Popen(['systemctl', 'stop', 'llama-server@*'])   # 대화 모델(템플릿 유닛)
@@ -633,10 +622,6 @@ async def handle_reset_log(sid):
 async def handle_poweroff(sid):
   os.system('echo "#11:!" > /dev/ttyS0')
   subprocess.Popen(['shutdown', '-h', 'now'])
-
-@app.sio.on('restart')
-async def handle_restart(sid):
-  subprocess.Popen(['shutdown', '-r', 'now'])
 
 
 @app.sio.on('load_directory')

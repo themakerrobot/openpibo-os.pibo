@@ -50,7 +50,7 @@ const translations = {
   result:          { ko: "결과", en: "Result" },
   speak:           { ko: "말하기", en: "Speak" },
   voice_type:      { ko: "목소리", en: "Voice" },
-  espeak:          { ko: "기계 목소리 (espeak)", en: "Robot voice (espeak)" },
+  espeak:          { ko: "기계 목소리 (espeak) · 영어 글자만", en: "Robot voice (espeak) · English text only" },   // PiBrain 도구·IDE 블록과 같은 안내(261124)
   file_ok:    { ko: "파일을 올렸어요.", en: "File uploaded." },
   file_error: { ko: "파일을 올리지 못했어요.", en: "Could not upload the file." },
   range_warn: {
@@ -115,7 +115,6 @@ const translations = {
   // [동작] 표에 추가(260928)
   scene_delete: { ko: "이 줄 지우기", en: "Delete row" },
   add_or_edit:  { ko: "추가·수정", en: "Add or update" },
-  scene_help:   { ko: "누를 때마다 시간 +0.5초", en: "Time +0.5 s on each press" },
   add_or_edit_tip: { ko: "지금 자세를 이 시간에 넣어요. 표에 같은 시간이 있으면 그 줄을 고쳐요.", en: "Puts this pose at this time. If the table already has this time, that row is updated." },
   scene_keys:   { ko: "점 숫자에 바로 입력 · Enter 다음 모터 · ↑ ↓ 1° (Shift 5°)", en: "Type on the dots · Enter next motor · ↑ ↓ 1° (Shift 5°)" },
   frames_empty_v2: {
@@ -200,6 +199,8 @@ const translations = {
   motor_s4: { ko: "고개↔", en: "Head ↔" },  motor_s5: { ko: "고개↕", en: "Head ↕" },
   motor_s6: { ko: "왼발", en: "L foot" },    motor_s7: { ko: "왼다리", en: "L leg" },
   motor_s8: { ko: "왼팔", en: "L arm" },     motor_s9: { ko: "왼손", en: "L hand" },
+  // [음성] 말할 글자 칸 안내(261124 — PiBrain 도구와 같게)
+  tts_ph:             { ko: "말할 글자를 적어 보세요", en: "Type what to say" },
 };
 
 // 키 → 현재 언어 문자열. 모르는 키(일반 문자열)는 그대로 반환.

@@ -798,13 +798,6 @@ Blockly.Python.forBlock['vision_analyze_pose'] = function(block) {
   }
   return [res, Blockly.Python.ORDER_ATOMIC];
 }
-// Blockly.Python.forBlock['vision_classification'] = function(block) {
-//   Blockly.Python.definitions_['from_vision_import_Detect'] = 'from openpibo.vision_detect import Detect';
-//   Blockly.Python.definitions_['assign_detect'] = 'detect = Detect()';
-
-//   const img = Blockly.Python.valueToCode(block, 'img', Blockly.Python.ORDER_ATOMIC);
-//   return [`[ item['name'] for item in detect.classify_image(${img})]`, Blockly.Python.ORDER_ATOMIC];
-// }
 Blockly.Python.forBlock['vision_marker_detect'] = function(block) {
   Blockly.Python.definitions_['from_vision_import_Detect'] = 'from openpibo.vision_detect import Detect';
   Blockly.Python.definitions_['assign_detect'] = 'detect = Detect()';

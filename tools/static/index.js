@@ -193,9 +193,6 @@ async function prompt_popup(message, defaultValue = '') {
   });
 }
 
-document.getElementById("logo_bt").addEventListener("click", function () {
-  location.href = `http://${location.hostname}`;
-});
 const socket = io(`http://${location.host}`, { path: "/socket.io" });
 
 const onoffVal = document.getElementById('onoff_val');
@@ -523,28 +520,6 @@ const getVisions = (socket) => {
   socket.on("disp_vision", (v) => { if (v === "face_id") faceLoad(); });
   window.refreshFace = paintFace;
   paintFace();
-
-  $("#v_upload_tm").on("change", (e) => {
-    let formData = new FormData();
-    formData.append("data", $("#v_upload_tm")[0].files[0]);
-    $("#v_upload_tm").val("");
-    $.ajax({
-      url: `/upload_tm`,
-      type: "post",
-      data: formData,
-      contentType: false,
-      processData: false,
-    }).always(async (xhr, status) => {
-      if (status == "success") {
-        await alert_popup(translations["file_ok"][lang]);
-      } else {
-        // 서버는 문구 키(motion_file_invalid 등)를 보낸다(261027)
-        const r = (xhr.responseJSON || {}).result;
-        await alert_popup(r ? `${t("file_error")}\n${t(r)}` : t("file_error"));
-        $("#v_upload_tm").val("");
-      }
-    });
-  });
 
   $("#v_tilt_range").on("click touchend", function (evt) {
     $("#m5_range").val(Number($("#v_tilt_range").val()));
@@ -1417,13 +1392,6 @@ menus.each((idx) => {
   element.addEventListener("click", () => handleMenu(name));
 });
 
-const menus_ds = $("#article_home").find("a");
-menus_ds.each((idx) => {
-  const element = menus_ds.get(idx);
-  const name = element.getAttribute("name");
-  element.addEventListener("click", () => handleMenu(name.split('_ds')[0]));
-});
-
 // keepalive 가 없으면 언로드 중 브라우저가 요청을 취소한다. 이 한 옵션이 전부다.
 window.addEventListener('beforeunload', () => {
   fetch(`http://${location.hostname}/tools?enable=off`, { method: 'GET', keepalive: true })
@@ -1447,6 +1415,10 @@ const setLanguage = (lang) => {
     const v = translations[el.getAttribute('data-aria-key')];
     if (v && typeof v[lang] === 'string') el.setAttribute('aria-label', v[lang]);
   });
+  document.querySelectorAll('[data-ph-key]').forEach(el => {   // 자리표시(261124)
+    const v = translations[el.getAttribute('data-ph-key')];
+    if (v && typeof v[lang] === 'string') el.placeholder = v[lang];
+  });
   if (window.paintCams) window.paintCams();   // 카메라 고르기 목록(보드 카메라 이름이 언어를 따른다)
 }
 
@@ -1466,13 +1438,6 @@ language.addEventListener("change", () => {
   localStorage.setItem("language", lang);
 });
 
-
-/* ==========================================================================
-   [IDE] — IDE 가 연 탭이면 닫아서 원래 IDE 탭으로 돌아간다. 주소를 직접 쳐서
-   연 탭은 닫을 수 없으니 IDE 주소로 이동한다. 어느 쪽이든 beforeunload 가
-   이 서비스를 끈다.
-   (오른쪽 끝 THE MAKER 로고도 IDE 로 가지만, 돌아가기 버튼인지 알아볼 수 없었다)
-   ========================================================================== */
 
 /* ==========================================================================
    연결 끊김 — 이 탭은 서비스가 꺼지면 소켓이 끊긴다. IDE 에서 다른 도구를 켜거나

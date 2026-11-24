@@ -1,7 +1,6 @@
 import asyncio
 import time
 import serial
-import os
 import threading
 import traceback
 import network_disp

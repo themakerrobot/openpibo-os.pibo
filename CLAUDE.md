@@ -28,6 +28,7 @@ Pibo 로봇 OS. Raspberry Pi(`pi` 유저, `/home/pi/openpibo-os`)에서 서비�
 **일관성은 기본이다**(사용자) — 화면마다 같은 부품·순서·크기, 다르면 고친다. 일부러 다른 것은 `AUDIT.md` '예외' 표에만 둔다.
 새 규칙이 생기면 `AUDIT.md`·검사 도구에 먼저 넣는다. `AUDIT.md` 는 두 리포 같은 파일, 도구(`design/audit/`)는 파이보 리포에만 있다.
 **화면은 Lighthouse 접근성·SEO 100 을 지킨다(261124, 사용자가 코딩 화면 점수를 보여 줌 — `AUDIT.md` M9).** 두 제품 전 화면 100 으로 맞췄다. Best Practices 는 HTTPS 2항목(LAN http)만 남는다
+**쓰레기 코드 정리(261124, 사용자 '이전에 남은 쓰레기 코드') — 지운 것**: `booting.py` `GET /wifi`(저장된 SSID·**비밀번호**를 로그인 없이 돌려주던 것, 부르는 곳 없음 — 네트워크가 바뀔 때 로그에도 비밀번호가 찍혀서 가려 찍는다) · IDE 소켓 `restart` · 늘 숨겨져 있던 THE MAKER 로고 `#logo_bt`(코딩·도구·AI 가르치기·대화)와 `themaker.png` · 안 쓰던 `jquery.jsonview` · 카드 코딩 '번호 고르기'(`#who_bt`·`#v_who`·`#dlg_icon`·`/api/profile`·`roster`·`profile_icons`) · v1 시절 숨은 칸(`#hiddenfile`·`#result_check`)을 읽던 코드 · 도구(파이보) `#v_upload_tm`·`#article_home` 처리, `simulator.css`(이름표 규칙만 남김)·`index.css` 의 v1 규칙, `tools/log.py` · 상대 앱 것이 섞여 있던 `cards.css`·`play.css` 규칙 · `ide.css` 의 예전 상태 줄·WiFi 창·[더보기] 항목·왼쪽 패널 규칙 · 주석 처리된 블록 생성기(`customblock_callback.js` — PiBrain 은 파이보 전용 생성기 150줄)·툴박스 끝 codelab 주석 · 안 쓰는 파이썬 import · 고아 파일(`ide/svg` 3개·`system/themaker*.jpg` 등). **남긴 것**: `speech.py` 의 `import onnxruntime`(sherpa-onnx 와 불러오는 순서 — 확인 필요), `system/openpibo_python-*.whl`(PiBrain 새 pyenv 용), 시험용으로 보이는 경로(`play` `/api/state`·`/api/stop`, 분류기 `/control_cam`, 대화 `/api/voice/warm`), 키트 데모(`design/index.html`)가 쓰는 `.pb-statusbar`
 
 ---
 
@@ -802,7 +803,7 @@ llama.cpp 웹 UI에는 `keepalive: true` 를 넣어 빌드했기 때문에 llm�
 - 두 앱은 같은 모터·화면·스피커를 쓰므로 **한 번에 하나만** — IDE `run_ide.py` 의 `kids_app()` 이 하나를 켤 때 다른 하나를 끈다(`KIDS_APPS`, `stop_kids(only)`). 도구·분류기·대화·검수 켜기와 코드 실행 때는 둘 다 꺼진다. 예전 주소 `/kids` 는 로봇 놀이로
 - 저장 폴더 `/home/pi/.kids` 는 같이 쓴다 — 카드 코딩 `p/1/{tricks,progress}.json` · `settings.json`(차시·목소리·소리 크기, 카드 코딩 [설정]에서 바꿈), 로봇 놀이 `p/1/pet.json` · `p/1/art/`(픽셀 그림첩). 카드 코딩 [처음부터 하기] 가 `p/1` 을 통째로 지운다(키우기·그림첩까지)
 - 내용 파일도 나눴다: `cards/content.json`(카드·차시·도전·말) · `play/content.json`(키우기·키우기 말·조종하기·그림 칭찬 말). 도전 결과 그림은 키우기 친구 그림(`pet.js`)이라 `cards/static/pet.js` 는 `play/static/pet.js` 의 사본이다 — 같이 고칠 것. `cards.css` · `play.css` 도 앞부분(버튼·처음·대화상자)이 같다
-- **조종하기**(파이보만): 방향 단추(앞으로 `forward1` · 뒤로 `backward1` · 왼쪽/오른쪽으로 돌기 · 가운데 [멈춤] = 끊고 처음 자세) + **다리·발(M0·M1·M6·M7)을 쓰지 않는 동작** 19개(openpibo-models 0.4.9 `motion_db` 82개 중 54개가 그렇다, `play/content.json` 의 `drive`). 누르면 바로 한다(`POST /api/drive {id}`) — 하던 것이 있으면 끊고 새것. 끝나면 처음 자세, `hold`(하이파이브·보기·손 들기)는 자세 유지. 위에 '넓고 평평한 바닥에서' 띠. **실기기 확인 필요** — 동작 이름, 걷기 중 끊기, 빨리 바꿔 누를 때 서보 전원 강하
+- **조종하기**(파이보만): 방향 단추(앞으로 `forward1` · 뒤로 `backward1` · 왼쪽/오른쪽으로 돌기 · 가운데 [멈춤] = 끊고 처음 자세) + **다리·발(M0·M1·M6·M7)을 쓰지 않는 동작** 19개(openpibo-models 0.4.9 `motion_db` 82개 중 54개가 그렇다, `play/content.json` 의 `drive`). 누르면 바로 한다(`POST /api/drive {id}`) — 하던 것이 있으면 끊고 새것. 동작은 끝나면 처음 자세, 방향 단추와 `hold`(하이파이브·보기·손 들기)는 끝난 자세 그대로(방향 단추 뒤 처음 자세는 261124 에 뺐다, 사용자). 위에 '넓고 평평한 바닥에서' 띠. **실기기 확인 필요** — 동작 이름, 걷기 중 끊기, 빨리 바꿔 누를 때 서보 전원 강하
 - **픽셀 그림**(PiBrain 만, `play/pixel.py`, 261123 — 블록 쌓기를 바꿨다. 사용자: 게임은 교육과 거리가 있고, **물리 버튼을 계속 누르는 놀이는 고장 위험**이라 버튼을 안 쓴다): 태블릿에서 칸을 칠하면 **LCD(240x320)에 바로**(0.08초에 한 번까지 마지막 모습만 — `POST /api/art/show`).
   캔버스 **12x16(한 칸 20px) · 24x32(10px)** — 둘 다 LCD 에 딱 맞는 정수 배율. 도구: 연필 · 지우개 · 채우기 · 되돌리기(40번) · 모두 지우기 · 12색(`pixel.PALETTE`, 0 = 흰 바탕 = 지우개)
   - 재미: **움직이는 그림**(2~4장, [장 더하기] = 지금 장을 복사, 앞 장이 옅게 비친다 — 느리게 2 · 보통 4 · 빠르게 8장/초, `POST /api/art/play`) · **그린 순서 다시 보기**(지금 장을 칠한 순서대로 약 4초 동안 LCD 에, `steps` — 장마다 3000칸까지) · **내 그림첩**(`p/1/art/<번호>.json`, 30장, 넘으면 409) · 저장하면 로봇이 '우와, 멋진 그림이야!'(효과음 tada + 말)
@@ -1427,7 +1428,7 @@ edge-lab 의 블록 수준을 본떠 IDE 에 **2단계**(사용자: 3단계 대�
 | 결과 막대가 튕기듯 참 | 분류기 [시험] | `.bar-fill` 의 `transition` 곡선(살짝 넘쳤다 돌아옴) |
 | 카메라 HUD | 도구 [카메라] `.v-stage`, 분류기 `#stage` | `::after` 에 모서리 꺾쇠 8개(그라데이션). 그림이 오기 전엔 `::before` 스캔선 |
 | 모터 번호 점 각도 링 | 도구 [동작] `.mdot > b` | `index.js` 의 `gauge()` 가 `--g-a`(호)·`--g-s`(시작)를 단다. 한쪽 끝(범위 min/max)이면 한 바퀴, + 시계 방향·− 반대 |
-| 연결 점 숨쉬기 | 도구 `#onoff_val[data-state=on]`, IDE `.v2-dot` | `pb-breathe` |
+| 연결 점 숨쉬기 | 도구 `#onoff_val[data-state=on]`(IDE `.v2-dot` 은 아래 상태 줄과 같이 261123 에 없어졌다) | `pb-breathe` |
 | 탭 전환 떠오르기 | IDE `.v2-side__page`, 분류기 `.only-*` | 숨김이 풀릴 때마다 `pb-tab-in` 이 다시 돈다. 도구 메뉴는 원래 jQuery 슬라이드 |
 | 반짝이는 빈 카드·줄 | 분류기 보관함 첫 목록(`S.modelsLoaded`), IDE 파일 목록(템플릿의 `tr.v2-skel`) | `.pb-skel`. 목록이 오면 통째로 바뀐다 |
 | 팝업·알림 튀며 등장 | 대화상자·와이파이·모달·알림 | `pb-rise`. IDE 는 키트의 `.pb .alert-popup-content` 보다 우선하게 `.v2-app` 을 붙였다 |

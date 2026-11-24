@@ -5,13 +5,10 @@ import openpibo_models
 from openpibo.audio import Audio
 from openpibo.motion import Motion
 import asyncio
-import numpy as np
-import time,datetime
+import time
 import cv2,logging
-import os,json,shutil,csv
-from PIL import Image,ImageDraw,ImageFont,ImageOps
-from queue import Queue
-from threading import Thread, Timer, Lock
+import json,shutil
+from threading import Thread, Lock
 
 logging.basicConfig(level=logging.ERROR, format='%(asctime)s [%(levelname)s] %(message)s')
 

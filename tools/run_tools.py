@@ -6,8 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from contextlib import asynccontextmanager
 
-import time,os,re,json,shutil,logging,asyncio,math
-from urllib import parse
+import os,re,json,shutil,logging,asyncio,math
 import argparse
 from threading import Timer
 
