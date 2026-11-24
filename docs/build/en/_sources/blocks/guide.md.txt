@@ -1,6 +1,6 @@
 # Block coding
 
-piBo Maker uses Blockly for block coding. Besides the standard blocks there are piBo blocks that call
+piBo Coding uses Blockly for block coding. Besides the standard blocks there are piBo blocks that call
 the **openpibo** Python package. The [Python code] button shows the Python code your blocks make.
 
 ```{note}
