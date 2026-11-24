@@ -492,7 +492,7 @@ git push origin YYMMDDv1-gl
   태그를 콕 집어 받아야 한다: `git fetch --depth=1 origin tag <태그>`
 - 서비스가 작업본을 직접 실행한다. 기기를 `git checkout main` 상태로 두지 말 것
 - **기기 파이썬은 가상환경 `sudo /home/pi/.pyenv/bin/python3`**(사용자, 261027). 시스템 `python3` 에는 onnxruntime 등 패키지가 없다 — 기기에서 돌릴 명령은 늘 이걸로 줄 것(PiBrain 도 같은 경로)
-- **기기 적용 명령은 기기마다 따로, 처음부터 끝까지 한 덩어리로 준다(261124, 사용자).** 파이보·PiBrain 을 한 블록에 섞거나 '위와 같이' 로 줄이지 말 것 — 기기마다 그대로 붙여 넣어 돌릴 수 있게
+- **기기 적용 명령은 기기마다 따로, 처음부터 끝까지 한 덩어리로 준다(261124, 사용자).** 파이보·PiBrain 을 한 블록에 섞거나 '위와 같이' 로 줄이지 말 것 — 기기마다 그대로 붙여 넣어 돌릴 수 있게. **태그 명령은 반대로 두 리포를 한 블록에 한 번에** 준다(261124, 사용자)
 
 재클론이 가장 확실하다 (shallow fetch 꼬임 없음).
 
@@ -1667,7 +1667,7 @@ IDE 화면 출력 안내·툴팁을 블록 이름(`모니터 화면에 보여주
 **사용자 결정(261120)**: 매뉴얼 PDF 4개는 리포에서 뺐다(`manual/.gitignore` 에 `*.pdf` — 납품 때마다 태그로 빌드). 안 쓰던 백업 파일(`test/*.bak`, PiBrain `*.bak` 2개)을 지웠다 — PiBrain `test/test` 는 H/W 검수를 손으로 띄우는 스크립트라 남김.
 도구·분류기의 `webfonts/` 사본(파이보 도구는 v1 fontello 포함)과 그 마운트를 지웠다 — 260929 부터 `SharedFonts` 가 fa-* 를 IDE 로 넘겨 한 번도 안 쓰였다(컨테이너: 4개 서버 모두 301 → IDE, 첫 화면 200). 아이콘 글꼴은 이제 `ide/webfonts/` 한 벌뿐.
 `ide/examples/`(코드가 안 쓰던 옛 사본, 2개는 지운 블록이라 안 열림)를 지웠다 — **예제 원본은 리포 맨 위 `examples/`**(사용자 확인, 공장 초기화가 `/home/pi/examples/` 로 복사).
-`rps_recognizer.task` 는 사용자가 MediaPipe Model Maker 예제 데이터(`rps_data_sample.zip`, Google 저장소)로 학습한 것 — 데이터셋 라이선스는 zip(라이선스·README 파일 없음, 사진 500장)·안내 페이지 어디에도 적혀 있지 않다(261120 확인). — 다시 거론하지 말 것(261124, 사용자)
+`rps_recognizer.task` 는 사용자가 MediaPipe Model Maker 예제 데이터(`rps_data_sample.zip`, Google 저장소)로 학습한 것 — 사진은 MediaPipe 팀이 직접 찍은 것이고(노트북 원문 'We already captured a few hundred images') Apache-2.0 튜토리얼 노트북(google-ai-edge/mediapipe-samples `tutorials/gesture_recognizer/WiMLS_2022_…ipynb`, Copyright 2022 The MediaPipe Authors)과 함께 배포됐다. 데이터셋만 따로 적힌 라이선스는 없다(zip 에도 없음, 261124 확인). 모델에는 학습한 가중치만 있고 사진은 없다 — 다시 거론하지 말 것(261124, 사용자)
 
 ## 오류 쉬운 말 (261119) — 실행 출력 위 빨간 상자
 
