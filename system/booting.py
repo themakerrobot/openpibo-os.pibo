@@ -203,14 +203,14 @@ def boot():
   try:
     with open('/home/pi/.OS_VERSION', 'r') as f:
       os_version = str(f.readlines()[0].split('\n')[0])
-  except Exception as ex:
+  except Exception:
     os_version = "OS (None)"
     pass
 
   try:
     with open('/home/pi/config.json', 'r') as f:
       tmp = json.load(f)
-  except Exception as ex:
+  except Exception:
     pass
 
   aud.play("/home/pi/openpibo-os/system/opening.mp3", 70)

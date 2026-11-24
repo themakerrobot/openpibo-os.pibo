@@ -70,7 +70,6 @@ async function alert_popup(message) {
 
 // --- confirm_popup Function (수정됨) ---
 async function confirm_popup(message) {
-  //console.log("confirm_popup: 함수 시작, 메시지:", message); // 디버깅 로그
   return new Promise((resolve) => {
     hidePopups(); // 다른 팝업 숨기기
 
@@ -85,22 +84,18 @@ async function confirm_popup(message) {
       resolve(false); // 요소를 찾을 수 없으면 즉시 false 반환 (오류 상황)
       return;
     }
-    //console.log("confirm_popup: 요소 찾음:", { popupElement, msgElement, okButton, cancelButton }); // 디버깅 로그
 
     msgElement.textContent = message;
     popupElement.style.display = 'flex'; // 팝업 표시
-    //console.log("confirm_popup: 팝업 표시됨. 사용자 입력 대기 중..."); // 디버깅 로그
     okButton.focus();
 
     // --- 이벤트 핸들러 정의 ---
     const okHandler = function () {
-      //console.log("confirm_popup: 확인 버튼 클릭됨"); // 디버깅 로그
       cleanup();
       resolve(true); // Promise를 true로 완료
     };
 
     const cancelHandler = function () {
-      //console.log("confirm_popup: 취소 버튼 클릭됨"); // 디버깅 로그
       cleanup();
       resolve(false); // Promise를 false로 완료
     };
@@ -108,7 +103,6 @@ async function confirm_popup(message) {
     // --- 리스너 정리 함수 ---
     // 이 함수는 버튼이 클릭될 때 호출되어 리스너를 제거하고 팝업을 숨김
     const cleanup = function () {
-      //console.log("confirm_popup: 리스너 정리 및 팝업 숨김"); // 디버깅 로그
       okButton.removeEventListener('click', okHandler);
       cancelButton.removeEventListener('click', cancelHandler);
       hidePopups();
@@ -122,7 +116,6 @@ async function confirm_popup(message) {
     // 새 리스너 추가
     okButton.addEventListener('click', okHandler);
     cancelButton.addEventListener('click', cancelHandler);
-    //console.log("confirm_popup: 이벤트 리스너 추가됨"); // 디버깅 로그
 
     // 이 시점에서는 resolve()가 호출되지 않음! 핸들러 내부에서만 호출됨.
   });
@@ -130,7 +123,6 @@ async function confirm_popup(message) {
 
 // --- prompt_popup Function (리스너 관리 강화) ---
 async function prompt_popup(message, defaultValue = '') {
-  //console.log("prompt_popup: 함수 시작, 메시지:", message); // 디버깅 로그
   return new Promise((resolve) => {
     hidePopups();
 
@@ -145,35 +137,29 @@ async function prompt_popup(message, defaultValue = '') {
       resolve(null); // 오류 시 null 반환
       return;
     }
-    //console.log("prompt_popup: 요소 찾음:", { popupElement, msgElement, inputElement, okButton, cancelButton }); // 디버깅 로그
 
     msgElement.textContent = message;
     inputElement.value = defaultValue;
     popupElement.style.display = 'flex';
     inputElement.focus(); // 입력 필드에 포커스
-    //console.log("prompt_popup: 팝업 표시됨. 사용자 입력 대기 중..."); // 디버깅 로그
 
     const okHandler = function () {
-      //console.log("prompt_popup: 확인 버튼 클릭됨"); // 디버깅 로그
       cleanup();
       resolve(inputElement.value); // 입력된 값으로 완료
     };
 
     const cancelHandler = function () {
-      //console.log("prompt_popup: 취소 버튼 클릭됨"); // 디버깅 로그
       cleanup();
       resolve(null); // 취소 시 null로 완료
     };
 
     const enterKeyHandler = (event) => {
       if (event.key === 'Enter') {
-        //console.log("prompt_popup: Enter 키 입력됨"); // 디버깅 로그
         okHandler(); // 확인 버튼 클릭과 동일하게 처리
       }
     };
 
     const cleanup = function () {
-      //console.log("prompt_popup: 리스너 정리 및 팝업 숨김"); // 디버깅 로그
       okButton.removeEventListener('click', okHandler);
       cancelButton.removeEventListener('click', cancelHandler);
       inputElement.removeEventListener('keydown', enterKeyHandler);
@@ -189,7 +175,6 @@ async function prompt_popup(message, defaultValue = '') {
     okButton.addEventListener('click', okHandler);
     cancelButton.addEventListener('click', cancelHandler);
     inputElement.addEventListener('keydown', enterKeyHandler);
-    //console.log("prompt_popup: 이벤트 리스너 추가됨"); // 디버깅 로그
   });
 }
 
@@ -226,7 +211,6 @@ socket.on("onoff", function (data) {
   onoffVal.innerHTML = data?
     `<i class="fas fa-toggle-on">&nbsp;on</i>`
     : `<i class="fas fa-toggle-off fa-sm fa-fade" style="--fa-animation-duration: 2s; --fa-fade-opacity: 0.6">&nbsp;off</i>`
-  console.log('onoff', data)
 
   if (data == true && !was) {   // 준비 안 됨 → 됨 으로 바뀔 때 한 번만(원래자세로 모터를 보낸다)
     // 준비 전에 [카메라] 탭을 열었으면 그때 보낸 켜기 요청은 버려졌다(서버가 아직 없었다) → 지금 탭 기준으로 다시 알린다
@@ -1216,7 +1200,6 @@ const getSpeech = (socket) => {
   let micTimer = null;
 
   socket.on("mic", function (d) {
-    //console.log('mic', d)
     $("#mic_status").text(d);
     micIndicatorStop();
     $("#stt_bt").prop("disabled", false);   // 녹음이 끝나면 [말해 보기] 를 다시 쓸 수 있다(같은 마이크)
