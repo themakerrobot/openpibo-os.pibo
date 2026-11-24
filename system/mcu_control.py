@@ -1,5 +1,5 @@
 # mcu_control.py
-import serial, time, logging, json
+import serial, time, logging
 from threading import Thread, Event, Lock
 from queue import Queue, Empty
 

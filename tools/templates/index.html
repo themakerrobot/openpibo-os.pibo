@@ -5,19 +5,18 @@
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0 user-scalable=no" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="piBo — 블록·파이썬 코딩 · 도구 · AI 가르치기 / Block and Python coding, tools, teach AI" />
     <meta name="mobile-web-app-capable" content="yes" />
 
     <!-- <link rel="manifest" href="../static/manifest.json" /> -->
     <link rel="stylesheet" href="../static/all.min.css?ver=240110v1" type="text/css" />
-    <link rel="stylesheet" href="../static/jquery.jsonview.min.css" />
-    <link rel="stylesheet" href="../static/index.css?ver=261120v2" />
-  <link rel="stylesheet" href="../static/pibo-ui.css?ver=261123v20" />
-    <link rel="stylesheet" href="../static/simulator.css?ver=261027v3" />
+    <link rel="stylesheet" href="../static/index.css?ver=261124v1" />
+  <link rel="stylesheet" href="../static/pibo-ui.css?ver=261124v1" />
+    <link rel="stylesheet" href="../static/simulator.css?ver=261124v1" />
     <link rel="shortcut icon" href="../static/icon.png?ver=261123v1" type="image/png" />
 
     <script src="../static/jquery-3.7.1.min.js"></script>
-    <script src="../static/jquery.jsonview.min.js"></script>
     <script src="../static/socket.io.min.js?ver=240110v1"></script>
   </head>
   <body class="pb pb-shell pb-refresh pb-v2">
@@ -34,7 +33,6 @@
           <option value="ko">한국어</option>
           <option value="en">English</option>
         </select>
-        <a id="logo_bt"><img src="../static/themaker.png" style="height:22px" alt="" /></a>
       </div>
     </header>
 
@@ -94,6 +92,7 @@
                     type="number"
                     name="m_time_val"
                     id="m_time_val"
+                    data-aria-key="time"
                     min="0"
                     max="300"
                     step="0.1"
@@ -330,6 +329,7 @@
                     type="number"
                     name="play_cycle_val"
                     id="play_cycle_val"
+                    data-aria-key="play_cycle"
                     min="1"
                     max="100"
                     value="1"
@@ -404,7 +404,7 @@
                   <label for="v_import_motion"><i class="fas fa-file-import"></i>&nbsp;<span data-key="import"></span></label>      
                   <div class="filebox">
                     <form>
-                      <input type="file" id="v_import_motion" accept=".json" />
+                      <input type="file" id="v_import_motion" accept=".json" data-aria-key="import" />
                     </form>
                   </div>
 
@@ -569,7 +569,7 @@
               <div class="s-voice-tiles" id="s_voice_tiles" hidden></div>
               <div class="speech-input-group s-text-row">
                 <span class="label" data-key="text"></span><span class="pb-sep">:</span>
-                <textarea id="s_tts_val" maxlength="200" rows="3"></textarea>
+                <textarea id="s_tts_val" maxlength="200" rows="3" data-ph-key="tts_ph" data-aria-key="tts_ph"></textarea>
               </div>
               <div class="speech-input-group s-btn-row">
                 <span class="label"></span>
@@ -634,9 +634,9 @@
       </div>
     </main>
   </body>
-  <script src="../static/ko2en.js?ver=261124v1"></script>
-  <script src="../static/pibo-ui.js?ver=261123v20"></script>
-  <script src="../static/index.js?ver=261123v20"></script>
+  <script src="../static/ko2en.js?ver=261124v2"></script>
+  <script src="../static/pibo-ui.js?ver=261124v1"></script>
+  <script src="../static/index.js?ver=261124v1"></script>
   <script>/* [동작] 표가 비면 안내를 보인다(pibo-ui.css 의 .motion-table-wrap[data-empty]). :has() 를 안 쓰려고 tbody 를 지켜본다 */
   (function () { var tb = document.querySelector('#motor_table > tbody'), wrap = tb && tb.closest('.motion-table-wrap');
     if (!tb || !wrap || !window.MutationObserver) return;
