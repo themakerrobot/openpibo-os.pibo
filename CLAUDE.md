@@ -812,7 +812,7 @@ llama.cpp 웹 UI에는 `keepalive: true` 를 넣어 빌드했기 때문에 llm�
   - LCD 는 일꾼 스레드 하나(`art_worker`)가 가장 최근 요청만 그린다 — 새 요청이 오면 재생·다시 보기를 끊는다. 화면 잠금은 `oled.py` 의 flock 이 지키므로 `robot.lock` 은 안 잡는다(칭찬 말 중에도 그림이 나온다). 화면을 나가면 IP 화면. 가짜 로봇은 `GET /api/fake/lcd.png`(시험용)
   - **실기기 확인 필요** — LCD 방향, 한 장 그리는 시간(SPI — 빠르게 8장/초가 되는지), 칠할 때 반응
 - 처음 화면은 대문과 같은 활동지 카드 + 캐릭터 장면(IDE 의 `pibo-art.js` 를 받아 씀 — challenge · cards · tricks / pet · drive · art). 색: 카드 코딩 `--app-kids` 주황 `fa-shapes`, 로봇 놀이 `--app-play` 청록 `fa-gamepad`
-- 대기 페이지 `launch.html?svc=cards|play[&go=make|pet|drive|art]`(`svc=kids` 는 예전 이름 → play). `LAUNCH_VER` 261124v1. IDE [로봇 놀이](`#kids_bt`)는 `svc=play`
+- 대기 페이지 `launch.html?svc=cards|play[&go=make|pet|drive|art]`(`svc=kids` 는 예전 이름 → play). `LAUNCH_VER` 261125v1. IDE [로봇 놀이](`#kids_bt`)는 `svc=play`
 - 확인(컨테이너, 가짜 로봇, 두 제품): 95/95 — 카드 코딩 3카드·잠금·카드 실행, 로봇 놀이 2카드·키우기 돌보기·조종하기(`greeting → stop`)· 픽셀 그림 따로 39/39(칠하기·끌기·채우기·되돌리기·지우개가 LCD 에 그대로, 장 더하기·재생(두 장을 오감)·멈춤, 다시 보기, 저장·덮어쓰기·순서 기록·24x32·열기·지우기, 잘못된 값 400, 31번째 409, 파이보엔 없음·API 400), 제품 밖 기능 400, 대문 설명·대기 페이지, 1366·1024·820·390 넘침 0, 한/영, pageerror 0
 
 **초등학생**이 코딩 없이 카드로 로봇 친구에게 **재주를 가르치며** 순서·고치기·반복·재사용(함수)을 차시대로 익힌다(유치원은 뺐다 — 사용자 결정).
@@ -1114,7 +1114,7 @@ easydetect-lab 지시서(`docs/pibo-integration.md`, 473dbe3) 그대로다. **�
 
 - 상단바 48px(**다른 앱과 같은 줄, 261123 사용자 — '대문이 있으면 IDE 상단바도 다른 것과 같아야'**): **[파일](`#v2_side_toggle`, 폴더 아이콘)** · `piBo · 코딩` | 블록/파이썬 | [⋯] · [처음 화면](`#home_bt`) · [전체화면] · [밝기](키트가 끼움) · 언어 select
   - [⋯]: 글자 크기 · 파이썬 편집기 테마(코딩에만 있는 것). 밝기·언어는 상단바로, 공장 초기화·전원 끄기·소스 코드는 대문 [설정]으로 옮겼다
-  - 예전 앱 버튼(도구·대화·분류기·로봇 놀이·도움말 — `#tools_bt` 등)은 뺐다. 앱은 대문에서 고른다. 이름은 대문 카드와 같은 '코딩'(`v2_brand`, 탭 제목 `코딩 · piBo` — 전엔 `piBo 메이커`)
+  - 예전 앱 버튼(도구·대화·분류기·로봇 놀이·도움말 — `#tools_bt` 등)은 뺐다. 앱은 대문에서 고른다. 이름은 대문 카드와 같은 '코딩'(`v2_brand`, 탭 제목 `piBo .211 · 코딩` — 전엔 `piBo 메이커`)
 - **파일 서랍**(`#v2_side.v2-drawer`, `body[data-side]`): 경로 + [추가](새 파일·새 폴더·올리기) · 목록 · 미리보기. 편집기 **위로** 열린다(밀지 않음, z-index 80).
   처음 열면 열려 있고(파일부터 고르게 — 261102 현장 요청을 이어 감), **파일을 열면(#codepath 가 바뀌면)·편집기나 실행 화면을 누르면·×** 로 닫힌다. 편집기 줄의 파일 이름을 눌러도 열린다
 - 편집기 줄: 파일 이름 · 미저장 표시 · [쉬움|전체] · [파이썬 코드] · [저장] · **실행 화면 접기**(`#v2_stage_toggle`)
@@ -1499,7 +1499,7 @@ v1 전용 CSS(`index.css` `fontello.css` `cobalt.css` `duotone-light.css`), [새
   화면에 쓰는 코드를 새로 만들면 이 클래스를 거칠 것(`self.oled` 를 밖에서 직접 쓰지 말 것). 확인(컨테이너, 가짜 장치 4프로세스 동시): 예전 코드는 동작 15번 겹침 → 0번. **실기기 확인 필요**
 - **상단바 왼쪽 로고를 누르면 로봇 화면(파이보 OLED · PiBrain LCD)이 IP 화면으로 돌아간다(261030, 사용자).** 키트 `pibo-ui.js` 의 `screenReset` 이 모든 앱의 `.pb-header__brand`·IDE `.v2-brand` 에 걸고, IDE(80) `POST /screen_reset` 이 `system/network_disp.py` 를 띄운다([출력 지우기] 의 화면 초기화와 같은 일, 여러 번 눌러도 하나만). 로봇 놀이 키우기 화면도 IP 로 덮는다
 - 상단바: 모든 앱 48px + 아래 1px 선, 왼쪽 `[제품 아이콘] piBo · 도구`(코딩은 `piBo · 코딩`), 오른쪽 순서 (앱 동작) · 처음 화면 · 전체화면 · 밝기 · 언어. 언어는 늘 **지금 언어를 보여 주는 select**
-- 브라우저 탭 제목: `<html data-product="piBo|PiBrain">` + `<title data-key=…>` 에 앱 이름만 — 키트 `fixTitle` 이 ` · piBo` 를 붙인다(IDE 도 261123 부터 같다). `도구 · piBo` / `Tools · PiBrain`, `코딩 · piBo`, `도움말 · piBo`, `H/W 검수 · piBo`
+- 브라우저 탭 제목(261125, 사용자 — 탭이 좁으면 '처음 화면 · pi…' 만 보여 기기를 못 갈랐다): **`제품 .IP끝 · 앱`** — `piBo .211 · 도구` / `PiBrain .37 · Tools`, `piBo .211 · 처음 화면`. `<html data-product="piBo|PiBrain">` + `<title data-key=…>` 에 앱 이름만 두면 키트 `fixTitle`(`PiboUI.tabPrefix`)이 앞에 붙인다. 주소가 IP 가 아니면(`localhost`) `piBo · 도구`. 키트를 안 쓰는 곳도 같은 꼴: 대기 페이지(`launch.html` `setTitle`)·H/W 검수(`test/index.html` 끝 스크립트 — 인쇄 파일 이름은 따로)·도움말(`_static/pibotheme.js` 의 `fixTitle`, `html_title` 은 `도움말 · piBo` 그대로)·체험 앱(`document.title = 이름` 뒤 키트가 붙임)
 - **꽉 찬 버튼은 한 구역(카드)에 하나**: IDE [실행](저장·+추가는 옅은 파랑 `.v2-btn--tint`), 분류기 [AI 가르치기](저장은 옅게), 도구 [동작] 왼쪽 [추가·수정]·오른쪽 저장 칸 [저장], [음성] 카드마다 [말하기]·[녹음하기], 대화상자 [확인]
 - 선택 표시는 **옅은 파랑 하나**(타일·목소리·메뉴·표 줄·열린 파일·PiBrain 버튼 칸). 상단 탭·세그먼트만 흰 알약
 - 제목: 카드 제목 16/700 + 왼쪽 노랑 막대 4×16(`.pb-title`), 구역 이름 13/700 ink-2(`.pb-label`)
@@ -1563,7 +1563,7 @@ v1 전용 CSS(`index.css` `fontello.css` `cobalt.css` `duotone-light.css`), [새
   - 오른쪽: 로봇 상태(괘선 표 — 배터리·메모리는 막대) · 이어서 하기(노란 메모지 + 마스킹 테이프)
   - [이어서 하기] 파일 → `/ide?open=<경로>`(`ide.js` 11 — init 을 놓치면 2.5초 보조 타이머)
 - **모든 앱의 [처음 화면](`#home_bt[data-pb-home]`, 집 아이콘)** → 대문(261123 — 예전 [IDE] `#ide_bt` 는 지웠다). 코딩(IDE)의 [처음 화면]은 저장 안 했으면 묻는다(`ide.js` 12, `data-pb-home` 없음). 체험 앱 안의 [처음]은 헷갈리지 않게 카드 코딩 [카드 처음](도형 아이콘) · 로봇 놀이 [놀이 처음](게임패드 아이콘) — id 는 `#start_bt`(261123 전엔 `#home_bt`)
-- 대기 페이지 `launch.html`: `svc=hwtest`(50050) · `svc=cards|play[&go=make|pet|drive|art]`(체험 앱의 그 화면, 이름·아이콘·색도 그 화면 것 — `svc=kids` 는 예전 이름 → play). `LAUNCH_VER` 261124v1. 체험 앱은 `?go=` 를 읽고 주소에서 지운다
+- 대기 페이지 `launch.html`: `svc=hwtest`(50050) · `svc=cards|play[&go=make|pet|drive|art]`(체험 앱의 그 화면, 이름·아이콘·색도 그 화면 것 — `svc=kids` 는 예전 이름 → play). `LAUNCH_VER` 261125v1. 체험 앱은 `?go=` 를 읽고 주소에서 지운다
 - 미리보기 `design/preview.py` 와 검사 `design/audit/browser_check.js` 가 대문(`/`)·IDE(`/ide`)를 안다. `AUDIT.md` B2 예외에 대문을 넣었다
 - **대문 중심 정리(261123, 사용자 — 'IDE 가 메인이었던 흔적 전수 조사')**: 앱은 대문에서만 고르고, 모든 앱의 상단바는 같은 줄이다.
   - 코딩(IDE): 상단바 앱 버튼·[더보기]의 밝기·언어·공장 초기화·전원 끄기·소스 코드·로고, WiFi 창, 아래 상태 줄을 뺐다 → 대문 [설정]·[로봇 상태]. 이름 `piBo · 코딩`(대문 카드와 같게)
