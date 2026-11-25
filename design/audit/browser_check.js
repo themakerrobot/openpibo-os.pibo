@@ -16,7 +16,7 @@ const ONLY = ((process.argv.find(a => a.startsWith('--only=')) || '').slice(7)).
 const PIBO = path.resolve(__dirname, '..', '..');
 fs.mkdirSync(OUT, { recursive: true });
 const H = `http://${IP}`;
-const PRODUCTS = [['pibo', 18000, 'piBo', PIBO]].concat(PIBRAIN ? [['pibrain', 18100, 'PiBrain', path.resolve(PIBRAIN)]] : []);
+const PRODUCTS = [['pibo', 18000, 'piBo', PIBO]].concat(PIBRAIN ? [['pibrain', 18100, 'piBrain', path.resolve(PIBRAIN)]] : []);
 const APPS = { home: '처음 화면|Home', ide: '코딩|Coding', tools: '도구|Tools', classifier: 'AI 가르치기|Teach AI', chat: '대화|Chat', kids: '로봇 놀이|Robot Play', cards: '카드 코딩|Card coding', docs: '도움말|Help', launch: '' };
 function pages() {
   const out = [];
