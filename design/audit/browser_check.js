@@ -132,7 +132,7 @@ async function b2(br) {
       if (d.bg !== ref.bg) bad.push(`${tag}: 바탕 ${d.bg}(다른 앱 ${ref.bg})`);
       const appRe = APPS[pgi.app];
       if (pgi.app !== 'launch') {
-        if (!new RegExp(`^(${appRe}) · ${pgi.prod}$`).test(d.title)) bad.push(`${tag}: 탭 제목 '${d.title}'(앱 · ${pgi.prod})`);
+        if (!new RegExp(`^${pgi.prod}( \\.\\d+)? · (${appRe})$`).test(d.title)) bad.push(`${tag}: 탭 제목 '${d.title}'(${pgi.prod} .IP끝 · 앱)`);   // 261125 — 탭이 좁아도 기기를 가르게 제품 + IP 끝자리를 앞에
         const bn = d.brand.replace(/\s+/g, '');
         if (pgi.app === 'home') { if (bn !== pgi.prod) bad.push(`${tag}: 왼쪽 이름 '${d.brand}'(대문은 제품 이름만)`); }
         else if (!new RegExp(`^${pgi.prod}·?(${appRe.replace(/ /g, '')})$`).test(bn))   // 가운데 점은 CSS ::before 라 글자에 없을 수 있다
