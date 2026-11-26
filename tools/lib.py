@@ -102,6 +102,7 @@ class Pibo:
       self._vision_step(3, 'vs_face', detect=True)
       from openpibo.vision_face import Face
       self.fac = Face()
+      self.fac.preload()   # 라이브러리는 처음 쓸 때 올리지만(261126) 도구는 타일을 처음 누를 때 멈칫하지 않게 미리
       try:
         from openpibo.modules.face_tool import FaceTool
         self.face_tool = FaceTool(self.fac, font_path=openpibo_models.filepath("KDL.ttf"))

@@ -1045,6 +1045,7 @@ sudo /home/pi/.pyenv/bin/python3 /home/pi/openpibo-os/system/bench_models.py --c
   얼굴 상자 둘레 30% 를 붙여 자르고 teach-lab `crop_to`(= TM cropTo, edge-lab `MaskCls._prep` 과 같은 쌍선형) 224, 0~255 float 그대로. 종류 이름은 파일 메타데이터 `edge-lab.classes`. 처음 부를 때 올린다.
   같은 자른 그림에서 edge-lab(OpenVINO f32)과 확률 최대 차이 1.2e-6, 답 120/120 일치. LFW 맨얼굴 60/60 no mask, 그려 넣은 마스크 60/60 mask(진짜 마스크 사진은 확인 필요).
   **블록은 아직 없다** — 파이썬·블록 이름 맞추기(일원화 8단계) 때 같이 정한다
+- **모델은 처음 쓸 때 올린다(261126, 성능)** — `Face()` 는 파일 검사만 하고, `detect_face` 때 0005 · `analyze_face` 때 0013·0003 · 얼굴 점·방향·구분 때 MediaPipe 얼굴 점(`import mediapipe` 도 그때 — `_LazyModule`) · `train_face`/`recognize` 때 0095 를 올린다(속성 + `RLock`, 여러 스레드가 불러도 한 번). 전엔 `Face()` 가 다섯 개를 한꺼번에 올려(PiBrain 실측 합 약 3.3초) 얼굴 찾기만 쓰는 프로그램도 다 기다렸다. 그 기능을 처음 부를 때 한 번 늦다. `Face.preload()` 는 한꺼번에 — **도구 두 곳(파이보 `tools/lib.py` · PiBrain `ensure_face`)은 preload 로 예전처럼 미리 올린다**. 안쪽 속성(`face_detection_compiled` 등)은 API 문서에서 뺐다(`vision_face.rst` 의 `:exclude-members:`). 가짜 OpenVINO·MediaPipe 로 9/9(두 리포). **실기기 시간·메모리 확인 필요**
 - **0005·0095 파일이 `/home/pi/.model/face/` 에 먼저 있어야 한다**(`sudo bash system/fetch_models.sh` — 이미지 작업. 실행 코드는 내려받지 않는다). 없으면 `Face()` 가 파일 이름을 담은 오류
 - **사물 추적 삭제(261106, 사용자 — 쓸모가 작다는 판단, 사물 인식이 대신한다)**: 두 리포의 `Detect.object_tracker_init`·`track_object`·`track_object_vis`(261104 에 CSRT 로 바꿨던 것), IDE 블록 `vision_object_tracker_init`·`vision_object_track`·`vision_object_track_vis`(정의·생성기·툴박스·`ko.js`/`en.js` 문구·블록 가이드 그림),
   파이보 도구의 '사물 추적' 타일·클릭 처리·`object_tracker_init` 소켓. API 호환 규칙의 예외다(사용자). **예전 프로그램은 그대로 열린다** — `customblock_callback.js` 끝 불러오기 감싸개가 추적 블록을 걷어낸다(설정·표시 블록은 빼고 뒤를 당기고, 추적하기 값 블록은 칸을 비움. 컨테이너 Blockly 로 확인). 파이썬에서 부르면 AttributeError
@@ -1726,6 +1727,7 @@ IDE 화면 출력 안내·툴팁을 블록 이름(`모니터 화면에 보여주
 
 ## IDE 서버·블록 메모 (260924)
 
+- **`/show`([모니터 화면에 보여주기])는 받은 그림을 그대로 보낸다(261126)** — 전엔 `/home/pi/.tmp.jpg` 에 썼다가 다시 읽어 [계속 반복] 안이면 초당 수십 번 SD 카드에 썼다. 그 경로는 화면의 이름표(`ide.js` `LIVE_PATH`)로만 남는다. 보내는 횟수는 막지 않는다 — 학생이 [기다리기]/`sleep` 으로 정한다(사용자, 261126 — 혼자 쓸 때는 빨라야 해서)
 - **IDE 가 띄우는 프로세스는 `bg(cmd)` 로**(261125, 사용자 — 기기 `ps` 에 `[python3] <defunct>`): `subprocess.Popen` 만 하면 끝난 프로세스(IP 화면을 그리고 끝난 `network_disp.py`·`systemctl`·`pkill`)가 IDE 가 다시 물을 때까지 좀비로 남았다. `bg()` 는 띄우고 스레드가 `wait()` 로 거둔다. 새로 띄울 때도 `bg()` 를 쓸 것(학생 프로그램은 asyncio 가 거둔다)
 - **첫 화면은 `FileResponse` 로 템플릿 파일을 그대로 보낸다** (`ide/run_ide.py` 의 `/`, `tools/run_tools.py` 의 `/`).
   템플릿에 Jinja 문법이 없어서다. 전에 쓰던 `TemplateResponse(이름, {"request": ...})` 는 starlette 1.0 부터
