@@ -201,6 +201,9 @@ const translations = {
   motor_s8: { ko: "왼팔", en: "L arm" },     motor_s9: { ko: "왼손", en: "L hand" },
   // [음성] 말할 글자 칸 안내(261124 — PiBrain 도구와 같게)
   tts_ph:             { ko: "말할 글자를 적어 보세요", en: "Type what to say" },
+  // 로봇 준비 실패(261126)
+  robot_init_fail:     { ko: "로봇을 준비하지 못했어요.", en: "Could not get the robot ready." },
+  robot_init_fail_tip: { ko: "[다시 켜기]를 눌러 보고, 계속 안 되면 로봇을 다시 켜 주세요.", en: "Press [Restart]. If it keeps failing, restart the robot." },
 };
 
 // 키 → 현재 언어 문자열. 모르는 키(일반 문자열)는 그대로 반환.
