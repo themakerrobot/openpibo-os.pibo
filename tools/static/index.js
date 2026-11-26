@@ -203,6 +203,23 @@ setInterval(() => {
   if (!robotOn) socket.emit("onoff");
 }, 5000);
 socket.on("disconnect", () => { robotOn = false; setRobotState(false); });
+// 로봇 준비(모터·소리)에 실패하면 서버가 이유를 알린다(261126) — 전엔 '로봇 준비 중 · N초' 가 끝없이 올라갔다
+let initFailShown = false;
+socket.on("init_error", (msg) => {
+  clearInterval(onoff_intv);
+  onoffCount.innerHTML = "";
+  onoffVal.dataset.state = 'error';
+  onoffVal.dataset.label = t('robot_init_fail');
+  if (initFailShown) return;
+  initFailShown = true;
+  PiboUI.banner('init', {
+    text: t('robot_init_fail') + ' ' + t('robot_init_fail_tip') + (msg ? ` (${msg})` : ''), kind: 'error',
+    actions: [
+      { label: PiboUI.text("restart"), primary: true, onClick: () => PiboUI.restartSelf("tools") },
+      { label: PiboUI.text("home"), onClick: () => PiboUI.goHome() },
+    ],
+  });
+});
 
 socket.on("onoff", function (data) {
   const was = robotOn;
@@ -1432,7 +1449,7 @@ PiboUI.watchSocket(socket, {
     kind: "warn",
     actions: [
       { label: PiboUI.text("restart"), primary: true, onClick: () => PiboUI.restartSelf("tools") },
-      { label: PiboUI.text("close"), onClick: () => PiboUI.goHome() }
+      { label: PiboUI.text("home"), onClick: () => PiboUI.goHome() }
     ]
   })
 });

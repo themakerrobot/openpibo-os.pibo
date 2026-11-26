@@ -7,7 +7,7 @@ from openpibo.motion import Motion
 import asyncio
 import time
 import cv2,logging
-import json,shutil
+import json,shutil,os
 from threading import Thread, Lock
 
 logging.basicConfig(level=logging.ERROR, format='%(asctime)s [%(levelname)s] %(message)s')
@@ -22,6 +22,41 @@ def to_jpeg(im):
   _, buffer = cv2.imencode('.jpg', im, [int(cv2.IMWRITE_JPEG_QUALITY), STREAM_JPEG_QUALITY])
   return buffer.tobytes()
 
+MYMOTION = '/home/pi/mymotion.json'
+
+def load_motions():
+  """내 동작 파일을 읽는다. 깨져 있으면(쓰는 중 전원이 꺼짐 등) 지우지 않고 옆에 이름을 바꿔 두고 빈 것으로 시작한다(261126).
+  전엔 빈 것으로 시작한 뒤 다음 저장이 그 파일을 덮어써 저장한 동작이 모두 사라졌다"""
+  try:
+    with open(MYMOTION, 'rb') as f:
+      j = json.load(f)
+    if isinstance(j, dict):
+      return j
+    raise ValueError('not a dict')
+  except FileNotFoundError:
+    return {}
+  except Exception as ex:
+    bad = f'{MYMOTION}.bad-{time.strftime("%y%m%d%H%M%S")}'
+    logging.error(f'[motion] {MYMOTION} 을 읽지 못해 {bad} 로 옮겨 둡니다: {ex}')
+    try:
+      os.replace(MYMOTION, bad)
+    except OSError:
+      pass
+    return {}
+
+def save_motions(j):
+  """내 동작 파일을 통째로 안전하게 쓴다 — 임시 파일에 다 쓴 뒤 바꿔 끼운다(쓰는 중 꺼져도 예전 파일이 남는다)"""
+  tmp = MYMOTION + '.tmp'
+  with open(tmp, 'w') as f:
+    json.dump(j, f)
+    f.flush()
+    os.fsync(f.fileno())
+  os.replace(tmp, MYMOTION)
+  try:
+    shutil.chown(MYMOTION, 'pi', 'pi')
+  except (OSError, LookupError):
+    pass
+
 class Pibo:
   def __init__(self, emit_func=None, logger=None):
     logging.info('Class INIT')
@@ -32,13 +67,7 @@ class Pibo:
     self.motion_d = [0, 0, -80, 0, 0, 0, 0, 0, 80, 0] # current d value
     self.motion_p = [] # current pos list value
     self.motion_j = {} # current json value
-    try:
-      with open('/home/pi/mymotion.json', 'rb') as f:
-        self.motion_j = json.load(f)
-        #await self.emit('disp_code', self.motion_j)
-    except Exception as ex:
-      logging.error(f'[motion_start] Error: {ex}')
-      pass
+    self.motion_j = load_motions()
     self.vision_type = "camera"
     self.vision_sleep = True
 
@@ -413,9 +442,7 @@ class Pibo:
 
   def add_motion(self, name):
     self.motion_j[name] = self.make_raw()
-    with open('/home/pi/mymotion.json', 'w') as f:
-      json.dump(self.motion_j, f)
-    shutil.chown('/home/pi/mymotion.json', 'pi', 'pi')
+    save_motions(self.motion_j)
     return self.motion_j
 
   def load_motion(self, name):
@@ -438,14 +465,10 @@ class Pibo:
   def delete_motion(self, name):
     if name in self.motion_j:
       del self.motion_j[name]
-    with open('/home/pi/mymotion.json', 'w') as f:
-      json.dump(self.motion_j, f)
-    shutil.chown('/home/pi/mymotion.json', 'pi', 'pi')
+    save_motions(self.motion_j)
     return self.motion_j
 
   def reset_motion(self):
     self.motion_j = {}
-    with open('/home/pi/mymotion.json', 'w') as f:
-      json.dump(self.motion_j, f)
-    shutil.chown('/home/pi/mymotion.json', 'pi', 'pi')
+    save_motions(self.motion_j)
     return self.motion_j

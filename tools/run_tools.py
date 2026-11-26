@@ -32,10 +32,16 @@ class SharedFonts:
       return
     await self.app(scope, receive, send)
 
+init_error = None   # 로봇 준비(모터·소리)에 실패한 이유 — 화면이 '준비 중' 을 끝없이 보이지 않게 알린다(261126)
+
 def init_pibo():
-  global pibo
-  from lib import Pibo
-  pibo = Pibo(emit)
+  global pibo, init_error
+  try:
+    from lib import Pibo
+    pibo = Pibo(emit)
+  except Exception as ex:
+    init_error = str(ex) or ex.__class__.__name__
+    logging.error(f'[init_pibo] {init_error}')
   os.system('/home/pi/.pyenv/bin/python3 /home/pi/openpibo-os/system/network_disp.py')
 
 @asynccontextmanager
@@ -143,10 +149,9 @@ async def import_motion(data:UploadFile = File(...)):
     logging.error(f'[import_motion] Error: {ex}')
     return JSONResponse(content={'result':'motion_file_invalid'}, status_code=400)
 
+  from lib import save_motions
   pibo.motion_j.update(content)
-  with open('/home/pi/mymotion.json', 'w') as f:
-    json.dump(pibo.motion_j, f)
-  shutil.chown('/home/pi/mymotion.json', 'pi', 'pi')
+  save_motions(pibo.motion_j)
 
   try:
     await emit('disp_motion', {'record':pibo.motion_j})
@@ -188,6 +193,8 @@ async def download_img():
 # (화면이 5초마다 'onoff' 를 묻지만 받는 곳이 없었다 → 아래 onoff 가 답한다)
 async def send_state(sid):
   await app.sio.emit('onoff', pibo is not None, to=sid)
+  if pibo is None and init_error:
+    await app.sio.emit('init_error', init_error, to=sid)
   if pibo is not None:
     await app.sio.emit('vision_state', dict(pibo.vision_state), to=sid)
     await app.sio.emit('voice_state', pibo.voice_state, to=sid)
