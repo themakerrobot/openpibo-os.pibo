@@ -36,9 +36,9 @@ const PREVIEW_ONLY = /socket\.io|\/api\/|enable=|favicon|odml|\/device\/|\/cam_l
 const results = [];   // [id, 이름, 상태, 줄들]
 function report(id, name, bad, info = []) { results.push([id, name, bad.length ? 'FAIL' : 'OK', bad.concat(info)]); }
 
-async function open(br, url, { w, lang, theme }) {
+async function open(br, url, { w, lang, theme, style }) {
   const ctx = await br.newContext({ viewport: { width: w, height: w < 500 ? 800 : 768 } });
-  await ctx.addCookies([{ name: 'pibo_theme', value: theme, url }]);
+  await ctx.addCookies([{ name: 'pibo_theme', value: theme, url }].concat(style ? [{ name: 'pibo_style', value: style, url }] : []));   // 개발자 스타일(261126)
   await ctx.addInitScript(l => { try { for (const k of ['language', 'tools_language', 'classifier_language', 'kids_language']) localStorage.setItem(k, l); } catch (e) { /* */ } }, lang);
   const pg = await ctx.newPage(); const errs = [], http = [];
   pg.on('pageerror', e => errs.push(e.message.slice(0, 140)));
@@ -54,6 +54,7 @@ async function b1(br) {
   const widths = QUICK ? [1366, 820] : [1366, 1024, 820, 390];
   for (const w of widths) for (const lang of ['ko', 'en']) combos.push({ w, lang, theme: 'soft' });
   for (const lang of ['ko', 'en']) combos.push({ w: 1366, lang, theme: 'dark' });
+  combos.push({ w: 1366, lang: 'ko', theme: 'dark', style: 'dev' }, { w: 820, lang: 'en', theme: 'soft', style: 'dev' });   // 개발자 스타일(261126)
   for (const pgi of pages()) for (const c of combos) {
     const url = c.lang === 'en' && pgi.en ? pgi.en : pgi.url;
     const { ctx, pg, errs, http } = await open(br, url, c); n++;
@@ -67,7 +68,7 @@ async function b1(br) {
         return (t.match(/[가-힣][가-힣 ]*/g) || []).slice(0, 4);
       }).catch(() => []);
     }
-    const tag = `${pgi.p}/${pgi.app} ${c.w} ${c.lang} ${c.theme}`;
+    const tag = `${pgi.p}/${pgi.app} ${c.w} ${c.lang} ${c.theme}${c.style ? ' ' + c.style : ''}`;
     if (errs.length) bad.push(`${tag}: pageerror ${errs[0]}`);
     if (http.length) bad.push(`${tag}: HTTP ${http.slice(0, 3).join(', ')}`);
     if (over > 0) bad.push(`${tag}: 가로 넘침 ${over}px`);

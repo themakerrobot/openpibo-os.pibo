@@ -273,6 +273,8 @@ sudo grep -h "^ssid=" /etc/NetworkManager/system-connections/*.nmconnection   # 
 sudo rm -rf /home/pi/code/* /home/pi/myimage/* /home/pi/myaudio/* /home/pi/mymodel/* 2>/dev/null
 sudo rm -f  /home/pi/mymotion.json /home/pi/custom_motion.json       # 검수 중 녹화한 모션
 sudo find /home/pi/.kids -mindepth 1 -maxdepth 1 ! -name voice -exec rm -rf {} + 2>/dev/null   # 로봇 놀이 기록·재주·사진(미리 만든 목소리 voice/ 는 남긴다)
+sudo rm -f  /home/pi/.pibo_style                                     # 화면 스타일 → 학습지(기본)
+# 특성화고처럼 개발자 스타일로 납품할 때만: echo dev | sudo tee /home/pi/.pibo_style && sudo chown pi:pi /home/pi/.pibo_style   (261126 — CLAUDE.md '개발자 스타일')
 sudo rm -rf /home/pi/.npm /home/pi/openpibo-files/.git               # 용량 (수십~64MB)
 sudo rm -f  /home/pi/.bash_history /root/.bash_history
 
