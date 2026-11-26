@@ -2,7 +2,7 @@
 
   node design/audit/browser_check.js <PC IP> <PiBrain 리포> <결과 폴더> [--quick] [--only=B2,B3]
 
-  B1 전 화면 × 폭 × 한/영 × 밝기: pageerror 0 · HTTP 오류 0 · 가로 넘침 0 · 영문 화면에 한글 0
+  B1 전 화면 × 폭 × 한/영 × 밝기: pageerror 0 · HTTP 오류 0 · 가로 넘침 0 · 영문 화면에 한글 0 · data-key 는 키만
   B2 상단바 규칙(AUDIT.md 'B2 상단바 규칙' — 높이·색·이름·버튼 순서·글자·크기)
   B3 예제(국내 main · 영문 global)가 블록으로 열리고 코드가 만들어짐
   B4 사람이 볼 캡처를 결과 폴더에 남김(상단바 모음 · 화면 전체)
@@ -68,11 +68,14 @@ async function b1(br) {
         return (t.match(/[가-힣][가-힣 ]*/g) || []).slice(0, 4);
       }).catch(() => []);
     }
+    // data-key 는 번역 키 자리다 — 다른 값을 넣으면 언어를 바꿀 때 그 글자가 화면에 찍힌다(261126 대문 [이어서 하기])
+    const badKey = await pg.evaluate(() => [...document.querySelectorAll('[data-key]')].map(e => e.getAttribute('data-key')).filter(k => !/^[\w.-]+$/.test(k)).slice(0, 2)).catch(() => []);
     const tag = `${pgi.p}/${pgi.app} ${c.w} ${c.lang} ${c.theme}${c.style ? ' ' + c.style : ''}`;
     if (errs.length) bad.push(`${tag}: pageerror ${errs[0]}`);
     if (http.length) bad.push(`${tag}: HTTP ${http.slice(0, 3).join(', ')}`);
     if (over > 0) bad.push(`${tag}: 가로 넘침 ${over}px`);
     if (ko.length) bad.push(`${tag}: 영문 화면에 한글 ${ko.join(' / ')}`);
+    if (badKey.length) bad.push(`${tag}: data-key 에 키가 아닌 값 ${badKey.map(x => x.slice(0, 40)).join(' / ')}`);
     if (c.w === 1366 && c.theme === 'soft') await pg.screenshot({ path: path.join(OUT, `page_${pgi.p}_${pgi.app}_${c.lang}.png`) }).catch(() => {});
     await ctx.close();
   }
