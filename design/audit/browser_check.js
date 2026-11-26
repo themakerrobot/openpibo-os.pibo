@@ -100,7 +100,7 @@ async function b2(br) {
           const cs = getComputedStyle(s); return { text: s.textContent.trim(), fs: cs.fontSize, fw: cs.fontWeight };
         };
         const pick = sel => { const e = [...h.querySelectorAll(sel)].find(vis); return e || null; };
-        const std = { home: pick('#home_bt, .pb-topbar__home'), fs: pick('#fullscreen_bt, .pb-topbar__fs'),
+        const std = { help: pick('#pb_help_bt'), home: pick('#home_bt, .pb-topbar__home'), fs: pick('#fullscreen_bt, .pb-topbar__fs'),
           theme: pick('#pb_theme_bt, #theme_bt, .pb-topbar__theme'), lang: pick('select') };
         const cs = getComputedStyle(h);
         const brand = h.querySelector('.pb-header__brand, .v2-brand, .pb-topbar__brand');
@@ -142,12 +142,16 @@ async function b2(br) {
       const s = d.std;
       for (const k of ['home', 'fs', 'theme']) if (!s[k] && !(k === 'home' && pgi.app === 'home')) bad.push(`${tag}: ${k} 버튼 없음`);   // 대문은 [처음 화면] 이 없다(자기가 처음 화면)
       if (!s.lang) bad.push(`${tag}: 언어 select 없음`);
-      const order = ['home', 'fs', 'theme', 'lang'].filter(k => s[k]);
+      // [사용법](261126): 앱 화면(대문·도움말 빼고)은 [처음 화면] 바로 왼쪽에 하나
+      const HELP_APPS = ['ide', 'tools', 'classifier', 'chat', 'kids', 'cards'];
+      if (HELP_APPS.includes(pgi.app) && !s.help) bad.push(`${tag}: [사용법] 버튼 없음`);
+      if (!HELP_APPS.includes(pgi.app) && s.help) bad.push(`${tag}: [사용법] 버튼이 있으면 안 됨`);
+      const order = ['help', 'home', 'fs', 'theme', 'lang'].filter(k => s[k]);
       for (let i = 1; i < order.length; i++) if (s[order[i]].x <= s[order[i - 1]].x) bad.push(`${tag}: 순서 ${order[i - 1]} → ${order[i]} 가 아님`);
       const extra = d.rightExtra;
       if (extra.length) bad.push(`${tag}: [처음 화면] 오른쪽에 다른 버튼 ${extra.join(',')}(앱 동작은 [처음 화면] 왼쪽)`);
       if (d.heights.some(x => x !== 32)) bad.push(`${tag}: 버튼 높이 ${d.heights.join('/')}(32)`);
-      for (const k of ['home', 'fs', 'theme']) {
+      for (const k of ['help', 'home', 'fs', 'theme']) {
         if (!s[k]) continue;
         const L = s[k].label;
         if (w >= 1000) {

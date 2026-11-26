@@ -812,7 +812,7 @@ llama.cpp 웹 UI에는 `keepalive: true` 를 넣어 빌드했기 때문에 llm�
   - LCD 는 일꾼 스레드 하나(`art_worker`)가 가장 최근 요청만 그린다 — 새 요청이 오면 재생·다시 보기를 끊는다. 화면 잠금은 `oled.py` 의 flock 이 지키므로 `robot.lock` 은 안 잡는다(칭찬 말 중에도 그림이 나온다). 화면을 나가면 IP 화면. 가짜 로봇은 `GET /api/fake/lcd.png`(시험용)
   - **실기기 확인 필요** — LCD 방향, 한 장 그리는 시간(SPI — 빠르게 8장/초가 되는지), 칠할 때 반응
 - 처음 화면은 대문과 같은 활동지 카드 + 캐릭터 장면(IDE 의 `pibo-art.js` 를 받아 씀 — challenge · cards · tricks / pet · drive · art). 색: 카드 코딩 `--app-kids` 주황 `fa-shapes`, 로봇 놀이 `--app-play` 청록 `fa-gamepad`
-- 대기 페이지 `launch.html?svc=cards|play[&go=make|pet|drive|art]`(`svc=kids` 는 예전 이름 → play). `LAUNCH_VER` 261125v2. IDE [로봇 놀이](`#kids_bt`)는 `svc=play`
+- 대기 페이지 `launch.html?svc=cards|play[&go=make|pet|drive|art]`(`svc=kids` 는 예전 이름 → play). `LAUNCH_VER` 261126v1. IDE [로봇 놀이](`#kids_bt`)는 `svc=play`
 - 확인(컨테이너, 가짜 로봇, 두 제품): 95/95 — 카드 코딩 3카드·잠금·카드 실행, 로봇 놀이 2카드·키우기 돌보기·조종하기(`greeting → stop`)· 픽셀 그림 따로 39/39(칠하기·끌기·채우기·되돌리기·지우개가 LCD 에 그대로, 장 더하기·재생(두 장을 오감)·멈춤, 다시 보기, 저장·덮어쓰기·순서 기록·24x32·열기·지우기, 잘못된 값 400, 31번째 409, 파이보엔 없음·API 400), 제품 밖 기능 400, 대문 설명·대기 페이지, 1366·1024·820·390 넘침 0, 한/영, pageerror 0
 
 **초등학생**이 코딩 없이 카드로 로봇 친구에게 **재주를 가르치며** 순서·고치기·반복·재사용(함수)을 차시대로 익힌다(유치원은 뺐다 — 사용자 결정).
@@ -1564,7 +1564,7 @@ v1 전용 CSS(`index.css` `fontello.css` `cobalt.css` `duotone-light.css`), [새
   - 오른쪽: 로봇 상태(괘선 표 — 배터리·메모리는 막대) · 이어서 하기(노란 메모지 + 마스킹 테이프)
   - [이어서 하기] 파일 → `/ide?open=<경로>`(`ide.js` 11 — init 을 놓치면 2.5초 보조 타이머)
 - **모든 앱의 [처음 화면](`#home_bt[data-pb-home]`, 집 아이콘)** → 대문(261123 — 예전 [IDE] `#ide_bt` 는 지웠다). 코딩(IDE)의 [처음 화면]은 저장 안 했으면 묻는다(`ide.js` 12, `data-pb-home` 없음). 체험 앱 안의 [처음]은 헷갈리지 않게 카드 코딩 [카드 처음](도형 아이콘) · 로봇 놀이 [놀이 처음](게임패드 아이콘) — id 는 `#start_bt`(261123 전엔 `#home_bt`)
-- 대기 페이지 `launch.html`: `svc=hwtest`(50050) · `svc=cards|play[&go=make|pet|drive|art]`(체험 앱의 그 화면, 이름·아이콘·색도 그 화면 것 — `svc=kids` 는 예전 이름 → play). `LAUNCH_VER` 261125v2. 체험 앱은 `?go=` 를 읽고 주소에서 지운다
+- 대기 페이지 `launch.html`: `svc=hwtest`(50050) · `svc=cards|play[&go=make|pet|drive|art]`(체험 앱의 그 화면, 이름·아이콘·색도 그 화면 것 — `svc=kids` 는 예전 이름 → play). `LAUNCH_VER` 261126v1. 체험 앱은 `?go=` 를 읽고 주소에서 지운다
 - 미리보기 `design/preview.py` 와 검사 `design/audit/browser_check.js` 가 대문(`/`)·IDE(`/ide`)를 안다. `AUDIT.md` B2 예외에 대문을 넣었다
 - **대문 중심 정리(261123, 사용자 — 'IDE 가 메인이었던 흔적 전수 조사')**: 앱은 대문에서만 고르고, 모든 앱의 상단바는 같은 줄이다.
   - 코딩(IDE): 상단바 앱 버튼·[더보기]의 밝기·언어·공장 초기화·전원 끄기·소스 코드·로고, WiFi 창, 아래 상태 줄을 뺐다 → 대문 [설정]·[로봇 상태]. 이름 `piBo · 코딩`(대문 카드와 같게)
@@ -1670,6 +1670,24 @@ IDE 화면 출력 안내·툴팁을 블록 이름(`모니터 화면에 보여주
 도구·분류기의 `webfonts/` 사본(파이보 도구는 v1 fontello 포함)과 그 마운트를 지웠다 — 260929 부터 `SharedFonts` 가 fa-* 를 IDE 로 넘겨 한 번도 안 쓰였다(컨테이너: 4개 서버 모두 301 → IDE, 첫 화면 200). 아이콘 글꼴은 이제 `ide/webfonts/` 한 벌뿐.
 `ide/examples/`(코드가 안 쓰던 옛 사본, 2개는 지운 블록이라 안 열림)를 지웠다 — **예제 원본은 리포 맨 위 `examples/`**(사용자 확인, 공장 초기화가 `/home/pi/examples/` 로 복사).
 `rps_recognizer.task` 는 사용자가 MediaPipe Model Maker 예제 데이터(`rps_data_sample.zip`, Google 저장소)로 학습한 것 — 사진은 MediaPipe 팀이 직접 찍은 것이고(노트북 원문 'We already captured a few hundred images') Apache-2.0 튜토리얼 노트북(google-ai-edge/mediapipe-samples `tutorials/gesture_recognizer/WiMLS_2022_…ipynb`, Copyright 2022 The MediaPipe Authors)과 함께 배포됐다. 데이터셋만 따로 적힌 라이선스는 없다(zip 에도 없음, 261124 확인). 모델에는 학습한 가중치만 있고 사진은 없다 — 다시 거론하지 말 것(261124, 사용자)
+
+## 코스웨어 다듬기 (261126, 사용자 — '교육 솔루션처럼 보이게', 회원가입 없이)
+
+**하지 않기로 한 것(사용자)**: '오늘의 수업'(수업은 매번 다르다), 제품 안 수업 가이드(수업 가이드는 따로 낸다). 다시 꺼내지 말 것.
+두 제품 같은 코드(아래 파일은 두 리포 같은 파일 — 고치면 같이).
+
+- **예제 갤러리** — 코딩 [예제 열기](빈 작업판 카드 · [⋯] 메뉴)가 파일 목록 대신 카드: 제목 · 한 줄 · 배우는 것 · 난이도 ★1~3 · 시간 · 필요한 것(카메라·스피커·넓은 바닥…).
+  누르면 고친 게 있으면 저장할지 묻고 블록으로 연다. [폴더에서 보기]는 예전처럼 서랍에. 코드 `ide/static/v2/examples.js`(카드 표 `EX` · 문구 ko/en 안에 — 영문판 델타 안 늘림),
+  서버 `GET /examples_list`(`/home/pi/examples` 의 .json·.py — **기기에 있는 것만** 보인다. 표에 없는 파일은 파일 이름 카드). **예제를 더하거나 바꾸면 `EX` 도 고칠 것**
+- **[사용법]**(`?`) — 모든 앱 상단바 [처음 화면] 바로 왼쪽(코딩·도구·AI 가르치기·대화·카드 코딩·로봇 놀이. 대문·도움말·대기 페이지는 없음 — `AUDIT.md` B2).
+  `<body data-pb-help="code|tools|classifier|llm|cards|play">` 이면 키트 `addHelpButton` 이 끼운다. 누르면 '이 화면에서 할 수 있는 것' 3~4줄 + 도움말 `notes/piboMaker.html#app-ide|app-tools|app-classifier|app-chat`(MyST 이름표 `(app-…)=` — 지우지 말 것).
+  문구는 키트 `HELP` 한 곳(piBrain 은 `kob`/`enb`). **화면의 버튼 이름을 바꾸면 여기 문구도**
+- **대문 [설정] → 로봇 정보** — 제품 · 버전(`.OS_VERSION`) · 올린 때(그 파일 시각 — 업데이트할 때는 인터넷에 붙어 있어 시계가 맞다고 본다) · 소스 날짜(받은 커밋, `git -c safe.directory=*`) · 시리얼 · 운영체제 · 저장 공간(막대) · 모델 판(`.model/VERSION` 의 `## sha256` 위 `이름 = 판` 줄). [복사](http 라 clipboard API 가 없으면 textarea). 서버 `GET /robot_info`. **기기 VERSION 줄 모양은 확인 필요**
+- **대문 꼬리말** — 제품 · 버전 · © Circulus · 도움말 · 라이선스(Apache-2.0, 소스 링크)
+- **대기 페이지 팁** — 기다리는 동안 앱마다 한 줄 팁(6초마다 바뀜, 실패하면 숨김). `launch.html` 의 `TIPS`. `LAUNCH_VER` 261126v1
+- **체험 앱 처음 화면 머리말·요약** — 제목 · 한 줄 설명 + 요약 칸: 카드 코딩 = 오늘 차시 · 모은 별(지금 차시까지) · 내 재주 n/24, 로봇 놀이 = 내 친구(이름 · 지금 기분) · 파이보 할 수 있는 동작 / piBrain 그림첩 n/30. 머리말과 카드를 한 덩어리로 가운데에(900px 이하는 위부터)
+- **대화** — 모델 카드로 고르는 동안 위 [대화 모델] 칸(`#model_bar`)을 숨긴다. 고른 뒤에 나타나 거기서 바꾼다(목록을 못 받았으면 늘 보임)
+- 확인(컨테이너 미리보기, 두 제품 × 한/영): 갤러리·로봇 정보·꼬리말 3폭 전부, 대기 페이지 팁 6앱, 체험 앱 머리말 4폭, [사용법] 6앱 × 3폭(위치·넘침·링크·Esc), 대화 모델 칸. **실기기 확인 필요** — `/robot_info` 의 VERSION 줄·소스 날짜, 예제 폴더 내용
 
 ## 오류 쉬운 말 (261119) — 실행 출력 위 빨간 상자
 
